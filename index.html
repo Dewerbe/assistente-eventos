@@ -216,7 +216,8 @@ function validateForm(){
 }
 
 function renderForm(){
-  var f=fields; var p=isPT(); var html='';
+  if(!currentType) return;
+  var f=fields; var p=lang==='PT'; var html='';
   var t=EMAIL_TYPES.find(function(x){ return x.id===currentType; });
   html+='<div style="margin-bottom:24px;"><div style="font-size:11px;color:'+BRONZE+';letter-spacing:0.12em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">'+(p?t.dpt:t.den)+'</div><div style="font-size:18px;color:'+BLACK+';font-weight:300;">'+(p?t.pt:t.en)+'</div><div style="width:40px;height:1px;background:'+BRONZE+';margin-top:10px;"></div></div>';
 
