@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assistente de Emails — TD Hotels Eventos</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Aptos','Montserrat',Arial,sans-serif; background:#FAF8F6; color:#231F20; }
+input,select,textarea { width:100%; border:1px solid #DDD4C8; border-radius:3px; padding:8px 12px; font-size:13px; background:#fff; color:#231F20; font-family:'Aptos','Montserrat',Arial,sans-serif; outline:none; }
+textarea { resize:vertical; line-height:1.6; }
+button { cursor:pointer; font-family:'Aptos','Montserrat',Arial,sans-serif; }
+.field { margin-bottom:16px; }
+.field label { display:block; font-size:10px; color:#9A918C; margin-bottom:5px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; }
+</style>
+</head>
+<body>
+
+<div style="background:#231F20;padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:64px;border-bottom:2px solid #887157;">
+  <div style="display:flex;align-items:center;gap:14px;">
+    <a href="#" onclick="resetApp();return false;" style="display:flex;align-items:center;gap:14px;text-decoration:none;">
+      <img src="./FOTOS/lg_1080x1080px_td_hotels.png" alt="TD Hotels" style="height:38px;width:auto;display:block;" onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='flex';">
+      <div id="logo-fallback" style="display:none;border:1px solid #fff;padding:4px 8px;">
+        <div style="color:#fff;font-weight:700;font-size:18px;letter-spacing:0.05em;line-height:1;">TD</div>
+        <div style="color:#fff;font-weight:300;font-size:7px;letter-spacing:0.2em;line-height:1;margin-top:2px;">HOTELS</div>
+      </div>
+    </a>
+    <div style="border-left:1px solid #887157;padding-left:12px;">
+      <div style="color:#fff;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;font-weight:400;" id="header-events">Departamento de Eventos</div>
+      <div style="color:#887157;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;font-weight:300;">HCTA · CCTA</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:6px;">
+    <button onclick="setLang('PT')" id="btn-pt" style="background:#887157;color:#fff;border:1px solid #887157;border-radius:2px;padding:4px 14px;font-size:11px;font-weight:600;letter-spacing:0.08em;">PT</button>
+    <button onclick="setLang('EN')" id="btn-en" style="background:transparent;color:#9A918C;border:1px solid #3A3636;border-radius:2px;padding:4px 14px;font-size:11px;font-weight:600;letter-spacing:0.08em;">EN</button>
+  </div>
+</div>
+<div style="height:3px;background:linear-gradient(90deg,#887157 0%,#C4AE96 50%,transparent 100%);"></div>
+
+<div style="display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 69px);">
+  <div style="background:#F5F1EC;border-right:1px solid #DDD4C8;position:relative;">
+    <div style="padding:20px 16px 10px;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#9A918C;font-weight:600;" id="sidebar-title">Tipo de email</div>
+    <div id="menu"></div>
+    <div style="position:absolute;bottom:0;width:100%;padding:14px 16px;border-top:1px solid #DDD4C8;background:#F5F1EC;">
+      <div style="font-size:9px;color:#9A918C;letter-spacing:0.08em;line-height:1.8;">HCTA · CCTA · TD Hotels<br><span style="color:#887157;">Departamento de Eventos</span></div>
+    </div>
+  </div>
+  <div style="padding:32px 36px;" id="main">
+    <div style="display:flex;align-items:flex-start;justify-content:center;padding-top:40px;min-height:320px;" id="empty-state">
+      <div style="text-align:center;max-width:620px;width:100%;">
+        <div style="font-size:10px;color:#887157;letter-spacing:0.2em;text-transform:uppercase;font-weight:600;margin-bottom:12px;">TD Hotels · HCTA · CCTA</div>
+        <div style="font-size:26px;color:#231F20;font-weight:300;letter-spacing:0.02em;margin-bottom:8px;" id="empty-title">Assistente de Emails</div>
+        <div style="width:48px;height:1px;background:#887157;margin:0 auto 16px;"></div>
+        <div style="font-size:13px;color:#9A918C;letter-spacing:0.04em;margin-bottom:32px;" id="empty-sub">Selecciona o tipo de comunicação que pretendes gerar</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:left;">
+          <div onclick="selectType('pedido_cotacao')" style="background:#fff;border:1px solid #DDD4C8;border-radius:4px;padding:16px;cursor:pointer;" onmouseover="this.style.borderColor='#887157'" onmouseout="this.style.borderColor='#DDD4C8'">
+            <div style="font-size:18px;margin-bottom:8px;">📋</div>
+            <div style="font-size:12px;font-weight:600;color:#231F20;margin-bottom:4px;" id="card-1-title">Pedido de cotação</div>
+            <div style="font-size:10px;color:#9A918C;" id="card-1-desc">Geral ou incompleto</div>
+          </div>
+          <div onclick="selectType('envio_proposta')" style="background:#fff;border:1px solid #DDD4C8;border-radius:4px;padding:16px;cursor:pointer;" onmouseover="this.style.borderColor='#887157'" onmouseout="this.style.borderColor='#DDD4C8'">
+            <div style="font-size:18px;margin-bottom:8px;">📄</div>
+            <div style="font-size:12px;font-weight:600;color:#231F20;margin-bottom:4px;" id="card-2-title">Envio de proposta</div>
+            <div style="font-size:10px;color:#9A918C;" id="card-2-desc">HCTA ou CCTA</div>
+          </div>
+          <div onclick="selectType('follow_up')" style="background:#fff;border:1px solid #DDD4C8;border-radius:4px;padding:16px;cursor:pointer;" onmouseover="this.style.borderColor='#887157'" onmouseout="this.style.borderColor='#DDD4C8'">
+            <div style="font-size:18px;margin-bottom:8px;">🔔</div>
+            <div style="font-size:12px;font-weight:600;color:#231F20;margin-bottom:4px;" id="card-3-title">Follow-up</div>
+            <div style="font-size:10px;color:#9A918C;" id="card-3-desc">Aguarda confirmação</div>
+          </div>
+          <div onclick="selectType('confirmacao')" style="background:#fff;border:1px solid #DDD4C8;border-radius:4px;padding:16px;cursor:pointer;" onmouseover="this.style.borderColor='#887157'" onmouseout="this.style.borderColor='#DDD4C8'">
+            <div style="font-size:18px;margin-bottom:8px;">✅</div>
+            <div style="font-size:12px;font-weight:600;color:#231F20;margin-bottom:4px;" id="card-4-title">Confirmação</div>
+            <div style="font-size:10px;color:#9A918C;" id="card-4-desc">Reserva confirmada</div>
+          </div>
+          <div onclick="selectType('cobranca')" style="background:#fff;border:1px solid #DDD4C8;border-radius:4px;padding:16px;cursor:pointer;" onmouseover="this.style.borderColor='#887157'" onmouseout="this.style.borderColor='#DDD4C8'">
+            <div style="font-size:18px;margin-bottom:8px;">💳</div>
+            <div style="font-size:12px;font-weight:600;color:#231F20;margin-bottom:4px;" id="card-5-title">Cobrança</div>
+            <div style="font-size:10px;color:#9A918C;" id="card-5-desc">Pagamento pendente</div>
+          </div>
+          <div onclick="selectType('satisfacao')" style="background:#fff;border:1px solid #DDD4C8;border-radius:4px;padding:16px;cursor:pointer;" onmouseover="this.style.borderColor='#887157'" onmouseout="this.style.borderColor='#DDD4C8'">
+            <div style="font-size:18px;margin-bottom:8px;">⭐</div>
+            <div style="font-size:12px;font-weight:600;color:#231F20;margin-bottom:4px;" id="card-6-title">Formulário de satisfação</div>
+            <div style="font-size:10px;color:#9A918C;" id="card-6-desc">Pós-evento</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="form-area" style="display:none;max-width:520px;"></div>
+    <div id="result-area" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+var BRONZE='#887157',BLACK='#231F20',WHITE='#FFFFFF',SUBTLE='#9A918C',MID='#5A5250',BORDER='#DDD4C8',BG_LIGHT='#F0EAE3';
+var lang='PT', currentType=null, currentSubtype='geral', fields={}, clientEmailText='';
+
+var EMAIL_TYPES=[
+  {id:'pedido_cotacao',pt:'Pedido de cotação',en:'Quotation request',dpt:'Geral ou incompleto',den:'General or incomplete'},
+  {id:'envio_proposta',pt:'Envio de proposta',en:'Proposal submission',dpt:'HCTA ou CCTA',den:'HCTA or CCTA'},
+  {id:'follow_up',pt:'Follow-up',en:'Follow-up',dpt:'Aguarda confirmação',den:'Awaiting confirmation'},
+  {id:'confirmacao',pt:'Confirmação',en:'Confirmation',dpt:'Reserva confirmada',den:'Booking confirmed'},
+  {id:'cobranca',pt:'Cobrança',en:'Payment',dpt:'1º contacto ou follow-up',den:'1st contact or follow-up'},
+  {id:'satisfacao',pt:'Formulário de satisfação',en:'Satisfaction survey',dpt:'Pós-evento',den:'Post-event'},
+];
+
+function isPT(){ return lang==='PT'; }
+
+function setLang(l){
+  lang=l;
+  document.getElementById('btn-pt').style.background=l==='PT'?BRONZE:'transparent';
+  document.getElementById('btn-pt').style.color=l==='PT'?WHITE:SUBTLE;
+  document.getElementById('btn-pt').style.borderColor=l==='PT'?BRONZE:'#3A3636';
+  document.getElementById('btn-en').style.background=l==='EN'?BRONZE:'transparent';
+  document.getElementById('btn-en').style.color=l==='EN'?WHITE:SUBTLE;
+  document.getElementById('btn-en').style.borderColor=l==='EN'?BRONZE:'#3A3636';
+  var evEl=document.getElementById('header-events');
+  if(evEl) evEl.textContent=l==='PT'?'Departamento de Eventos':'Events Department';
+  updateEmptyState();
+  document.getElementById('empty-label').textContent=isPT()?'Selecciona um tipo de email':'Select an email type';
+  document.getElementById('empty-sub').textContent=isPT()?'na coluna à esquerda':'from the left panel';
+  renderMenu();
+updateEmptyState();
+  if(currentType) renderForm();
+}
+
+function updateEmptyState(){
+  var p=isPT();
+  var el=document.getElementById('empty-title'); if(el) el.textContent=p?'Assistente de Emails':'Email Assistant';
+  var es=document.getElementById('empty-sub'); if(es) es.textContent=p?'Selecciona o tipo de comunicação que pretendes gerar':'Select the type of communication you wish to generate';
+  var cards=[
+    ['card-1-title','card-1-desc', p?'Pedido de cotação':'Quotation request', p?'Geral ou incompleto':'General or incomplete'],
+    ['card-2-title','card-2-desc', p?'Envio de proposta':'Proposal submission', p?'HCTA ou CCTA':'HCTA or CCTA'],
+    ['card-3-title','card-3-desc', 'Follow-up', p?'Aguarda confirmação':'Awaiting confirmation'],
+    ['card-4-title','card-4-desc', p?'Confirmação':'Confirmation', p?'Reserva confirmada':'Booking confirmed'],
+    ['card-5-title','card-5-desc', p?'Cobrança':'Payment', p?'Pagamento pendente':'Pending payment'],
+    ['card-6-title','card-6-desc', p?'Formulário de satisfação':'Satisfaction survey', p?'Pós-evento':'Post-event'],
+  ];
+  cards.forEach(function(c){
+    var t=document.getElementById(c[0]); if(t) t.textContent=c[2];
+    var d=document.getElementById(c[1]); if(d) d.textContent=c[3];
+  });
+}
+
+function resetApp(){
+  currentType=null; currentSubtype='geral'; fields={}; clientEmailText='';
+  document.getElementById('empty-state').style.display='none';
+  document.getElementById('result-area').style.display='none';
+  document.getElementById('form-area').style.display='block';
+  renderMenu(); renderForm();
+}
+
+function renderMenu(){
+  var menu=document.getElementById('menu');
+  if(!menu) return;
+  menu.innerHTML='';
+  EMAIL_TYPES.forEach(function(t){
+    var btn=document.createElement('button');
+    var active=currentType===t.id;
+    btn.style.cssText='display:block;width:100%;text-align:left;padding:12px 16px;background:'+(active?'#fff':'transparent')+';border:none;border-left:'+(active?'3px solid '+BRONZE:'3px solid transparent')+';cursor:pointer;';
+    btn.innerHTML='<div style="font-size:12px;color:'+(active?BLACK:MID)+';font-weight:'+(active?600:400)+';">'+(isPT()?t.pt:t.en)+'</div><div style="font-size:10px;color:'+SUBTLE+';margin-top:2px;">'+(isPT()?t.dpt:t.den)+'</div>';
+    btn.onclick=function(){ selectType(t.id); };
+    menu.appendChild(btn);
+  });
+}
+
+function selectType(type){
+  currentType=type; currentSubtype='geral'; fields={}; clientEmailText='';
+  document.getElementById('empty-state').style.display='flex';
+  document.getElementById('form-area').style.display='none';
+  document.getElementById('result-area').style.display='none';
+  updateEmptyState();
+  renderMenu();
+}
+
+function field(label,inputHtml){ return '<div class="field"><label>'+label+'</label>'+inputHtml+'</div>'; }
+
+function inp(id,placeholder,val){
+  val=val||'';
+  return '<input type="text" id="'+id+'" placeholder="'+(placeholder||'')+'" value="'+val+'" oninput="fields[\''+id+'\']=this.value;validateForm()">';
+}
+
+function sel(id,options,val){
+  val=val||options[0].v;
+  var opts=options.map(function(o){ return '<option value="'+o.v+'"'+(val===o.v?' selected':'')+'>'+o.l+'</option>'; }).join('');
+  var onChange='fields[\''+id+'\']=this.value;';
+  if(id==='subtypeSel') onChange+='currentSubtype=this.value;';
+  onChange+='renderForm();';
+  return '<select id="'+id+'" onchange="'+onChange+'">'+opts+'</select>';
+}
+
+function req(){ return '<span style="color:#C0392B;margin-left:3px;">*</span>'; }
+
+function getRequiredFields(){
+  if(currentType==='pedido_cotacao') return ['nome'];
+  if(currentType==='envio_proposta') return ['nome','numEvento','datas'];
+  if(currentType==='follow_up') return ['nome','dataEvento'];
+  if(currentType==='confirmacao'){
+    var base=['nome','dataEvento'];
+    if((fields.dadosFiscaisOpcao||'conhecidos')==='conhecidos') return base.concat(['entidade','nif','morada']);
+    return base;
+  }
+  if(currentType==='cobranca') return ['nome','dataEvento'];
+  if(currentType==='satisfacao') return ['nome'];
+  return [];
+}
+
+function validateForm(){
+  var required=getRequiredFields();
+  var missing=required.filter(function(k){ return !fields[k]||!fields[k].trim(); });
+  var btn=document.getElementById('generate-btn');
+  if(!btn) return;
+  if(missing.length>0){ btn.disabled=true; btn.style.opacity='0.4'; btn.style.cursor='not-allowed'; }
+  else { btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer'; }
+}
+
+function renderForm(){
+  if(!currentType) return;
+  var f=fields; var p=lang==='PT'; var html='';
+  var t=EMAIL_TYPES.find(function(x){ return x.id===currentType; });
+  html+='<div style="margin-bottom:24px;"><div style="font-size:11px;color:'+BRONZE+';letter-spacing:0.12em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">'+(p?t.dpt:t.den)+'</div><div style="font-size:18px;color:'+BLACK+';font-weight:300;">'+(p?t.pt:t.en)+'</div><div style="width:40px;height:1px;background:'+BRONZE+';margin-top:10px;"></div></div>';
+
+  var nameFld=field((p?'Nome do destinatário':'Recipient name')+req(),inp('nome',p?'Ex: Dra. Ana Silva':'e.g. Ms. Ana Silva',f.nome));
+  var dataFld=field((p?'Data do evento':'Event date')+req(),inp('dataEvento',p?'Ex: 14 de Julho de 2026':'e.g. 14 July 2026',f.dataEvento));
+
+  if(currentType==='pedido_cotacao'){
+    html+=field(p?'Tipo de pedido':'Request type',sel('subtypeSel',[
+      {v:'geral',l:p?'Pedido geral — cliente sem detalhes':'General — client with no details'},
+      {v:'incompleto',l:p?'Pedido incompleto — falta informação':'Incomplete — missing information'},
+    ],currentSubtype));
+    html+=nameFld;
+    if(currentSubtype==='incompleto'){
+      html+=field(p?'Email do cliente':'Client email','<textarea id="clientEmailTA" rows="5" placeholder="'+(p?'Cola o email original do cliente aqui...':'Paste the client email here...')+'" oninput="clientEmailText=this.value">'+clientEmailText+'</textarea>');
+      html+='<button onclick="extractData()" style="margin-bottom:16px;background:transparent;border:1px solid '+BRONZE+';color:'+BRONZE+';border-radius:3px;padding:7px 16px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;" id="extract-btn">'+(p?'Extrair dados automaticamente':'Extract data automatically')+'</button>';
+      html+='<div id="extract-result"></div>';
+    }
+  } else if(currentType==='envio_proposta'){
+    html+=field(p?'Espaço e regime':'Venue and regime',sel('espacoTipo',[
+      {v:'hcta',l:'Hotel de Convenções de Talatona (HCTA)'},
+      {v:'ccta_excl',l:'CCTA — Com exclusividade'},
+      {v:'ccta_sem',l:'CCTA — Sem exclusividade'},
+    ],f.espacoTipo||'hcta'));
+    html+=nameFld;
+    html+=field((p?'Nº e nome do evento':'Event number and name')+req(),inp('numEvento','Ex: 922/26 — Conferência Anual BAI',f.numEvento));
+    html+=field((p?'Datas':'Dates')+req(),inp('datas','Ex: 12 e 13 de Junho de 2026',f.datas));
+    html+=field(p?'Situação da proposta':'Proposal status',sel('segundaOpcao',[
+      {v:'nao',l:p?'1ª opção':'First option'},
+      {v:'sim',l:p?'2ª opção — existe pré-reserva anterior':'2nd option — prior pre-booking exists'},
+    ],f.segundaOpcao||'nao'));
+  } else if(currentType==='follow_up'){
+    html+=nameFld; html+=dataFld;
+    html+=field(p?'Motivo':'Reason',sel('followUpModo',[
+      {v:'proximo',l:p?'Data a aproximar-se — urgência de confirmação':'Date approaching — confirmation urgency'},
+      {v:'conflito',l:p?'Novo pedido para as mesmas datas':'New request for same dates'},
+    ],f.followUpModo||'proximo'));
+    if((f.followUpModo||'proximo')!=='conflito'){
+      html+=field(p?'Data limite de confirmação':'Confirmation deadline',inp('dataLimite',p?'Ex: 13 de Maio às 12h00':'e.g. 13 May at 12:00',f.dataLimite));
+    }
+  } else if(currentType==='confirmacao'){
+    html+=nameFld; html+=dataFld;
+    html+=field(p?'Espaço':'Venue',sel('espaco',[
+      {v:'Hotel de Convenções de Talatona',l:'Hotel de Convenções de Talatona'},
+      {v:'Centro de Convenções de Talatona (CCTA)',l:'Centro de Convenções de Talatona (CCTA)'},
+    ],f.espaco||'Hotel de Convenções de Talatona'));
+    html+=field(p?'Dados fiscais':'Fiscal details',sel('dadosFiscaisOpcao',[
+      {v:'conhecidos',l:p?'Dados conhecidos — reconfirmar':'Known — reconfirm details'},
+      {v:'falta',l:p?'Dados em falta — solicitar ao cliente':'Missing — request from client'},
+    ],f.dadosFiscaisOpcao||'conhecidos'));
+    if((f.dadosFiscaisOpcao||'conhecidos')==='conhecidos'){
+      html+=field('Entidade'+req(),inp('entidade','Ex: Sonangol E.P.',f.entidade));
+      html+=field('NIF'+req(),inp('nif','Ex: 5000012345',f.nif));
+      html+=field((p?'Morada Fiscal':'Fiscal Address')+req(),inp('morada','Ex: Av. 4 de Fevereiro, Luanda',f.morada));
+    }
+  } else if(currentType==='cobranca'){
+    html+=nameFld; html+=dataFld;
+    html+=field(p?'Tipo de contacto':'Contact type',sel('cobrancaModo',[
+      {v:'1',l:p?'1º contacto — envio de factura':'1st contact — invoice submission'},
+      {v:'2',l:p?'2º contacto — 1º follow-up':'2nd contact — 1st follow-up'},
+      {v:'3',l:p?'3º contacto — 2º follow-up (urgente)':'3rd contact — 2nd follow-up (urgent)'},
+    ],f.cobrancaModo||'1'));
+    html+=field(p?'Nº da fatura (opcional)':'Invoice number (optional)',inp('fatura','Ex: FT 2025/0034',f.fatura));
+    html+=field(p?'Valor (opcional)':'Amount (optional)',inp('valor','Ex: 1.400.000,00 Kzs',f.valor));
+    html+=field(p?'Data de vencimento (opcional)':'Due date (optional)',inp('vencimento','Ex: 30 de Abril de 2026',f.vencimento));
+  } else if(currentType==='satisfacao'){
+    html+=nameFld;
+  }
+
+  html+='<div style="margin-top:4px;font-size:10px;color:#9A918C;">* campos obrigatórios</div>';
+  html+='<button id="generate-btn" onclick="generateEmail()" style="background:'+BLACK+';color:'+WHITE+';border:1px solid '+BRONZE+';border-radius:3px;padding:10px 28px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-top:12px;opacity:0.4;cursor:not-allowed;" disabled>'+(isPT()?'Gerar email →':'Generate email →')+'</button>';
+  document.getElementById('form-area').innerHTML=html;
+  validateForm();
+}
+
+function buildEmailContent(){
+  var f=fields; var p=isPT();
+  var nome=f.nome||(p?'[Nome do Cliente]':'[Client Name]');
+  var numEvento=f.numEvento||'[Nº Evento + Nome do Evento]';
+  var datas=f.datas||'[Data(s)]';
+
+  var TBL='<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:600px;font-family:\'Aptos\',Montserrat,Arial,sans-serif;font-size:12px;">'
+    +'<tr><td colspan="2" style="background:#231F20;color:#887157;font-weight:bold;padding:7px 8px;">'+(p?'PEDIDO DE COTAÇÃO':'QUOTATION REQUEST')+'</td></tr>'
+    +'<tr><td colspan="2" style="background:#887157;color:#fff;font-weight:bold;padding:5px 8px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">'+(p?'Informações Gerais':'General Information')+'</td></tr>'
+    +'<tr><td style="width:60%;background:#FAF8F6;padding:5px 8px;">'+(p?'Nome da Entidade':'Entity Name')+'</td><td style="width:40%;padding:5px 8px;">'+(f.entidade||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'NIF':'Tax ID')+'</td><td style="padding:5px 8px;">'+(f.nif||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'Morada Fiscal':'Fiscal Address')+'</td><td style="padding:5px 8px;">'+(f.morada||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'Nome do Evento':'Event Name')+'</td><td style="padding:5px 8px;">'+(f.nomeEvento||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'Data do Evento':'Event Date')+'</td><td style="padding:5px 8px;">'+(f.dataEvento||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'Horário do Evento':'Event Schedule')+'</td><td style="padding:5px 8px;">'+(f.horario||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'Nº Previsto de Participantes':'Expected Number of Attendees')+'</td><td style="padding:5px 8px;">'+(f.participantes||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'Pessoa de Contacto':'Contact Person')+'</td><td style="padding:5px 8px;">'+(f.contacto||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'Telefone / Email':'Phone / Email')+'</td><td style="padding:5px 8px;">'+(f.telEmail||'')+'</td></tr>'
+    +'<tr><td colspan="2" style="background:#887157;color:#fff;font-weight:bold;padding:5px 8px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">'+(p?'Logística e Montagem':'Logistics and Setup')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'Data e hora de montagem':'Setup date and time')+'</td><td style="padding:5px 8px;">'+(f.montagem||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'Data e hora de desmontagem':'Breakdown date and time')+'</td><td style="padding:5px 8px;">'+(f.desmontagem||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'Empresas envolvidas / Fornecedores montagem':'Companies involved / Setup suppliers')+'</td><td style="padding:5px 8px;">'+(f.fornecedores||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'Disposição da sala (Plateia, Escola, Mesa U, Cabaret ou Banquete)':'Room layout (Theatre, Classroom, U-Shape, Cabaret or Banquet)')+'</td><td style="padding:5px 8px;">'+(f.disposicao||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'Necessidades audiovisuais (PROJECTOR, LED, SOM, ILUMINAÇÃO, PALCO, TRADUÇÃO SIMULTÂNEA)':'Audiovisual requirements (PROJECTOR, LED, SOUND, LIGHTING, STAGE, SIMULTANEOUS TRANSLATION)')+'</td><td style="padding:5px 8px;">'+(f.av||'')+'</td></tr>'
+    +'<tr><td colspan="2" style="background:#887157;color:#fff;font-weight:bold;padding:5px 8px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">'+(p?'Serviços de Catering · verificar Kit de Banquetes em anexo':'Catering Services · please refer to the attached Banquet Kit')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">Coffee Break</td><td style="padding:5px 8px;">'+(f.cb||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'Almoço':'Lunch')+'</td><td style="padding:5px 8px;">'+(f.almoco||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'Jantar':'Dinner')+'</td><td style="padding:5px 8px;">'+(f.jantar||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">Cocktail</td><td style="padding:5px 8px;">'+(f.cocktail||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(p?'Outros serviços do menu':'Other menu services')+'</td><td style="padding:5px 8px;">'+(f.outros||'')+'</td></tr>'
+    +'</table>';
+
+  if(currentType==='pedido_cotacao'){
+    var isGeral=currentSubtype==='geral';
+    var table=isGeral?TBL.replace(/>(<\/td>)/g,'> $1'):TBL;
+    var txtPT=isGeral
+      ?'Exmo(a). Sr(a). '+nome+',\n\nAgradecemos o vosso contacto e a preferência pela TD Hotels para a realização do vosso evento. Será com todo o gosto que daremos seguimento ao vosso pedido.\n\nPara que possamos elaborar uma proposta personalizada e detalhada, agradecemos que nos façam chegar as seguintes informações, que poderão preencher directamente na tabela abaixo:\n\n[TABELA]\n\nEm anexo, enviamos também a nossa Brochura de Banquetes, que contém diversas opções de serviços de alimentos e bebidas que poderão ser combinados conforme a vossa preferência.\n\nFicamos ao dispor para qualquer esclarecimento adicional.'
+      :'Exmo(a). Sr(a). '+nome+',\n\nAgradecemos o vosso contacto e a preferência pela TD Hotels para a realização do vosso evento. Será com todo o gosto que daremos seguimento ao vosso pedido.\n\nPara que possamos elaborar uma proposta personalizada e detalhada, agradecemos que nos façam chegar as informações em falta, que poderão preencher directamente na tabela abaixo:\n\n[TABELA]\n\nEm anexo, enviamos também a nossa Brochura de Banquetes, que contém diversas opções de serviços de alimentos e bebidas que poderão ser combinados conforme a vossa preferência.\n\nFicamos ao dispor para qualquer esclarecimento adicional.';
+    var txtEN=isGeral
+      ?'Dear '+nome+',\n\nThank you for your contact and for choosing TD Hotels for your event. It is with great pleasure that we will follow up on your request.\n\nIn order to prepare a personalised and detailed proposal, we kindly ask you to provide the following information in the table below:\n\n[TABELA]\n\nPlease find attached our Banqueting Brochure, which features a comprehensive selection of food and beverage options that can be tailored to suit your preferences and event requirements.\n\nWe remain at your disposal for any further clarification.'
+      :'Dear '+nome+',\n\nThank you for your contact and for choosing TD Hotels for your event. It is with great pleasure that we will follow up on your request.\n\nIn order to prepare a personalised and detailed proposal, we kindly ask you to complete the missing information in the table below:\n\n[TABELA]\n\nPlease find attached our Banqueting Brochure, which features a comprehensive selection of food and beverage options that can be tailored to suit your preferences and event requirements.\n\nWe remain at your disposal for any further clarification.';
+    return {text:p?txtPT:txtEN, table:TBL};
+  }
+
+  if(currentType==='envio_proposta'){
+    var espacoTipo=f.espacoTipo||'hcta';
+    var espacoNome=espacoTipo==='hcta'?'Hotel de Convenções de Talatona':'Centro de Convenções de Talatona (CCTA)';
+    var ccta=espacoTipo==='ccta_sem'
+      ?(p?'\n\nNo âmbito do regime de aluguer do Centro de Convenções de Talatona CCTA, e sempre que o mesmo não seja contratado em exclusividade, importa esclarecer que os espaços comuns, nomeadamente o lobby ou foyer, bem como as entradas e acessos ao edifício, não são de uso exclusivo do evento, podendo ser partilhados com outros clientes ou eventos em simultâneo.\n\nAdicionalmente, o hotel reserva-se ao direito de comercializar e utilizar os restantes espaços do CCTA que não estejam incluídos no âmbito do vosso aluguer.\n\nNeste sentido, agradecemos que nos informem previamente caso pretendam utilizar áreas comuns, tais como foyer, zonas de recepção ou circulação, bem como o tipo de ocupação ou elementos a instalar, para que possamos analisar a sua viabilidade e salvaguardar a inexistência de conflitos operacionais ou visuais com outros eventos.'
+        :'\n\nUnder the CCTA rental scheme, when not contracted exclusively, common areas are not for the exclusive use of any single event and may be shared simultaneously. The hotel reserves the right to use remaining spaces not included in your rental. Please inform us in advance should you intend to use any common areas.')
+      :'';
+    var seg=f.segundaOpcao==='sim'
+      ?(p?'\n\nInformamos que existe uma consulta/pré-reserva anterior para as datas solicitadas, pelo que a vossa proposta será considerada em segunda opção, sujeita à disponibilidade. Para garantir a eventual disponibilidade, agradecemos a vossa confirmação com a maior brevidade possível. A confirmação definitiva será formalizada mediante o envio do comprovativo de pagamento de 50% do valor total da proposta.'
+        :'\n\nPlease note that there is a prior inquiry/pre-booking for the requested dates, and your proposal will be considered as a second option, subject to availability. Final confirmation will be formalised upon receipt of proof of payment of 50% of the total proposal value.')
+      :'';
+    var txtPT2='Exmo(a). Sr(a). '+nome+',\n\nAgradecemos mais uma vez o vosso contacto e a preferência pelo Grupo TD Hotels.\n\nNo seguimento da vossa solicitação, é com gosto que partilhamos em anexo a nossa proposta para o evento '+numEvento+', previsto para os dias '+datas+', no '+espacoNome+'.\n\nJuntamente com a proposta, segue a nossa Brochura de Banquetes, que inclui todos os nossos serviços para melhor apoiar a vossa decisão.\n\n[NOTAS]Informamos que esta proposta está a ser considerada como uma consulta, pelo que, até ao momento, não foi efetuada qualquer pré-reserva de espaços ou quartos na nossa unidade. Em caso de confirmação, o pedido estará sujeito à disponibilidade do hotel nas datas solicitadas.\nInformamos que os valores apresentados poderão ser revistos caso se verifique uma variação cambial superior a 5% face ao câmbio de referência indicado.\nCaso venham a envolver fornecedores externos (ex: empresas de audiovisuais, decoração, segurança, etc.), pedimos que nos informem com a devida antecedência, de forma a submetermos a respectiva aprovação de entrada nas nossas instalações.'+ccta+seg+'\n\nMantemo-nos ao dispor para qualquer dúvida ou ajuste que considerem necessário.';
+    var txtEN2='Dear '+nome+',\n\nThank you once again for your contact and for choosing TD Hotels Group.\n\nFollowing your request, we are pleased to share in attachment our proposal for the event '+numEvento+', scheduled for '+datas+', at '+espacoNome+'.\n\nAlongside the proposal, please find our Banqueting Brochure, which includes all our services to better support your decision.\n\n[NOTAS]Please note that this proposal is being considered as an enquiry only, and no pre-booking of spaces or rooms has been made at this stage. In the event of confirmation, the request will be subject to hotel availability on the requested dates.\nPlease note that the values presented may be revised should an exchange rate variation of more than 5% occur in relation to the reference rate indicated.\nShould you involve any external suppliers (e.g. audiovisual companies, decoration, security, etc.), we kindly ask that you inform us in advance so that we may process the corresponding entry approval for our premises.'+ccta+seg+'\n\nWe remain at your disposal for any questions or adjustments you may consider necessary.';
+    return {text:p?txtPT2:txtEN2, table:null};
+  }
+
+  if(currentType==='follow_up'){
+    var dataEvento=f.dataEvento||'[data do evento]';
+    var dataLimite=f.dataLimite||'[data limite]';
+    if((f.followUpModo||'proximo')==='conflito'){
+      return {text:p
+        ?'Exmo(a). Sr(a). '+nome+',\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento da proposta anteriormente enviada, gostaríamos de informar que recebemos um novo pedido de reserva para as mesmas datas — '+dataEvento+' — pelo que a vossa proposta passa a estar em risco de indisponibilidade.\n\nNeste sentido, solicitamos com carácter de urgência a vossa confirmação oficial, de forma a salvaguardar a reserva do espaço e dos serviços necessários para a realização do evento.\n\nA confirmação definitiva será formalizada mediante o envio do comprovativo de pagamento de 50% do valor total da proposta.\n\nAgradecemos antecipadamente pela vossa atenção e pronta resposta. Caso necessitem de qualquer informação adicional ou tenham alguma dúvida, não hesitem em nos contactar.'
+        :'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing the proposal previously sent, we wish to inform you that we have received a new booking request for the same dates — '+dataEvento+' — and your proposal is now at risk of unavailability.\n\nWe urgently request your official confirmation to secure the venue and services required.\n\nFinal confirmation will be formalised upon receipt of proof of payment of 50% of the total proposal value.\n\nWe thank you in advance for your attention and prompt response.',
+        table:null};
+    }
+    return {text:p
+      ?'Exmo(a). Sr(a). '+nome+',\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento da proposta anteriormente enviada, referente ao evento previsto para '+dataEvento+', gostaríamos de obter uma confirmação oficial quanto à realização da actividade, a fim de procedermos com o bloqueio da data solicitada.\n\nComo parte do processo de validação da reserva, solicitamos o envio do comprovativo de pagamento (PoP) para assegurar a reserva do espaço e dos serviços necessários para a realização do evento.\n\nGostaríamos de reiterar a importância da confirmação até '+dataLimite+', sendo que em caso de ausência de resposta até à data referida, reservamo-nos o direito de proceder com o cancelamento da proposta.\n\nAgradecemos antecipadamente pela vossa atenção e pronta resposta. Caso necessitem de qualquer informação adicional ou tenham alguma dúvida, não hesitem em nos contactar.'
+      :'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing the proposal previously sent, regarding the event scheduled for '+dataEvento+', we would like to obtain an official confirmation in order to proceed with blocking the requested date.\n\nAs part of the booking validation process, we kindly request the submission of a Proof of Payment (PoP) to secure the venue and all services required for the event.\n\nWe would like to reiterate the importance of confirmation by '+dataLimite+'. Should we not receive a response by the above date, we reserve the right to proceed with the cancellation of the proposal.\n\nWe thank you in advance for your attention and prompt response. Should you require any further information or have any questions, please do not hesitate to contact us.',
+      table:null};
+  }
+
+  if(currentType==='confirmacao'){
+    var dataEvento2=f.dataEvento||'[data do evento]';
+    var espaco=f.espaco||'Hotel de Convenções de Talatona';
+    var dadosFiscais=(f.dadosFiscaisOpcao||'conhecidos')==='falta'
+      ?(p?'\n\nFicamos a aguardar, com a maior brevidade possível, o envio dos vossos dados fiscais (Entidade, NIF e Morada Fiscal). Caso não nos seja facultada esta informação dentro do prazo legal, a factura será emitida sob designação genérica de "Consumidor Final".'
+        :'\n\nWe kindly ask that you provide your fiscal details (Entity, Tax ID and Fiscal Address) at your earliest convenience. Should this information not be provided within the legal timeframe, the invoice will be issued under the generic designation of "Final Consumer".')
+      :(p?'\n\nAproveitamos para reconfirmar que o evento será facturado com os seguintes dados fiscais:\n\nEntidade: '+(f.entidade||'[Entidade]')+'\nNIF: '+(f.nif||'[NIF]')+'\nMorada Fiscal: '+(f.morada||'[Morada]')
+        :'\n\nWe would also like to reconfirm that the event will be invoiced under the following fiscal details:\n\nEntity: '+(f.entidade||'[Entity]')+'\nTax ID: '+(f.nif||'[Tax ID]')+'\nFiscal Address: '+(f.morada||'[Address]'));
+    return {text:p
+      ?'Exmo(a). Sr(a). '+nome+',\n\nAgradecemos a vossa preferência pelo Grupo TD Hotels e o envio do comprovativo de pagamento. Temos o prazer de confirmar a reserva do '+espaco+' para a realização do vosso evento, previsto para '+dataEvento2+'.\n\nAssim que o nosso departamento financeiro confirmar a entrada dos valores, iremos partilhar a factura final.'+dadosFiscais+'\n\nFicamos ao dispor para qualquer esclarecimento adicional.'
+      :'Dear '+nome+',\n\nWe thank you for your preference for TD Hotels Group and for submitting the Proof of Payment (PoP). We are pleased to confirm the booking of '+espaco+' for your event, scheduled for '+dataEvento2+'.\n\nOnce our Finance Department confirms receipt of the funds, we will issue the final invoice.'+dadosFiscais+'\n\nWe remain at your disposal for any further clarification.',
+      table:null};
+  }
+
+  if(currentType==='cobranca'){
+    var dataEvento3=f.dataEvento||'[data do evento]';
+    var extras=[];
+    if(f.fatura) extras.push(p?'Fatura n.º: '+f.fatura:'Invoice no.: '+f.fatura);
+    if(f.valor) extras.push(p?'Valor: '+f.valor:'Amount: '+f.valor);
+    if(f.vencimento) extras.push(p?'Data de vencimento: '+f.vencimento:'Due date: '+f.vencimento);
+    var detalhes=extras.length?'\n\n'+extras.join('\n'):'';
+    var modo=f.cobrancaModo||'1';
+    if(modo==='1') return {text:p
+      ?'Exmo(a). Sr(a). '+nome+',\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento do evento realizado em '+dataEvento3+', vimos por este meio partilhar a factura referente aos serviços prestados, que se encontra pendente de liquidação.'+detalhes+'\n\nNeste sentido, e de forma a possibilitar o fecho do processo junto do nosso Departamento de Contabilidade, agradecíamos a partilha do respectivo comprovativo de pagamento.\n\nCaso o pagamento já tenha sido efectuado, pedimos que nos façam chegar o comprovativo para que possamos proceder à reconciliação dos registos.\n\nFicamos a aguardar o vosso retorno e permanecemos ao dispor para qualquer informação adicional que necessitem.'
+      :'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing the event held on '+dataEvento3+', we are hereby sharing the invoice related to the services rendered, which remains pending settlement.'+detalhes+'\n\nIn order to allow for the closure of the process with our Accounting Department, we would kindly ask you to share the corresponding proof of payment.\n\nShould payment have already been made, please send us the proof so that we may proceed with the reconciliation of our records.\n\nWe look forward to your reply and remain at your disposal for any additional information.',
+      table:null};
+    if(modo==='2') return {text:p
+      ?'Exmo(a). Sr(a). '+nome+',\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento do email anteriormente enviado, e dado que o valor referente aos serviços prestados no evento de '+dataEvento3+' se encontra ainda por liquidar, vimos reforçar o nosso pedido de regularização.'+detalhes+'\n\nAgradecíamos, com a maior brevidade possível, a partilha do respectivo comprovativo de pagamento, de forma a possibilitar o fecho do processo junto do nosso Departamento de Contabilidade.\n\nFicamos a aguardar o vosso retorno e permanecemos ao dispor para qualquer esclarecimento adicional.'
+      :'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing our previous email, and given that the amount related to the services rendered at the event of '+dataEvento3+' remains outstanding, we would like to reiterate our request for settlement.'+detalhes+'\n\nWe kindly ask that you share the corresponding proof of payment at your earliest convenience.\n\nWe look forward to your reply and remain at your disposal for any further clarification.',
+      table:null};
+    return {text:p
+      ?'Exmo(a). Sr(a). '+nome+',\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento dos contactos anteriormente efectuados, e verificando-se que o valor referente aos serviços prestados no evento de '+dataEvento3+' permanece por liquidar, vimos, por este meio, reiterar com carácter de urgência o pedido de regularização da situação.'+detalhes+'\n\nAgradecemos que procedam à liquidação e ao envio do respectivo comprovativo com a máxima brevidade, por forma a evitar que o processo seja escalado para a nossa área administrativa.\n\nFicamos a aguardar uma resposta com a maior brevidade possível.'
+      :'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing our previous contacts, and noting that the amount related to the services rendered at the event of '+dataEvento3+' remains outstanding, we hereby reiterate with urgency our request for settlement.'+detalhes+'\n\nWe kindly ask that you proceed with payment at the earliest opportunity, in order to avoid this matter being escalated to our administrative team.\n\nWe look forward to your prompt response.',
+      table:null};
+  }
+
+  if(currentType==='satisfacao'){
+    var imgHtml='<a href="https://bit.ly/QuestionarioHCTAEventos" target="_blank"><img src="https://i.imgur.com/L0EkdiH.jpeg" alt="Questionário de Satisfação HCTA" style="width:100%;max-width:600px;display:block;border:none;"></a><div style="background:#F0EAE3;border:1px dashed #887157;padding:14px;font-family:\'Aptos\',Montserrat,Arial,sans-serif;font-size:12px;color:#5A5250;margin-top:8px;border-radius:3px;"><strong style="color:#887157;">⚠️ Nota para a equipa:</strong> Se a imagem não aparecer no Outlook após colar, inserir manualmente: <em>Inserir → Imagens → Este dispositivo</em>. <a href="https://i.imgur.com/L0EkdiH.jpeg" download="questionario_satisfacao_hcta.jpeg" style="color:#887157;font-weight:600;">Fazer download da imagem</a> &nbsp;|&nbsp; Link do formulário: <strong><a href="https://bit.ly/QuestionarioHCTAEventos" style="color:#887157;">https://bit.ly/QuestionarioHCTAEventos</a></strong></div>';
+    return {
+      text:p
+        ?'Exmo(a). Sr(a). '+nome+',\n\nFoi um gosto receber o seu evento no nosso hotel! Esperamos que tenha sido produtivo e tudo tenha correspondido às suas expectativas.\n\nPara nós, cada detalhe conta, e a sua opinião faz toda a diferença. Preparámos um questionário rápido para saber como correu a sua experiência. Não levará mais do que 2 minutos e ajudará a tornar os próximos eventos ainda melhores.\n\n[IMAGEM]\n\nMuito obrigados pela sua colaboração e confiança.\n\nEstamos ao dispor para qualquer questão adicional.'
+        :'Dear '+nome+',\n\nIt was a pleasure to host your event at our hotel! We hope it was productive and that everything met your expectations.\n\nEvery detail matters to us, and your opinion makes all the difference. We have prepared a quick questionnaire to find out how your experience went. It will take no more than 2 minutes.\n\n[IMAGEM]\n\nThank you very much for your collaboration and trust.\n\nWe remain at your disposal for any further questions.',
+      table:null, imgHtml:imgHtml
+    };
+  }
+  return {text:'',table:null};
+}
+
+function renderEmailParagraphs(text, result, forOutlook){
+  var html='';
+  var parts=text.split('\n\n');
+  for(var i=0;i<parts.length;i++){
+    var pp=parts[i];
+    if(pp==='[TABELA]'&&result.table){ html+='<div style="margin:16px 0;">'+result.table+'</div>'; }
+    else if(pp==='[IMAGEM]'&&result.imgHtml){ html+='<div style="margin:16px 0;">'+result.imgHtml+'</div>'; }
+    else if(pp.indexOf('[NOTAS]')===0){
+      var lines=pp.replace('[NOTAS]','').split('\n').filter(function(l){return l.length>0;});
+      var fs=forOutlook?'14px':'13px';
+      html+='<p style="margin:0 0 4px;font-family:\'Aptos\',Montserrat,Arial,sans-serif;font-size:'+fs+';line-height:1.8;color:#231F20;"><strong>Notas:</strong></p>';
+      lines.forEach(function(line){
+        html+='<p style="margin:0;font-family:\'Aptos\',Montserrat,Arial,sans-serif;font-size:11px;line-height:1.6;color:#231F20;">'+line+'</p>';
+      });
+      html+='<p style="margin:0 0 14px;"></p>';
+    } else {
+      var fs2=forOutlook?'14px':'13px';
+      html+='<p style="margin:0 0 14px;font-family:\'Aptos\',Montserrat,Arial,sans-serif;font-size:'+fs2+';line-height:1.8;color:#231F20;">'+pp.replace(/\n/g,'<br>')+'</p>';
+    }
+  }
+  return html;
+}
+
+function generateEmail(){
+  var result=buildEmailContent();
+  if(!result||!result.text) return;
+  var p=isPT(); var t=EMAIL_TYPES.find(function(x){return x.id===currentType;});
+  var previewHtml=renderEmailParagraphs(result.text,result,false);
+  document.getElementById('form-area').style.display='none';
+  var ra=document.getElementById('result-area'); ra.style.display='block';
+  ra.innerHTML='<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;"><div><div style="font-size:11px;color:'+BRONZE+';letter-spacing:0.12em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">'+(p?'Pronto para enviar':'Ready to send')+'</div><div style="font-size:18px;color:'+BLACK+';font-weight:300;">'+(p?'Email gerado':'Email generated')+'</div><div style="width:40px;height:1px;background:'+BRONZE+';margin-top:10px;"></div></div><div style="display:flex;gap:10px;margin-top:4px;"><button onclick="copyEmail()" id="copy-btn" style="background:'+BRONZE+';color:'+WHITE+';border:none;border-radius:3px;padding:9px 22px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">'+(p?'Copiar':'Copy')+'</button><button onclick="backToForm()" style="background:transparent;border:1px solid '+BORDER+';color:'+MID+';border-radius:3px;padding:9px 18px;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;">'+(p?'← Editar':'← Edit')+'</button></div></div><div id="email-preview" style="background:#fff;border:1px solid '+BORDER+';border-radius:3px;padding:28px 32px;box-shadow:0 1px 8px rgba(35,31,32,0.06);">'+previewHtml+'</div>';
+  window._emailResult=result;
+}
+
+function backToForm(){
+  document.getElementById('result-area').style.display='none';
+  document.getElementById('form-area').style.display='block';
+}
+
+function copyEmail(){
+  var result=window._emailResult; if(!result) return;
+  var html=renderEmailParagraphs(result.text,result,true);
+  var plainText=result.text.replace('[TABELA]','(tabela incluída)').replace('[IMAGEM]','(imagem incluída)').replace('[NOTAS]','Notas:\n');
+  var btn=document.getElementById('copy-btn');
+  try {
+    var htmlBlob=new Blob(['<meta charset="utf-8">'+html],{type:'text/html'});
+    var textBlob=new Blob([plainText],{type:'text/plain'});
+    navigator.clipboard.write([new ClipboardItem({'text/html':htmlBlob,'text/plain':textBlob})])
+    .then(function(){
+      btn.textContent='✓ Copiado';
+      setTimeout(function(){ btn.textContent=isPT()?'Copiar':'Copy'; },2500);
+    })
+    .catch(function(){
+      navigator.clipboard.writeText(plainText).then(function(){
+        btn.textContent='✓ Copiado';
+        setTimeout(function(){ btn.textContent=isPT()?'Copiar':'Copy'; },2500);
+      });
+    });
+  } catch(e){
+    navigator.clipboard.writeText(plainText).then(function(){
+      btn.textContent='✓ Copiado';
+      setTimeout(function(){ btn.textContent=isPT()?'Copiar':'Copy'; },2500);
+    });
+  }
+}
+
+function extractData(){
+  var btn=document.getElementById('extract-btn'); var p=isPT();
+  if(!clientEmailText.trim()){ return; }
+  btn.textContent=p?'A extrair...':'Extracting...'; btn.disabled=true;
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1000,
+      messages:[{role:'user',content:'Extrai do seguinte email os campos listados. Responde APENAS em JSON puro sem backticks nem texto adicional. Se não mencionado, usa null.\n\nCampos: nome, entidade, nif, morada, nomeEvento, dataEvento, horario, participantes, contacto, telEmail, montagem, desmontagem, fornecedores, disposicao, av, cb, almoco, jantar, cocktail, outros\n\nEmail:\n'+clientEmailText}]
+    })
+  })
+  .then(function(res){ return res.json(); })
+  .then(function(data){
+    var text=data.content?data.content.map(function(i){return i.text||'';}).join(''):'';
+    var clean=text.replace(/```json|```/g,'').trim();
+    var parsed=JSON.parse(clean);
+    Object.keys(parsed).forEach(function(k){ if(parsed[k]) fields[k]=parsed[k]; });
+    var keys=[['nome','Nome'],['entidade','Entidade'],['nif','NIF'],['nomeEvento','Evento'],['dataEvento','Data'],['horario','Horário'],['participantes','Participantes']];
+    var found=keys.filter(function(kv){return fields[kv[0]];}).map(function(kv){return '<div style="margin-bottom:3px;"><strong>'+kv[1]+':</strong> '+fields[kv[0]]+'</div>';}).join('');
+    var er=document.getElementById('extract-result');
+    if(er) er.innerHTML=found?'<div style="background:'+BG_LIGHT+';border:1px solid '+BORDER+';border-radius:3px;padding:10px 14px;margin-bottom:16px;font-size:12px;">'+found+'<div style="margin-top:8px;color:'+SUBTLE+';font-size:10px;">'+(p?'Verifica os dados antes de gerar.':'Review before generating.')+'</div></div>':'';
+    btn.textContent=p?'Extrair dados automaticamente':'Extract data automatically';
+    btn.disabled=false;
+  })
+  .catch(function(e){
+    console.error('Erro extracção:',e);
+    var er=document.getElementById('extract-result');
+    if(er) er.innerHTML='<div style="background:#fdecea;border:1px solid #e74c3c;border-radius:3px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#c0392b;">Erro ao extrair dados. Verifica a ligação à internet e tenta novamente.<br><small>'+e.message+'</small></div>';
+    btn.textContent=p?'Extrair dados automaticamente':'Extract data automatically';
+    btn.disabled=false;
+  });
+}
+
+renderMenu();
+</script>
+</body>
+</html>
