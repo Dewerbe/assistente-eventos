@@ -54,10 +54,12 @@ button { cursor:pointer; font-family:'Aptos','Montserrat',Arial,sans-serif; }
     <!-- LANDING -->
     <div id="landing">
       <div style="text-align:center;max-width:620px;margin:40px auto 0;">
-        <div style="font-size:10px;color:#887157;letter-spacing:0.2em;text-transform:uppercase;font-weight:600;margin-bottom:12px;">TD Hotels · HCTA · CCTA</div>
-        <div style="font-size:26px;color:#231F20;font-weight:300;margin-bottom:8px;" id="land-title">Assistente de Emails</div>
-        <div style="width:48px;height:1px;background:#887157;margin:0 auto 16px;"></div>
-        <div style="font-size:13px;color:#9A918C;margin-bottom:32px;" id="land-sub">Selecciona o tipo de comunicação que pretendes gerar</div>
+        <div style="font-size:10px;color:#887157;letter-spacing:0.2em;text-transform:uppercase;font-weight:600;margin-bottom:16px;">TD Hotels · HCTA · CCTA</div>
+        <div style="font-size:24px;color:#231F20;font-weight:300;margin-bottom:6px;" id="land-title">Bem-vindo ao Assistente de Comunicações</div>
+        <div style="font-size:13px;color:#887157;font-weight:500;margin-bottom:14px;" id="land-subtitle">Departamento de Eventos · HCTA / CCTA</div>
+        <div style="width:48px;height:1px;background:#887157;margin:0 auto 20px;"></div>
+        <div style="font-size:13px;color:#5A5250;line-height:1.7;margin-bottom:12px;text-align:left;" id="land-desc">Esta plataforma foi desenvolvida com o objectivo de uniformizar e agilizar as comunicações mais frequentes do Departamento de Eventos, garantindo consistência, profissionalismo e alinhamento com os procedimentos internos do HCTA/CCTA.</div>
+        <div style="font-size:12px;color:#9A918C;margin-bottom:32px;text-align:left;" id="land-cta">Seleccione abaixo o tipo de comunicação que pretende preparar.</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:left;" id="cards-grid"></div>
       </div>
     </div>
@@ -162,8 +164,12 @@ function renderMenu(){
 }
 
 function renderCards(){
-  document.getElementById('land-title').textContent=p()?'Assistente de Emails':'Email Assistant';
-  document.getElementById('land-sub').textContent=p()?'Selecciona o tipo de comunicação que pretendes gerar':'Select the type of communication you wish to generate';
+  document.getElementById('land-title').textContent=p()?'Bem-vindo ao Assistente de Comunicações':'Welcome to the Communications Assistant';
+  document.getElementById('land-subtitle').textContent=p()?'Departamento de Eventos · HCTA / CCTA':'Events Department · HCTA / CCTA';
+  document.getElementById('land-desc').textContent=p()
+    ?'Esta plataforma foi desenvolvida com o objectivo de uniformizar e agilizar as comunicações mais frequentes do Departamento de Eventos, garantindo consistência, profissionalismo e alinhamento com os procedimentos internos do HCTA/CCTA.'
+    :'This platform was developed to standardise and streamline the most frequent communications of the Events Department, ensuring consistency, professionalism and alignment with the internal procedures of HCTA/CCTA.';
+  document.getElementById('land-cta').textContent=p()?'Seleccione abaixo o tipo de comunicação que pretende preparar.':'Select below the type of communication you wish to prepare.';
   var grid=document.getElementById('cards-grid'); grid.innerHTML='';
   TYPES.forEach(function(t){
     var card=document.createElement('div');
