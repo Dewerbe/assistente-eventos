@@ -120,7 +120,7 @@ function setLang(l){
   document.getElementById('empty-label').textContent=isPT()?'Selecciona um tipo de email':'Select an email type';
   document.getElementById('empty-sub').textContent=isPT()?'na coluna à esquerda':'from the left panel';
   renderMenu();
-updateEmptyState();
+renderApp();
   if(currentType) renderForm();
 }
 
@@ -214,8 +214,7 @@ function validateForm(){
   else { btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer'; }
 }
 
-function renderForm(){
-  if(!currentType) return;
+function buildFormHtml(){
   var f=fields; var p=lang==='PT'; var html='';
   var t=EMAIL_TYPES.find(function(x){ return x.id===currentType; });
   html+='<div style="margin-bottom:24px;"><div style="font-size:11px;color:'+BRONZE+';letter-spacing:0.12em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">'+(p?t.dpt:t.den)+'</div><div style="font-size:18px;color:'+BLACK+';font-weight:300;">'+(p?t.pt:t.en)+'</div><div style="width:40px;height:1px;background:'+BRONZE+';margin-top:10px;"></div></div>';
@@ -286,9 +285,8 @@ function renderForm(){
   }
 
   html+='<div style="margin-top:4px;font-size:10px;color:#9A918C;">* campos obrigatórios</div>';
-  html+='<button id="generate-btn" onclick="generateEmail()" style="background:'+BLACK+';color:'+WHITE+';border:1px solid '+BRONZE+';border-radius:3px;padding:10px 28px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-top:12px;opacity:0.4;cursor:not-allowed;" disabled>'+(isPT()?'Gerar email →':'Generate email →')+'</button>';
-  document.getElementById('form-area').innerHTML=html;
-  validateForm();
+  html+='<button id="generate-btn" onclick="generateEmail()" style="background:'+BLACK+';color:'+WHITE+';border:1px solid '+BRONZE+';border-radius:3px;padding:10px 28px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-top:12px;opacity:0.4;cursor:not-allowed;" disabled>'+(p?'Gerar email →':'Generate email →')+'</button>';
+  return html;
 }
 
 function buildEmailContent(){
