@@ -3,28 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Assistente de Emails — TD Hotels Eventos</title>
+<title>Assistente de Comunicações — TD Hotels Eventos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 * { box-sizing:border-box; margin:0; padding:0; }
-body { font-family:'Aptos','Montserrat',Arial,sans-serif; background:#FAF8F6; color:#231F20; }
-input,select,textarea { width:100%; border:1px solid #DDD4C8; border-radius:3px; padding:8px 12px; font-size:13px; background:#fff; color:#231F20; font-family:'Aptos','Montserrat',Arial,sans-serif; outline:none; }
+body { font-family:'Montserrat',Arial,sans-serif; background:#FAF8F6; color:#231F20; }
+input,select,textarea { width:100%; border:1px solid #DDD4C8; border-radius:3px; padding:8px 12px; font-size:13px; background:#fff; color:#231F20; font-family:'Montserrat',Arial,sans-serif; outline:none; }
 textarea { resize:vertical; line-height:1.6; }
-button { cursor:pointer; font-family:'Aptos','Montserrat',Arial,sans-serif; }
+button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
 .field { margin-bottom:16px; }
 .field label { display:block; font-size:10px; color:#9A918C; margin-bottom:5px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; }
-#landing { display:block; }
-#formview { display:none; }
-#resultview { display:none; }
+.ftable { width:100%; border-collapse:collapse; font-size:12px; }
+.ftable th { padding:7px 8px; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; font-weight:600; text-align:right; }
+.ftable th:first-child { text-align:left; }
+.ftable td { padding:4px 6px; border-bottom:1px solid #F0EAE3; vertical-align:middle; }
+.ftable .cinput { border:none; border-bottom:1px solid #DDD4C8; border-radius:0; padding:4px 6px; font-size:12px; background:transparent; width:100%; color:#231F20; font-family:'Montserrat',Arial,sans-serif; outline:none; }
+.ftable .ninput { border:none; border-bottom:1px solid #DDD4C8; border-radius:0; padding:4px 6px; font-size:12px; background:transparent; width:100%; text-align:right; color:#231F20; font-family:'Montserrat',Arial,sans-serif; outline:none; }
+.ftable td.calc { text-align:right; color:#231F20; padding:4px 8px; }
+.ftable tr.total-row td { background:#231F20; color:#fff; font-weight:600; padding:7px 8px; font-size:11px; text-align:right; }
+.ftable tr.total-row td:first-child { text-align:left; }
+.sect-hdr { padding:7px 8px; font-weight:700; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; }
+.info-box { background:#F0EAE3; border-left:3px solid #887157; padding:12px 16px; border-radius:0 3px 3px 0; font-size:11px; line-height:1.8; color:#5A5250; margin-bottom:12px; }
+.info-box strong { color:#231F20; }
+.diag-result { border-radius:3px; padding:14px 18px; font-size:12px; line-height:1.8; margin-top:8px; }
+.diag-ok  { background:#F0FAF4; border:1px solid #27ae60; }
+.diag-err { background:#FEF5F5; border:1px solid #e74c3c; }
+.diag-warn{ background:#FFFBF0; border:1px solid #f39c12; }
+.etoggle { display:flex; border:1px solid #DDD4C8; border-radius:3px; overflow:hidden; margin-bottom:20px; }
+.etoggle button { flex:1; padding:10px 8px; border:none; background:#fff; font-size:11px; font-weight:600; color:#9A918C; letter-spacing:0.06em; text-transform:uppercase; border-right:1px solid #DDD4C8; transition:background 0.15s,color 0.15s; }
+.etoggle button:last-child { border-right:none; }
+.etoggle button.active { background:#231F20; color:#fff; }
+.ftab-btn { background:transparent; border:none; border-bottom:2px solid transparent; margin-bottom:-2px; padding:10px 20px; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#9A918C; }
+.ftab-btn.active { border-bottom-color:#887157; color:#231F20; }
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <div style="background:#231F20;padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:64px;border-bottom:2px solid #887157;">
   <div style="display:flex;align-items:center;gap:14px;">
     <a href="#" onclick="goHome();return false;" style="display:flex;align-items:center;text-decoration:none;">
       <img src="./FOTOS/lg_1080x1080px_td_hotels.png" alt="TD Hotels" style="height:38px;width:auto;display:block;" onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex';">
-      <div id="logo-fb" style="display:none;border:1px solid #fff;padding:4px 8px;margin-right:14px;">
+      <div id="logo-fb" style="display:none;border:1px solid #fff;padding:4px 8px;">
         <div style="color:#fff;font-weight:700;font-size:18px;line-height:1;">TD</div>
         <div style="color:#fff;font-weight:300;font-size:7px;letter-spacing:0.2em;margin-top:2px;">HOTELS</div>
       </div>
@@ -41,35 +61,40 @@ button { cursor:pointer; font-family:'Aptos','Montserrat',Arial,sans-serif; }
 </div>
 <div style="height:3px;background:linear-gradient(90deg,#887157 0%,#C4AE96 50%,transparent 100%);"></div>
 
+<!-- LAYOUT -->
 <div style="display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 69px);">
+
+  <!-- SIDEBAR -->
   <div style="background:#F5F1EC;border-right:1px solid #DDD4C8;position:relative;">
-    <div style="padding:20px 16px 10px;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#9A918C;font-weight:600;" id="sidebar-title">Tipo de email</div>
+    <div style="padding:20px 16px 10px;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#9A918C;font-weight:600;" id="sidebar-title">Navegação</div>
     <div id="menu"></div>
     <div style="position:absolute;bottom:0;width:100%;padding:14px 16px;border-top:1px solid #DDD4C8;background:#F5F1EC;">
       <div style="font-size:9px;color:#9A918C;letter-spacing:0.08em;line-height:1.8;">HCTA · CCTA · TD Hotels<br><span style="color:#887157;">Departamento de Eventos</span></div>
     </div>
   </div>
-  <div style="display:flex;flex-direction:column;">
-    <div style="padding:32px 36px;flex:1;">
+
+  <!-- MAIN -->
+  <div style="padding:32px 36px;">
 
     <!-- LANDING -->
-    <div id="landing">
+    <div id="landing" style="display:block;">
       <div style="text-align:center;max-width:620px;margin:40px auto 0;">
         <div style="font-size:10px;color:#887157;letter-spacing:0.2em;text-transform:uppercase;font-weight:600;margin-bottom:16px;">TD Hotels · HCTA · CCTA</div>
         <div style="font-size:24px;color:#231F20;font-weight:300;margin-bottom:6px;" id="land-title">Bem-vindo ao Assistente de Comunicações</div>
         <div style="font-size:13px;color:#887157;font-weight:500;margin-bottom:14px;" id="land-subtitle">Departamento de Eventos · HCTA / CCTA</div>
         <div style="width:48px;height:1px;background:#887157;margin:0 auto 20px;"></div>
-        <div style="font-size:13px;color:#5A5250;line-height:1.7;margin-bottom:12px;text-align:left;" id="land-desc">Esta plataforma foi desenvolvida com o objectivo de uniformizar e agilizar as comunicações mais frequentes do Departamento de Eventos, garantindo consistência, profissionalismo e alinhamento com os procedimentos internos do HCTA/CCTA.</div>
-        <div style="font-size:12px;color:#9A918C;margin-bottom:32px;text-align:left;" id="land-cta">Seleccione abaixo o tipo de comunicação que pretende preparar.</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:left;" id="cards-grid"></div>
+        <div style="font-size:13px;color:#5A5250;line-height:1.7;margin-bottom:12px;text-align:left;" id="land-desc"></div>
+        <div style="font-size:12px;color:#9A918C;margin-bottom:28px;text-align:left;" id="land-cta"></div>
+        <div id="cards-grid" style="display:flex;flex-direction:column;gap:8px;"></div>
+        <div style="margin-top:28px;font-size:9px;color:#C4AE96;letter-spacing:0.04em;" id="land-dev"></div>
       </div>
     </div>
 
     <!-- FORM -->
-    <div id="formview">
+    <div id="formview" style="display:none;">
       <div style="max-width:520px;">
-        <div style="margin-bottom:20px;">
-          <a href="#" onclick="goHome();return false;" style="font-size:11px;color:#887157;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;">← Voltar</a>
+        <div style="margin-bottom:16px;">
+          <a href="#" onclick="goHome();return false;" style="font-size:11px;color:#887157;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;" id="back-lbl">← Voltar</a>
         </div>
         <div style="margin-bottom:24px;">
           <div style="font-size:11px;color:#887157;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;margin-bottom:6px;" id="form-subtitle"></div>
@@ -78,112 +103,679 @@ button { cursor:pointer; font-family:'Aptos','Montserrat',Arial,sans-serif; }
         </div>
         <div id="form-fields"></div>
         <div style="margin-top:4px;font-size:10px;color:#9A918C;" id="req-note">* campos obrigatórios</div>
-        <button id="generate-btn" onclick="generateEmail()" style="background:#231F20;color:#fff;border:1px solid #887157;border-radius:3px;padding:10px 28px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-top:12px;opacity:0.4;cursor:not-allowed;" disabled>Gerar email →</button>
+        <button id="generate-btn" onclick="generateEmail()" style="background:#231F20;color:#fff;border:1px solid #887157;border-radius:3px;padding:10px 28px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-top:12px;opacity:0.4;cursor:not-allowed;" disabled></button>
       </div>
     </div>
 
     <!-- RESULT -->
-    <div id="resultview">
+    <div id="resultview" style="display:none;">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;">
         <div>
-          <div style="font-size:11px;color:#887157;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;margin-bottom:6px;" id="result-label">Pronto para enviar</div>
-          <div style="font-size:18px;color:#231F20;font-weight:300;" id="result-title">Email gerado</div>
+          <div style="font-size:11px;color:#887157;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;margin-bottom:6px;" id="result-label"></div>
+          <div style="font-size:18px;color:#231F20;font-weight:300;" id="result-title"></div>
           <div style="width:40px;height:1px;background:#887157;margin-top:10px;"></div>
         </div>
         <div style="display:flex;gap:10px;margin-top:4px;">
-          <button onclick="copyEmail()" id="copy-btn" style="background:#887157;color:#fff;border:none;border-radius:3px;padding:9px 22px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">Copiar</button>
-          <button onclick="backToForm()" id="edit-btn" style="background:transparent;border:1px solid #DDD4C8;color:#5A5250;border-radius:3px;padding:9px 18px;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;">← Editar</button>
+          <button onclick="copyEmail()" id="copy-btn" style="background:#887157;color:#fff;border:none;border-radius:3px;padding:9px 22px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;"></button>
+          <button onclick="backToForm()" id="edit-btn" style="background:transparent;border:1px solid #DDD4C8;color:#5A5250;border-radius:3px;padding:9px 18px;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;"></button>
         </div>
       </div>
       <div id="email-preview" style="background:#fff;border:1px solid #DDD4C8;border-radius:3px;padding:28px 32px;box-shadow:0 1px 8px rgba(35,31,32,0.06);"></div>
+    </div>
+
+    <!-- FISCAL -->
+    <div id="fiscalview" style="display:none;">
+      <div style="margin-bottom:16px;">
+        <a href="#" onclick="goHome();return false;" style="font-size:11px;color:#887157;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;" id="fiscal-back-lbl">← Voltar</a>
+      </div>
+      <div style="display:flex;gap:0;border-bottom:2px solid #DDD4C8;margin-bottom:28px;">
+        <button class="ftab-btn active" id="ftab-calc" onclick="fiscalTab('calc')" id="ftab-calc"></button>
+        <button class="ftab-btn" id="ftab-diag" onclick="fiscalTab('diag')"></button>
+        <button class="ftab-btn" id="ftab-info" onclick="fiscalTab('info')"></button>
+      </div>
+
+      <!-- CALC -->
+      <div id="tab-calc">
+        <div style="max-width:820px;">
+          <div style="font-size:18px;color:#231F20;font-weight:300;margin-bottom:6px;" id="fc-title"></div>
+          <div style="width:40px;height:1px;background:#887157;margin-bottom:20px;"></div>
+          <div style="margin-bottom:8px;font-size:10px;color:#9A918C;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;" id="fc-entity-lbl"></div>
+          <div class="etoggle">
+            <button id="ent-pub" class="active" onclick="setEntity('pub')"></button>
+            <button id="ent-priv" onclick="setEntity('priv')"></button>
+          </div>
+          <div id="entity-note" style="font-size:11px;color:#887157;margin-bottom:20px;padding:8px 12px;background:#F5F1EC;border-radius:3px;border-left:3px solid #887157;"></div>
+
+          <!-- FORA HOTELARIA -->
+          <div style="margin-bottom:24px;">
+            <div class="sect-hdr" id="sh-fora" style="background:#C0392B;color:#fff;"></div>
+            <table class="ftable">
+              <thead><tr style="background:#E8E0D8;">
+                <th style="width:34%;padding:7px 8px;" id="th-c1"></th>
+                <th style="width:18%;" id="th-pf1"></th>
+                <th style="width:18%;" id="th-bi1"></th>
+                <th style="width:15%;" id="th-iva1"></th>
+                <th style="width:15%;" id="th-ret1"></th>
+              </tr></thead>
+              <tbody id="tbody-fora"></tbody>
+              <tfoot><tr class="total-row">
+                <td id="tf-lbl1" style="text-align:left;"></td>
+                <td id="tf-fora-pf">0,00</td>
+                <td></td>
+                <td id="tf-fora-iva">0,00</td>
+                <td id="tf-fora-ret">—</td>
+              </tr></tfoot>
+            </table>
+          </div>
+
+          <!-- HOTELARIA -->
+          <div style="margin-bottom:24px;">
+            <div class="sect-hdr" id="sh-hot" style="background:#1a6b3a;color:#fff;"></div>
+            <table class="ftable">
+              <thead><tr style="background:#E8E0D8;">
+                <th style="width:34%;padding:7px 8px;" id="th-c2"></th>
+                <th style="width:18%;" id="th-pf2"></th>
+                <th style="width:18%;" id="th-bi2"></th>
+                <th style="width:15%;" id="th-iva2"></th>
+                <th style="width:15%;" id="th-ret2"></th>
+              </tr></thead>
+              <tbody id="tbody-hot"></tbody>
+              <tfoot><tr class="total-row">
+                <td id="tf-lbl2" style="text-align:left;"></td>
+                <td id="tf-hot-pf">0,00</td>
+                <td></td>
+                <td id="tf-hot-iva">0,00</td>
+                <td>—</td>
+              </tr></tfoot>
+            </table>
+          </div>
+
+          <!-- TOTAL BOX -->
+          <div style="background:#231F20;color:#fff;padding:14px 18px;border-radius:3px;margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9A918C;" id="lbl-tg"></span>
+              <span style="font-size:14px;font-weight:600;" id="grand-pf">0,00 Kzs</span>
+            </div>
+            <div id="grand-breakdown" style="font-size:11px;color:#9A918C;line-height:2;"></div>
+            <div style="border-top:1px solid #3A3636;margin:10px 0;"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:11px;font-weight:600;color:#887157;" id="lbl-tr"></span>
+              <span style="font-size:18px;font-weight:700;color:#887157;" id="grand-receber">0,00 Kzs</span>
+            </div>
+          </div>
+
+          <button id="btn-reset" onclick="resetCalc()" style="background:transparent;border:1px solid #DDD4C8;color:#5A5250;border-radius:3px;padding:8px 20px;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;"></button>
+
+          <div style="margin-top:20px;font-size:10px;color:#9A918C;line-height:1.8;border-top:1px solid #DDD4C8;padding-top:14px;" id="calc-legal"></div>
+        </div>
+      </div>
+
+      <!-- DIAG -->
+      <div id="tab-diag" style="display:none;">
+        <div style="max-width:560px;">
+          <div style="font-size:18px;color:#231F20;font-weight:300;margin-bottom:6px;" id="fd-title"></div>
+          <div style="width:40px;height:1px;background:#887157;margin-bottom:16px;"></div>
+          <div style="font-size:12px;color:#5A5250;margin-bottom:20px;line-height:1.7;" id="fd-desc"></div>
+          <div style="margin-bottom:8px;font-size:10px;color:#9A918C;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;" id="fd-entity-lbl"></div>
+          <div class="etoggle">
+            <button id="dent-pub" class="active" onclick="setDiagEntity('pub')"></button>
+            <button id="dent-priv" onclick="setDiagEntity('priv')"></button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div class="field"><label id="fd-lbl-pf"></label><input type="text" id="diag-pf" oninput="diagCalc()"></div>
+            <div class="field"><label id="fd-lbl-paid"></label><input type="text" id="diag-paid" oninput="diagCalc()"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div class="field"><label id="fd-lbl-fora"></label><input type="text" id="diag-fora" oninput="diagCalc()"></div>
+            <div class="field"><label id="fd-lbl-hot"></label><input type="text" id="diag-hot" oninput="diagCalc()"></div>
+          </div>
+          <div id="diag-result-area"></div>
+        </div>
+      </div>
+
+      <!-- INFO -->
+      <div id="tab-info" style="display:none;">
+        <div style="max-width:680px;" id="info-content"></div>
+      </div>
     </div>
 
   </div>
 </div>
 
 <script>
-var BRONZE='#887157',BLACK='#231F20',WHITE='#fff',SUBTLE='#9A918C',MID='#5A5250',BORDER='#DDD4C8',BGLT='#F0EAE3';
+// ─── GLOBALS ────────────────────────────────────────────────
+var BRONZE='#887157',BLACK='#231F20',WHITE='#fff',SUBTLE='#9A918C',MID='#5A5250',BORDER='#DDD4C8';
 var lang='PT', curType=null, curSubtype='geral', fields={}, clientTxt='', emailResult=null;
+var curSection='email';
+var entityType='pub';
+var diagEntityType='pub';
+var NUM_ROWS=10;
+var foraRows=[], hotRows=[];
+
+function emptyRow(){ return {conceito:'',valor:0}; }
+function initRows(){ foraRows=[]; hotRows=[]; for(var i=0;i<NUM_ROWS;i++){ foraRows.push(emptyRow()); hotRows.push(emptyRow()); } }
+initRows();
 
 var TYPES=[
-  {id:'pedido_cotacao',icon:'📋',pt:'Pedido de cotação',en:'Quotation request',dpt:'Geral ou incompleto',den:'General or incomplete'},
-  {id:'envio_proposta',icon:'📄',pt:'Envio de proposta',en:'Proposal submission',dpt:'HCTA ou CCTA',den:'HCTA or CCTA'},
-  {id:'follow_up',icon:'🔔',pt:'Follow-up',en:'Follow-up',dpt:'Aguarda confirmação',den:'Awaiting confirmation'},
-  {id:'confirmacao',icon:'✅',pt:'Confirmação',en:'Confirmation',dpt:'Reserva confirmada',den:'Booking confirmed'},
-  {id:'cobranca',icon:'💳',pt:'Cobrança',en:'Payment',dpt:'1º contacto ou follow-up',den:'1st contact or follow-up'},
-  {id:'satisfacao',icon:'⭐',pt:'Formulário de satisfação',en:'Satisfaction survey',dpt:'Pós-evento',den:'Post-event'}
+  {id:'pedido_cotacao', pt:'Pedido de cotação',       en:'Quotation request',    dpt:'Geral ou incompleto',       den:'General or incomplete',      fase:'pre'},
+  {id:'envio_proposta', pt:'Envio de proposta',        en:'Proposal submission',  dpt:'HCTA ou CCTA',              den:'HCTA or CCTA',               fase:'pre'},
+  {id:'follow_up',      pt:'Follow-up',               en:'Follow-up',            dpt:'Aguarda confirmação',       den:'Awaiting confirmation',      fase:'durante'},
+  {id:'confirmacao',    pt:'Confirmação',              en:'Confirmation',         dpt:'Reserva confirmada',        den:'Booking confirmed',          fase:'durante'},
+  {id:'cobranca',       pt:'Cobrança',                en:'Payment',              dpt:'1º contacto ou follow-up',  den:'1st contact or follow-up',   fase:'pos'},
+  {id:'satisfacao',     pt:'Formulário de satisfação', en:'Satisfaction survey',  dpt:'Pós-evento',                den:'Post-event',                 fase:'pos'}
 ];
 
+// ─── HELPERS ─────────────────────────────────────────────────
 function p(){ return lang==='PT'; }
+function $(id){ return document.getElementById(id); }
+function show(id){ var e=$(id); if(e) e.style.display='block'; }
+function hide(id){ var e=$(id); if(e) e.style.display='none'; }
+function setText(id,v){ var e=$(id); if(e) e.textContent=v; }
+function fmt(n){ return n.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+function parseNum(s){ if(!s&&s!==0) return 0; return parseFloat(s.toString().replace(/\./g,'').replace(',','.'))||0; }
 
-function show(id){ document.getElementById(id).style.display='block'; }
-function hide(id){ document.getElementById(id).style.display='none'; }
-
-function setLang(l){
-  lang=l;
-  document.getElementById('btn-pt').style.background=l==='PT'?BRONZE:'transparent';
-  document.getElementById('btn-pt').style.color=l==='PT'?WHITE:SUBTLE;
-  document.getElementById('btn-pt').style.borderColor=l==='PT'?BRONZE:'#3A3636';
-  document.getElementById('btn-en').style.background=l==='EN'?BRONZE:'transparent';
-  document.getElementById('btn-en').style.color=l==='EN'?WHITE:SUBTLE;
-  document.getElementById('btn-en').style.borderColor=l==='EN'?BRONZE:'#3A3636';
-  document.getElementById('hdr-events').textContent=p()?'Departamento de Eventos':'Events Department';
-  document.getElementById('sidebar-title').textContent=p()?'Tipo de email':'Email type';
-  renderMenu();
-  renderCards();
-  if(curType && !emailResult) renderFields();
+// ─── STRINGS (all UI text in one place) ──────────────────────
+function T(key){
+  var S={
+    'nav':                    ['Navegação','Navigation'],
+    'communications':         ['Comunicações','Communications'],
+    'pre':                    ['Pré-evento','Pre-event'],
+    'durante':                ['Durante','During'],
+    'pos':                    ['Pós-evento','Post-event'],
+    'fiscal-tools':           ['Ferramentas Fiscais','Fiscal Tools'],
+    'ret-calc-menu':          ['Retenção e Cativação','Retention & Withholding'],
+    'ret-calc-sub':           ['Calculadora · Diagnóstico','Calculator · Diagnosis'],
+    'back':                   ['← Voltar','← Back'],
+    'hdr-events':             ['Departamento de Eventos','Events Department'],
+    'land-title':             ['Bem-vindo ao Assistente de Comunicações','Welcome to the Communications Assistant'],
+    'land-subtitle':          ['Departamento de Eventos · HCTA / CCTA','Events Department · HCTA / CCTA'],
+    'land-desc':              ['Esta plataforma foi desenvolvida com o objectivo de uniformizar e agilizar as comunicações mais frequentes do Departamento de Eventos, garantindo consistência, profissionalismo e alinhamento com os procedimentos internos do HCTA/CCTA.','This platform was developed to standardise and streamline the most frequent communications of the Events Department, ensuring consistency, professionalism and alignment with HCTA/CCTA internal procedures.'],
+    'land-cta':               ['Seleccione abaixo o tipo de comunicação que pretende preparar.','Select below the type of communication you wish to prepare.'],
+    'land-dev':               ['Desenvolvido por José M. Dewerbe · v1.2 · Junho 2026','Developed by José M. Dewerbe · v1.2 · June 2026'],
+    'req-note':               ['* campos obrigatórios','* required fields'],
+    'generate':               ['Gerar email →','Generate email →'],
+    'ready':                  ['Pronto para enviar','Ready to send'],
+    'email-generated':        ['Email gerado','Email generated'],
+    'copy':                   ['Copiar','Copy'],
+    'copied':                 ['Copiado ✓','Copied ✓'],
+    'edit':                   ['← Editar','← Edit'],
+    // fiscal tabs
+    'tab-calc':               ['Calculadora','Calculator'],
+    'tab-diag':               ['Diagnóstico','Diagnosis'],
+    'tab-info':               ['Conceitos','Concepts'],
+    // calc
+    'fc-title':               ['Calculadora de Retenção e Cativação','Retention & Withholding Calculator'],
+    'fc-entity-lbl':          ['Tipo de entidade pagadora','Payer entity type'],
+    'ent-pub':                ['🏛 Entidade Pública (Agente Cativador)','🏛 Public Entity (Withholding Agent)'],
+    'ent-priv':               ['🏢 Entidade Privada','🏢 Private Entity'],
+    'note-pub':               ['<strong>Agente Cativador</strong> — pode fazer cativação de IVA (100% do IVA é retido pelo cliente) e retenção de Imposto Industrial de 6,5% sobre serviços fora da hotelaria. Lei 7/19 e Lei 17/19.','<strong>Withholding Agent</strong> — may withhold VAT (100% of VAT retained by client) and apply 6.5% industrial tax retention on non-hotel services. Law 7/19 and Law 17/19.'],
+    'note-priv':              ['<strong>Entidade Privada</strong> — <u>não pode</u> fazer cativação de IVA. Pode apenas fazer retenção de Imposto Industrial de 6,5% sobre serviços fora do âmbito da hotelaria (salas, audiovisuais, etc.).','<strong>Private Entity</strong> — <u>cannot</u> withhold VAT. May only apply 6.5% industrial tax retention on non-hotel services (rooms, AV equipment, etc.).'],
+    'sh-fora':                ['Serviços fora do âmbito da hotelaria — IVA 14%','Services outside hotel scope — VAT 14%'],
+    'sh-hot':                 ['Serviços do âmbito da hotelaria — IVA 7%','Hotel services — VAT 7%'],
+    'th-conceito':            ['Conceito','Description'],
+    'th-proforma':            ['Valor Proforma','Invoice Value'],
+    'th-base':                ['Base Incidência','Tax Base'],
+    'th-iva14':               ['IVA 14%','VAT 14%'],
+    'th-ret':                 ['Ret. Ind. 6,5%','Ind. Tax 6.5%'],
+    'th-iva7':                ['IVA 7%','VAT 7%'],
+    'tf-lbl':                 ['Total Parcial','Subtotal'],
+    'lbl-tg':                 ['Total Geral','Grand Total'],
+    'lbl-tr':                 ['Total a Receber','Total to Receive'],
+    'btn-reset':              ['Limpar tudo','Clear all'],
+    'ph-conceito':            ['Descrição do serviço...','Service description...'],
+    'ph-valor':               ['0,00','0.00'],
+    'deduct-cat14':           ['Cativação de IVA 14% (serviços fora hotelaria)','VAT 14% withholding (non-hotel services)'],
+    'deduct-ret':             ['Retenção Imp. Industrial 6,5% (serviços fora hotelaria)','Ind. Tax 6.5% retention (non-hotel services)'],
+    'deduct-none':            ['Entidade privada — sem cativação de IVA','Private entity — no VAT withholding'],
+    'calc-legal':             ['<strong style="color:#887157;">Nota legal:</strong> A retenção na fonte sobre o Imposto Industrial (6,5%) aplica-se exclusivamente a serviços fora do âmbito da hotelaria (salas, audiovisuais, etc.), ao abrigo da Lei 19/14 e Lei 26/20 (art.º 67.º). Os serviços de hotelaria e similares não estão sujeitos a retenção na fonte. A cativação de IVA é obrigação do pagador e aplica-se apenas a agentes cativadores (Estado e organismos públicos), ao abrigo da Lei 7/19 e Lei 17/19.','<strong style="color:#887157;">Legal note:</strong> The 6.5% industrial tax retention applies exclusively to services outside the hotel scope (rooms, AV, etc.), under Law 19/14 and Law 26/20 (art. 67). Hotel and similar services are not subject to withholding. VAT withholding is the payer\'s obligation and applies only to withholding agents (State and public bodies), under Law 7/19 and Law 17/19.'],
+    // diag
+    'fd-title':               ['Diagnóstico de Pagamento','Payment Diagnosis'],
+    'fd-desc':                ['Introduza os valores da proforma e o montante efectivamente recebido. A ferramenta analisa se o cliente aplicou correctamente as retenções e cativações.','Enter the invoice values and the amount actually received. The tool analyses whether the client correctly applied retentions and withholdings.'],
+    'fd-entity-lbl':          ['Tipo de entidade pagadora','Payer entity type'],
+    'fd-lbl-pf':              ['Valor total da proforma (Kzs)','Total invoice value (Kzs)'],
+    'fd-lbl-paid':            ['Valor recebido / pago (Kzs)','Amount received / paid (Kzs)'],
+    'fd-lbl-fora':            ['Valor fora hotelaria na proforma (Kzs)','Non-hotel value in invoice (Kzs)'],
+    'fd-lbl-hot':             ['Valor hotelaria na proforma (Kzs)','Hotel value in invoice (Kzs)'],
+    'diag-proforma':          ['Valor da proforma:','Invoice value:'],
+    'diag-received':          ['Valor recebido:','Amount received:'],
+    'diag-deducted':          ['Valor deduzido pelo cliente:','Amount deducted by client:'],
+    'diag-ret-correct':       ['Retenção correcta (6,5% base incidência fora hotelaria):','Correct retention (6.5% on non-hotel tax base):'],
+    'diag-cat-correct':       ['Cativação correcta (IVA 14% sobre fora hotelaria):','Correct withholding (14% VAT on non-hotel):'],
+    'diag-total-correct':     ['Total correcto a receber:','Correct amount to receive:'],
+    'diag-breakdown':         ['Análise do Valor Deduzido','Deduction Analysis'],
+    // fi = fiscal info tab
+    'fi-title':               ['Conceitos e Definições','Concepts and Definitions'],
+  };
+  var row=S[key]; if(!row) return key;
+  return p()?row[0]:row[1];
 }
 
+// ─── LANGUAGE ────────────────────────────────────────────────
+function setLang(l){
+  lang=l;
+  var isPT=l==='PT';
+  $('btn-pt').style.background=isPT?BRONZE:'transparent';
+  $('btn-pt').style.color=isPT?WHITE:SUBTLE;
+  $('btn-pt').style.borderColor=isPT?BRONZE:'#3A3636';
+  $('btn-en').style.background=!isPT?BRONZE:'transparent';
+  $('btn-en').style.color=!isPT?WHITE:SUBTLE;
+  $('btn-en').style.borderColor=!isPT?BRONZE:'#3A3636';
+  refreshAll();
+}
+
+function refreshAll(){
+  setText('hdr-events',T('hdr-events'));
+  setText('sidebar-title',T('nav'));
+  renderMenu();
+  renderLanding();
+  // update visible section labels
+  updateStaticLabels();
+  if(curSection==='fiscal'){ renderFiscalLabels(); renderCalc(); }
+  if(curType&&!emailResult) renderFields();
+  // result view buttons
+  setText('copy-btn',T('copy'));
+  setText('edit-btn',T('edit'));
+  setText('result-label',T('ready'));
+  setText('result-title',T('email-generated'));
+  setText('back-lbl',T('back'));
+  setText('fiscal-back-lbl',T('back'));
+  setText('generate-btn',T('generate'));
+  setText('req-note',T('req-note'));
+}
+
+function updateStaticLabels(){
+  // these are set once on open but need refresh on lang change
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────
 function goHome(){
-  curType=null; curSubtype='geral'; fields={}; clientTxt=''; emailResult=null;
-  show('landing'); hide('formview'); hide('resultview');
-  renderMenu(); renderCards();
+  curType=null; curSubtype='geral'; fields={}; clientTxt=''; emailResult=null; curSection='email';
+  show('landing'); hide('formview'); hide('resultview'); hide('fiscalview');
+  renderMenu(); renderLanding();
 }
 
 function selectType(type){
-  curType=type; curSubtype='geral'; fields={}; clientTxt=''; emailResult=null;
-  hide('landing'); hide('resultview'); show('formview');
+  curType=type; curSubtype='geral'; fields={}; clientTxt=''; emailResult=null; curSection='email';
+  hide('landing'); hide('resultview'); hide('fiscalview'); show('formview');
+  setText('back-lbl',T('back'));
   renderMenu(); renderFields();
 }
 
+function openFiscal(){
+  curType=null; curSection='fiscal';
+  hide('landing'); hide('formview'); hide('resultview'); show('fiscalview');
+  setText('fiscal-back-lbl',T('back'));
+  renderMenu();
+  fiscalTab('calc');
+  renderFiscalLabels();
+  renderCalc();
+}
+
 function backToForm(){
-  emailResult=null;
-  hide('resultview'); show('formview');
-  renderFields();
+  emailResult=null; hide('resultview'); show('formview'); renderFields();
 }
 
+// ─── FISCAL TABS ──────────────────────────────────────────────
+function fiscalTab(tab){
+  ['calc','diag','info'].forEach(function(t){
+    var btn=$('ftab-'+t), cnt=$('tab-'+t);
+    if(btn){ btn.classList.toggle('active',t===tab); }
+    if(cnt){ cnt.style.display=t===tab?'block':'none'; }
+  });
+}
+
+function setEntity(type){
+  entityType=type;
+  $('ent-pub').classList.toggle('active',type==='pub');
+  $('ent-priv').classList.toggle('active',type==='priv');
+  updateEntityNote();
+  renderCalc();
+}
+
+function setDiagEntity(type){
+  diagEntityType=type;
+  $('dent-pub').classList.toggle('active',type==='pub');
+  $('dent-priv').classList.toggle('active',type==='priv');
+  refreshDiagEntityLabels();
+  diagCalc();
+}
+
+function updateEntityNote(){
+  var el=$('entity-note'); if(!el) return;
+  el.innerHTML=entityType==='pub'?T('note-pub'):T('note-priv');
+}
+
+function renderFiscalLabels(){
+  // tabs
+  setText('ftab-calc',T('tab-calc'));
+  setText('ftab-diag',T('tab-diag'));
+  setText('ftab-info',T('tab-info'));
+  // calc
+  setText('fc-title',T('fc-title'));
+  setText('fc-entity-lbl',T('fc-entity-lbl'));
+  setText('ent-pub',T('ent-pub'));
+  setText('ent-priv',T('ent-priv'));
+  updateEntityNote();
+  $('sh-fora').textContent=T('sh-fora');
+  $('sh-hot').textContent=T('sh-hot');
+  setText('th-c1',T('th-conceito')); setText('th-pf1',T('th-proforma')); setText('th-bi1',T('th-base')); setText('th-iva1',T('th-iva14')); setText('th-ret1',T('th-ret'));
+  setText('th-c2',T('th-conceito')); setText('th-pf2',T('th-proforma')); setText('th-bi2',T('th-base')); setText('th-iva2',T('th-iva7')); setText('th-ret2',T('th-ret'));
+  setText('tf-lbl1',T('tf-lbl')); setText('tf-lbl2',T('tf-lbl'));
+  setText('lbl-tg',T('lbl-tg')); setText('lbl-tr',T('lbl-tr'));
+  setText('btn-reset',T('btn-reset'));
+  $('calc-legal').innerHTML=T('calc-legal');
+  // diag
+  setText('fd-title',T('fd-title'));
+  setText('fd-desc',T('fd-desc'));
+  setText('fd-entity-lbl',T('fd-entity-lbl'));
+  refreshDiagEntityLabels();
+  setText('fd-lbl-pf',T('fd-lbl-pf'));
+  setText('fd-lbl-paid',T('fd-lbl-paid'));
+  setText('fd-lbl-fora',T('fd-lbl-fora'));
+  setText('fd-lbl-hot',T('fd-lbl-hot'));
+  // placeholders on diag inputs
+  setPlaceholder('diag-pf', p()?'Ex: 2 500 000,00':'e.g. 2,500,000.00');
+  setPlaceholder('diag-paid', p()?'Ex: 2 336 448,60':'e.g. 2,336,448.60');
+  setPlaceholder('diag-fora', p()?'Ex: 0,00 (salas/AV)':'e.g. 0.00 (rooms/AV)');
+  setPlaceholder('diag-hot', p()?'Ex: 2 500 000,00 (CB, almoço...)':'e.g. 2,500,000.00 (CB, lunch...)');
+  // info tab
+  renderInfoTab();
+  // re-render rows to update placeholders
+  renderCalc();
+}
+
+function refreshDiagEntityLabels(){
+  setText('dent-pub',T('ent-pub'));
+  setText('dent-priv',T('ent-priv'));
+}
+
+function setPlaceholder(id,v){ var e=$(id); if(e) e.placeholder=v; }
+
+// ─── CALC ────────────────────────────────────────────────────
+function renderCalc(){
+  renderTable('tbody-fora', foraRows, 14, entityType==='pub');
+  renderTable('tbody-hot',  hotRows,  7,  false);
+  updateTotals();
+}
+
+function renderTable(tbodyId, rows, ivaPct, showRet){
+  var tbody=$(tbodyId); if(!tbody) return;
+  var ph=T('ph-conceito');
+  tbody.innerHTML='';
+  rows.forEach(function(row,i){
+    var isHot=(tbodyId==='tbody-hot');
+    var base=row.valor>0?(row.valor/(1+ivaPct/100)):0;
+    var iva=base*(ivaPct/100);
+    var ret=showRet?base*0.065:0;
+    var tr=document.createElement('tr');
+    tr.innerHTML=
+      '<td style="background:#F5FFF5;"><input class="cinput" type="text" value="'+escHtml(row.conceito)+'" placeholder="'+ph+'" onchange="rowUpdate(\''+tbodyId+'\','+i+',\'conceito\',this.value)"></td>'
+      +'<td style="background:#F5FFF5;"><input class="ninput" type="text" value="'+(row.valor?fmt(row.valor):'')+'" placeholder="0,00" onchange="rowUpdate(\''+tbodyId+'\','+i+',\'valor\',this.value)"></td>'
+      +'<td class="calc">'+(row.valor>0?fmt(base):'0,00')+'</td>'
+      +'<td class="calc" style="color:'+(ivaPct===14?'#C0392B':'#1a6b3a')+';font-weight:500;">'+(row.valor>0?fmt(iva):'0,00')+'</td>'
+      +'<td class="calc" style="color:'+(showRet&&row.valor>0?'#231F20':'#C4AE96')+'">'+(showRet&&row.valor>0?fmt(ret):'—')+'</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function rowUpdate(tbodyId,idx,key,val){
+  var rows=(tbodyId==='tbody-hot')?hotRows:foraRows;
+  if(key==='valor') rows[idx].valor=parseNum(val);
+  else rows[idx][key]=val;
+  renderCalc();
+}
+
+function updateTotals(){
+  var showRet=entityType==='pub';
+  var foraPF=0,foraIVA=0,foraRet=0;
+  foraRows.forEach(function(r){ if(r.valor>0){ var b=r.valor/1.14; foraPF+=r.valor; foraIVA+=b*0.14; if(showRet) foraRet+=b*0.065; } });
+  var hotPF=0,hotIVA=0;
+  hotRows.forEach(function(r){ if(r.valor>0){ var b=r.valor/1.07; hotPF+=r.valor; hotIVA+=b*0.07; } });
+
+  setText('tf-fora-pf',fmt(foraPF));
+  setText('tf-fora-iva',fmt(foraIVA));
+  setText('tf-fora-ret',showRet?fmt(foraRet):'—');
+  setText('tf-hot-pf',fmt(hotPF));
+  setText('tf-hot-iva',fmt(hotIVA));
+
+  var totalPF=foraPF+hotPF;
+  var catIVA=showRet?foraIVA:0;
+  var totalRet=showRet?foraRet:0;
+  var totalReceber=totalPF-catIVA-totalRet;
+
+  setText('grand-pf',fmt(totalPF)+' Kzs');
+  var bd='';
+  if(showRet){
+    bd+='<div style="display:flex;justify-content:space-between;"><span>'+T('deduct-cat14')+'</span><span style="color:#e74c3c;">— '+fmt(catIVA)+' Kzs</span></div>';
+    if(foraRet>0) bd+='<div style="display:flex;justify-content:space-between;"><span>'+T('deduct-ret')+'</span><span style="color:#e74c3c;">— '+fmt(totalRet)+' Kzs</span></div>';
+  } else {
+    if(foraRet>0) bd+='<div style="display:flex;justify-content:space-between;"><span>'+T('deduct-ret')+'</span><span style="color:#e74c3c;">— '+fmt(totalRet)+' Kzs</span></div>';
+    else bd+='<div style="color:#9A918C;font-size:10px;">'+T('deduct-none')+'</div>';
+  }
+  $('grand-breakdown').innerHTML=bd;
+  setText('grand-receber',fmt(totalReceber)+' Kzs');
+}
+
+function resetCalc(){ initRows(); renderCalc(); }
+
+// ─── DIAGNÓSTICO ──────────────────────────────────────────────
+function diagCalc(){
+  var pfVal=parseNum($('diag-pf').value);
+  var paidVal=parseNum($('diag-paid').value);
+  var foraVal=parseNum($('diag-fora').value);
+  var hotVal=parseNum($('diag-hot').value);
+  var area=$('diag-result-area');
+  if(!pfVal||!paidVal){ area.innerHTML=''; return; }
+  if(foraVal===0&&hotVal===0) hotVal=pfVal;
+
+  var diff=pfVal-paidVal;
+  var isPub=diagEntityType==='pub';
+  var msgs=[], identified=false;
+  var TOL=2;
+
+  var foraBase=foraVal/1.14, foraIVA=foraBase*0.14, foraRet=foraBase*0.065;
+  var hotBase=hotVal/1.07,   hotIVA=hotBase*0.07;
+  var expDeduct=isPub?(foraIVA+foraRet):foraRet;
+  var expPaid=pfVal-expDeduct;
+
+  if(Math.abs(paidVal-expPaid)<TOL){
+    msgs.push({t:'ok', txt:p()
+      ?'✅ O cálculo está <strong>correcto</strong>. O cliente aplicou correctamente '+(isPub?'a cativação de IVA (14%) sobre os serviços fora da hotelaria e a retenção de Imposto Industrial (6,5%) sobre a base de incidência.':'a retenção de Imposto Industrial (6,5%) sobre a base de incidência dos serviços fora do âmbito da hotelaria.')
+      :'✅ The calculation is <strong>correct</strong>. The client correctly applied '+(isPub?'VAT withholding (14%) on non-hotel services and the 6.5% Industrial Tax retention on the tax base.':'the 6.5% Industrial Tax retention on the tax base of non-hotel services.')});
+  } else {
+    // Test 1: private trying to deduct VAT
+    if(!isPub&&Math.abs(diff-foraIVA)<TOL){
+      msgs.push({t:'err',txt:p()
+        ?'❌ A entidade privada <strong>não pode fazer cativação de IVA</strong>. A cativação é exclusiva de agentes cativadores (Estado e organismos públicos), ao abrigo da Lei 7/19 e Lei 17/19. O valor correcto a receber seria <strong>'+fmt(expPaid)+' Kzs</strong>.'
+        :'❌ A private entity <strong>cannot withhold VAT</strong>. VAT withholding is exclusive to withholding agents (State and public bodies) under Law 7/19 and Law 17/19. The correct amount to receive would be <strong>'+fmt(expPaid)+' Kzs</strong>.'});
+      identified=true;
+    }
+    // Test 2: retention applied to hotel services
+    if(!identified){
+      var retHotBase=hotBase*0.065, retHotFull=hotVal*0.065;
+      if(Math.abs(diff-retHotBase)<TOL||Math.abs(diff-retHotFull)<TOL||Math.abs(diff-(foraRet+retHotBase))<TOL){
+        msgs.push({t:'err',txt:p()
+          ?'❌ O cliente aplicou retenção de Imposto Industrial sobre <strong>serviços de hotelaria</strong>, o que <strong>não é permitido por lei</strong>. Os serviços de hotelaria e similares não estão sujeitos a retenção na fonte, ao abrigo da Lei 19/14 e Lei 26/20 (art.º 67.º). O valor correcto a receber seria <strong>'+fmt(expPaid)+' Kzs</strong>.'
+          :'❌ The client applied Industrial Tax retention to <strong>hotel services</strong>, which is <strong>not permitted by law</strong>. Hotel and similar services are not subject to withholding tax under Law 19/14 and Law 26/20 (art. 67). The correct amount to receive would be <strong>'+fmt(expPaid)+' Kzs</strong>.'});
+        identified=true;
+      }
+    }
+    // Test 3: retention calculated on full value (with VAT) instead of tax base
+    if(!identified){
+      var retFullFora=foraVal*0.065, retFullAll=pfVal*0.065;
+      if(Math.abs(diff-retFullFora)<TOL||Math.abs(diff-retFullAll)<TOL){
+        msgs.push({t:'err',txt:p()
+          ?'❌ A retenção de 6,5% foi calculada sobre o <strong>valor com IVA</strong> em vez da <strong>base de incidência</strong> (valor sem IVA). Fórmula correcta: Base = Valor Proforma ÷ (1 + taxa IVA). A retenção correcta seria <strong>'+fmt(foraRet)+' Kzs</strong> e o total a receber <strong>'+fmt(expPaid)+' Kzs</strong>.'
+          :'❌ The 6.5% retention was calculated on the <strong>value including VAT</strong> instead of the <strong>tax base</strong> (value excluding VAT). Correct formula: Base = Invoice Value ÷ (1 + VAT rate). The correct retention would be <strong>'+fmt(foraRet)+' Kzs</strong> and the total to receive <strong>'+fmt(expPaid)+' Kzs</strong>.'});
+        identified=true;
+      }
+    }
+    // Test 4: pub entity withholding on hotel services
+    if(!identified&&isPub){
+      if(Math.abs(diff-(foraIVA+hotIVA+foraRet))<TOL||Math.abs(diff-(foraIVA+hotIVA))<TOL){
+        msgs.push({t:'err',txt:p()
+          ?'❌ O cliente aplicou cativação de IVA sobre <strong>serviços de hotelaria</strong>. O IVA dos serviços de hotelaria deve ser pago na totalidade. A cativação aplica-se apenas a serviços fora do âmbito da hotelaria. O valor correcto a receber seria <strong>'+fmt(expPaid)+' Kzs</strong>.'
+          :'❌ The client applied VAT withholding on <strong>hotel services</strong>. VAT on hotel services must be paid in full. Withholding only applies to non-hotel services. The correct amount to receive would be <strong>'+fmt(expPaid)+' Kzs</strong>.'});
+        identified=true;
+      }
+    }
+    if(!identified){
+      var pct=(diff/pfVal*100).toFixed(2);
+      msgs.push({t:'warn',txt:p()
+        ?'⚠️ O valor deduzido (<strong>'+fmt(diff)+' Kzs</strong>, equivalente a '+pct+'% da proforma) não corresponde a nenhum cenário de retenção ou cativação padrão. Recomenda-se verificar os detalhes com o cliente. O valor teoricamente correcto a receber seria <strong>'+fmt(expPaid)+' Kzs</strong>.'
+        :'⚠️ The deducted amount (<strong>'+fmt(diff)+' Kzs</strong>, equivalent to '+pct+'% of the invoice) does not match any standard retention or withholding scenario. Please verify the details with the client. The theoretically correct amount to receive would be <strong>'+fmt(expPaid)+' Kzs</strong>.'});
+    }
+  }
+
+  var html='';
+  msgs.forEach(function(m){ html+='<div class="diag-result diag-'+(m.t==='ok'?'ok':m.t==='err'?'err':'warn')+'">'+m.txt+'</div>'; });
+
+  // breakdown
+  html+='<div style="margin-top:16px;background:#fff;border:1px solid #DDD4C8;border-radius:3px;padding:14px 18px;font-size:11px;line-height:2;">';
+  html+='<div style="font-size:10px;color:#887157;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">'+T('diag-breakdown')+'</div>';
+  html+='<div style="display:flex;justify-content:space-between;"><span>'+T('diag-proforma')+'</span><span><strong>'+fmt(pfVal)+' Kzs</strong></span></div>';
+  html+='<div style="display:flex;justify-content:space-between;"><span>'+T('diag-received')+'</span><span><strong>'+fmt(paidVal)+' Kzs</strong></span></div>';
+  html+='<div style="display:flex;justify-content:space-between;color:#e74c3c;"><span>'+T('diag-deducted')+'</span><span><strong>— '+fmt(diff)+' Kzs</strong></span></div>';
+  html+='<div style="border-top:1px solid #DDD4C8;margin:8px 0;"></div>';
+  if(foraVal>0) html+='<div style="display:flex;justify-content:space-between;color:#9A918C;"><span>'+T('diag-ret-correct')+'</span><span>'+fmt(foraRet)+' Kzs</span></div>';
+  if(isPub&&foraVal>0) html+='<div style="display:flex;justify-content:space-between;color:#9A918C;"><span>'+T('diag-cat-correct')+'</span><span>'+fmt(foraIVA)+' Kzs</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;font-weight:600;color:#1a6b3a;"><span>'+T('diag-total-correct')+'</span><span>'+fmt(expPaid)+' Kzs</span></div>';
+  html+='</div>';
+  area.innerHTML=html;
+}
+
+// ─── INFO TAB ────────────────────────────────────────────────
+function renderInfoTab(){
+  var ic=$('info-content'); if(!ic) return;
+  var is=p();
+  ic.innerHTML='<div style="font-size:18px;color:#231F20;font-weight:300;margin-bottom:6px;">'+T('fi-title')+'</div>'
+  +'<div style="width:40px;height:1px;background:#887157;margin-bottom:24px;"></div>'
+
+  +'<div style="margin-bottom:20px;"><div style="font-size:11px;color:#887157;letter-spacing:0.12em;text-transform:uppercase;font-weight:700;margin-bottom:10px;">'+(is?'Agentes Cativadores':'Withholding Agents')+'</div>'
+  +'<div class="info-box">'+(is
+    ?'São agentes cativadores <strong>o Estado</strong> bem como quaisquer dos seus Serviços, estabelecimentos e organismos, ainda que personalizados, e as autarquias locais, <strong>exceptuando as Empresas Públicas</strong>.<br><span style="color:#9A918C;font-size:10px;">Lei 7/19 e Lei 17/19</span><br><br>A cativação é uma <strong>obrigação do pagador</strong>. No entanto, se o pagador não o fizer e pagar a factura na totalidade, devemos creditar a conta do cliente no montante do IVA e informá-lo a esse respeito.'
+    :'Withholding agents are <strong>the State</strong> as well as any of its Services, establishments and bodies, even if personalised, and local authorities, <strong>excluding State-Owned Enterprises</strong>.<br><span style="color:#9A918C;font-size:10px;">Law 7/19 and Law 17/19</span><br><br>Withholding is the <strong>payer\'s obligation</strong>. However, if the payer fails to do so and pays the invoice in full, we must credit the client\'s account with the VAT amount and inform them accordingly.')
+  +'</div></div>'
+
+  +'<div style="margin-bottom:20px;"><div style="font-size:11px;color:#887157;letter-spacing:0.12em;text-transform:uppercase;font-weight:700;margin-bottom:10px;">'+(is?'Retenção na Fonte sobre Prestação de Serviços':'Withholding Tax on Services')+'</div>'
+  +'<div class="info-box">'+(is
+    ?'O Código do Imposto Industrial estabelece que os sujeitos passivos que exerçam <strong>actividades de prestação de serviços de qualquer natureza</strong> estão sujeitos à tributação por retenção na fonte à taxa de <strong>6,5%</strong>.<br><br>A lei refere ainda que <strong>não constituem</strong> prestação de serviços sujeita a retenção na fonte <strong>os Serviços de Hotelaria e Similares</strong>.<br><br><strong>Resumindo:</strong> se os serviços forem no âmbito da hotelaria, <strong>não têm retenção na fonte</strong>. Se forem fora do âmbito da hotelaria (salas, audiovisuais, etc.) <strong>já são sujeitos a retenção</strong>.<br><span style="color:#9A918C;font-size:10px;">Lei 19/14, Lei 26/20 (art.º 67.º)</span><br><br>A retenção na fonte é da <strong>responsabilidade do pagador</strong>. Se o mesmo não o fizer, não representa um problema para nós desde que proceda ao pagamento integral.'
+    :'The Industrial Tax Code establishes that entities providing <strong>services of any nature</strong> are subject to withholding tax at the rate of <strong>6.5%</strong>.<br><br>The law further states that <strong>Hotel and Similar Services do not constitute</strong> services subject to withholding tax.<br><br><strong>In summary:</strong> if services fall within the hotel scope, <strong>no withholding applies</strong>. If they fall outside (rooms, AV equipment, etc.) <strong>withholding is required</strong>.<br><span style="color:#9A918C;font-size:10px;">Law 19/14, Law 26/20 (art. 67)</span><br><br>Withholding is the <strong>payer\'s responsibility</strong>. If they fail to do so, it is not a problem for us provided they make full payment.')
+  +'</div></div>'
+
+  +'<div style="margin-bottom:20px;"><div style="font-size:11px;color:#887157;letter-spacing:0.12em;text-transform:uppercase;font-weight:700;margin-bottom:10px;">'+(is?'Taxas de IVA':'VAT Rates')+'</div>'
+  +'<div class="info-box"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
+  +'<div style="background:#fff;border:1px solid #DDD4C8;border-radius:3px;padding:12px;"><div style="font-size:18px;font-weight:700;color:#C0392B;">14%</div><div style="font-size:11px;font-weight:600;margin-top:2px;">'+(is?'Fora do âmbito da hotelaria':'Outside hotel scope')+'</div><div style="font-size:10px;color:#9A918C;margin-top:4px;">'+(is?'Salas de conferência, audiovisuais, decoração, segurança, etc.':'Conference rooms, AV equipment, decoration, security, etc.')+'</div></div>'
+  +'<div style="background:#fff;border:1px solid #DDD4C8;border-radius:3px;padding:12px;"><div style="font-size:18px;font-weight:700;color:#1a6b3a;">7%</div><div style="font-size:11px;font-weight:600;margin-top:2px;">'+(is?'Âmbito da hotelaria':'Hotel scope')+'</div><div style="font-size:10px;color:#9A918C;margin-top:4px;">'+(is?'Coffee break, almoço, jantar, cocktail, alojamento e similares.':'Coffee break, lunch, dinner, cocktail, accommodation and similar.')+'</div></div>'
+  +'</div></div></div>'
+
+  +'<div style="margin-bottom:20px;"><div style="font-size:11px;color:#887157;letter-spacing:0.12em;text-transform:uppercase;font-weight:700;margin-bottom:10px;">'+(is?'Base de Incidência':'Tax Base')+'</div>'
+  +'<div class="info-box">'+(is
+    ?'A base de incidência é o <strong>valor sem IVA</strong>. É sobre este valor que se calcula o IVA e a retenção — <strong>nunca sobre o valor total da proforma</strong>.<br><br><strong>Erro frequente:</strong> muitos clientes aplicam a retenção de 6,5% sobre o valor total com IVA. Isto está errado.<br><br>Fórmula correcta: <strong>Base = Valor Proforma ÷ (1 + taxa IVA)</strong><br>Exemplo: 1.000.000 Kzs com IVA 14% → Base = 1.000.000 ÷ 1,14 = <strong>877.192,98 Kzs</strong>'
+    :'The tax base is the <strong>value excluding VAT</strong>. Both VAT and retention are calculated on this value — <strong>never on the total invoice value</strong>.<br><br><strong>Common mistake:</strong> many clients apply the 6.5% retention on the total value including VAT. This is incorrect.<br><br>Correct formula: <strong>Base = Invoice Value ÷ (1 + VAT rate)</strong><br>Example: 1,000,000 Kzs with 14% VAT → Base = 1,000,000 ÷ 1.14 = <strong>877,192.98 Kzs</strong>')
+  +'</div></div>'
+
+  +'<div><div style="font-size:11px;color:#887157;letter-spacing:0.12em;text-transform:uppercase;font-weight:700;margin-bottom:10px;">'+(is?'Erros Mais Comuns dos Clientes':'Most Common Client Errors')+'</div>'
+  +'<div class="info-box">'
+  +'<div style="margin-bottom:8px;">⚠️ <strong>'+(is?'Retenção sobre serviços de hotelaria':'Retention on hotel services')+'</strong> — '+(is?'não permitido por lei. A retenção de 6,5% aplica-se apenas a serviços fora do âmbito da hotelaria.':'not permitted by law. The 6.5% retention only applies to non-hotel services.')+'</div>'
+  +'<div style="margin-bottom:8px;">⚠️ <strong>'+(is?'Retenção calculada sobre o valor com IVA':'Retention calculated on value including VAT')+'</strong> — '+(is?'a retenção incide sobre a base de incidência (valor sem IVA), não sobre o valor total da proforma.':'retention is calculated on the tax base (value excluding VAT), not on the total invoice value.')+'</div>'
+  +'<div style="margin-bottom:8px;">⚠️ <strong>'+(is?'Entidade privada a fazer cativação de IVA':'Private entity withholding VAT')+'</strong> — '+(is?'a cativação é exclusiva de agentes cativadores (Estado e organismos públicos). Empresas privadas não podem cativar IVA.':'withholding is exclusive to withholding agents (State and public bodies). Private companies cannot withhold VAT.')+'</div>'
+  +'<div>⚠️ <strong>'+(is?'Empresas Públicas a fazer cativação':'State-Owned Enterprises withholding VAT')+'</strong> — '+(is?'as Empresas Públicas estão expressamente excluídas do regime de cativação, mesmo sendo do Estado.':'State-Owned Enterprises are expressly excluded from the withholding regime, even though they belong to the State.')+'</div>'
+  +'</div></div>';
+}
+
+// ─── SIDEBAR ─────────────────────────────────────────────────
 function renderMenu(){
-  var menu=document.getElementById('menu'); menu.innerHTML='';
-  TYPES.forEach(function(t){
-    var btn=document.createElement('button');
-    var active=curType===t.id;
-    btn.style.cssText='display:block;width:100%;text-align:left;padding:12px 16px;background:'+(active?'#fff':'transparent')+';border:none;border-left:'+(active?'3px solid '+BRONZE:'3px solid transparent')+';cursor:pointer;';
-    btn.innerHTML='<div style="font-size:12px;color:'+(active?BLACK:MID)+';font-weight:'+(active?600:400)+';">'+(p()?t.pt:t.en)+'</div><div style="font-size:10px;color:'+SUBTLE+';margin-top:2px;">'+(p()?t.dpt:t.den)+'</div>';
-    btn.onclick=(function(id){ return function(){ selectType(id); }; })(t.id);
-    menu.appendChild(btn);
+  var is=p();
+  var menu=$('menu'); menu.innerHTML='';
+  var phases=[
+    {id:'pre',     pt:'Pré-evento',  en:'Pre-event'},
+    {id:'durante', pt:'Durante',     en:'During'},
+    {id:'pos',     pt:'Pós-evento',  en:'Post-event'}
+  ];
+
+  addMenuLabel(menu,T('communications'));
+  phases.forEach(function(fase){
+    addMenuLabel(menu,is?fase.pt:fase.en,'small');
+    TYPES.filter(function(t){ return t.fase===fase.id; }).forEach(function(t){
+      var active=curType===t.id&&curSection==='email';
+      var btn=makeMenuBtn(is?t.pt:t.en, is?t.dpt:t.den, active, (function(id){ return function(){ selectType(id); }; })(t.id));
+      menu.appendChild(btn);
+    });
   });
+
+  var div=document.createElement('div');
+  div.style.cssText='margin:12px 16px;border-top:1px solid '+BORDER+';';
+  menu.appendChild(div);
+
+  addMenuLabel(menu,T('fiscal-tools'));
+  var fiscActive=curSection==='fiscal';
+  menu.appendChild(makeMenuBtn(T('ret-calc-menu'),T('ret-calc-sub'),fiscActive,openFiscal));
 }
 
-function renderCards(){
-  document.getElementById('land-title').textContent=p()?'Bem-vindo ao Assistente de Comunicações':'Welcome to the Communications Assistant';
-  document.getElementById('land-subtitle').textContent=p()?'Departamento de Eventos · HCTA / CCTA':'Events Department · HCTA / CCTA';
-  document.getElementById('land-desc').textContent=p()
-    ?'Esta plataforma foi desenvolvida com o objectivo de uniformizar e agilizar as comunicações mais frequentes do Departamento de Eventos, garantindo consistência, profissionalismo e alinhamento com os procedimentos internos do HCTA/CCTA.'
-    :'This platform was developed to standardise and streamline the most frequent communications of the Events Department, ensuring consistency, professionalism and alignment with the internal procedures of HCTA/CCTA.';
-  document.getElementById('land-cta').textContent=p()?'Seleccione abaixo o tipo de comunicação que pretende preparar.':'Select below the type of communication you wish to prepare.';
-  var grid=document.getElementById('cards-grid'); grid.innerHTML='';
-  TYPES.forEach(function(t){
-    var card=document.createElement('div');
-    card.style.cssText='background:#fff;border:1px solid '+BORDER+';border-radius:4px;padding:16px;cursor:pointer;text-align:center;';
-    card.innerHTML='<div style="font-size:12px;font-weight:600;color:'+BLACK+';margin-bottom:4px;">'+(p()?t.pt:t.en)+'</div>'
-      +'<div style="font-size:10px;color:'+SUBTLE+';">'+(p()?t.dpt:t.den)+'</div>';
-    card.onmouseover=function(){ this.style.borderColor=BRONZE; };
-    card.onmouseout=function(){ this.style.borderColor=BORDER; };
-    card.onclick=(function(id){ return function(){ selectType(id); }; })(t.id);
-    grid.appendChild(card);
-  });
+function addMenuLabel(menu,text,size){
+  var d=document.createElement('div');
+  d.style.cssText='padding:'+(size==='small'?'6px':'10px')+' 16px 2px;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:'+(size==='small'?SUBTLE:BRONZE)+';font-weight:700;';
+  d.textContent=text;
+  menu.appendChild(d);
 }
 
+function makeMenuBtn(main,sub,active,fn){
+  var btn=document.createElement('button');
+  btn.style.cssText='display:block;width:100%;text-align:left;padding:9px 16px;background:'+(active?'#fff':'transparent')+';border:none;border-left:'+(active?'3px solid '+BRONZE:'3px solid transparent')+';cursor:pointer;';
+  btn.innerHTML='<div style="font-size:12px;color:'+(active?BLACK:MID)+';font-weight:'+(active?600:400)+';">'+main+'</div><div style="font-size:10px;color:'+SUBTLE+';margin-top:1px;">'+sub+'</div>';
+  btn.onclick=fn;
+  return btn;
+}
+
+// ─── LANDING ─────────────────────────────────────────────────
+function renderLanding(){
+  setText('land-title',T('land-title'));
+  setText('land-subtitle',T('land-subtitle'));
+  setText('land-desc',T('land-desc'));
+  setText('land-cta',T('land-cta'));
+  setText('land-dev',T('land-dev'));
+
+  var grid=$('cards-grid'); grid.innerHTML='';
+  var phases=[
+    {id:'pre',     pt:'Pré-evento',         en:'Pre-event'},
+    {id:'durante', pt:'Durante o evento',    en:'During the event'},
+    {id:'pos',     pt:'Pós-evento',          en:'Post-event'}
+  ];
+  phases.forEach(function(fase){
+    var td=document.createElement('div');
+    td.style.cssText='font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:'+BRONZE+';font-weight:700;padding:8px 0 4px;border-top:1px solid #DDD4C8;margin-top:8px;text-align:center;';
+    td.textContent=p()?fase.pt:fase.en;
+    grid.appendChild(td);
+    var row=document.createElement('div'); row.style.cssText='display:flex;gap:12px;justify-content:center;';
+    TYPES.filter(function(t){ return t.fase===fase.id; }).forEach(function(t){
+      row.appendChild(makeCard(p()?t.pt:t.en, p()?t.dpt:t.den, (function(id){ return function(){ selectType(id); }; })(t.id)));
+    });
+    grid.appendChild(row);
+  });
+
+  var ftd=document.createElement('div');
+  ftd.style.cssText='font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:'+BRONZE+';font-weight:700;padding:8px 0 4px;border-top:1px solid #DDD4C8;margin-top:8px;text-align:center;';
+  ftd.textContent=T('fiscal-tools');
+  grid.appendChild(ftd);
+  var fr=document.createElement('div'); fr.style.cssText='display:flex;gap:12px;justify-content:center;';
+  fr.appendChild(makeCard(T('ret-calc-menu'),T('ret-calc-sub'),openFiscal));
+  grid.appendChild(fr);
+}
+
+function makeCard(main,sub,fn){
+  var c=document.createElement('div');
+  c.style.cssText='background:#fff;border:1px solid '+BORDER+';border-radius:4px;padding:16px;cursor:pointer;text-align:center;width:190px;flex-shrink:0;';
+  c.innerHTML='<div style="font-size:12px;font-weight:600;color:'+BLACK+';margin-bottom:4px;">'+main+'</div><div style="font-size:10px;color:'+SUBTLE+';">'+sub+'</div>';
+  c.onmouseover=function(){ this.style.borderColor=BRONZE; };
+  c.onmouseout=function(){ this.style.borderColor=BORDER; };
+  c.onclick=fn;
+  return c;
+}
+
+// ─── EMAIL FORM ───────────────────────────────────────────────
 function fld(label,html){ return '<div class="field"><label>'+label+'</label>'+html+'</div>'; }
 function inp(id,ph,val){ return '<input type="text" id="'+id+'" placeholder="'+(ph||'')+'" value="'+(val||'')+'" oninput="fields[\''+id+'\']=this.value;validateForm()">'; }
 function sel(id,opts,val){
@@ -206,7 +798,7 @@ function getRequired(){
 }
 
 function validateForm(){
-  var btn=document.getElementById('generate-btn'); if(!btn) return;
+  var btn=$('generate-btn'); if(!btn) return;
   var missing=getRequired().filter(function(k){ return !fields[k]||!fields[k].trim(); });
   btn.disabled=missing.length>0;
   btn.style.opacity=missing.length>0?'0.4':'1';
@@ -215,12 +807,13 @@ function validateForm(){
 
 function renderFields(){
   if(!curType) return;
-  var f=fields; var is=p();
+  var f=fields, is=p();
   var t=TYPES.find(function(x){ return x.id===curType; });
-  document.getElementById('form-subtitle').textContent=is?t.dpt:t.den;
-  document.getElementById('form-title').textContent=is?t.pt:t.en;
-  document.getElementById('generate-btn').textContent=is?'Gerar email →':'Generate email →';
-  document.getElementById('req-note').textContent=is?'* campos obrigatórios':'* required fields';
+  setText('form-subtitle',is?t.dpt:t.den);
+  setText('form-title',is?t.pt:t.en);
+  setText('generate-btn',T('generate'));
+  setText('req-note',T('req-note'));
+  setText('back-lbl',T('back'));
 
   var nameFld=fld((is?'Nome do destinatário':'Recipient name')+req(),inp('nome',is?'Ex: Dra. Ana Silva':'e.g. Ms. Ana Silva',f.nome));
   var dataFld=fld((is?'Data do evento':'Event date')+req(),inp('dataEvento',is?'Ex: 14 de Julho de 2026':'e.g. 14 July 2026',f.dataEvento));
@@ -233,19 +826,19 @@ function renderFields(){
     ],curSubtype));
     html+=nameFld;
     if(curSubtype==='incompleto'){
-      html+=fld(is?'Email do cliente':'Client email','<textarea id="clientTA" rows="5" placeholder="'+(is?'Cola o email original do cliente aqui...':'Paste the client email here...')+'" oninput="clientTxt=this.value">'+(clientTxt||'')+'</textarea>');
+      html+=fld(is?'Email do cliente':'Client email','<textarea id="clientTA" rows="5" placeholder="'+(is?'Cola o email original do cliente aqui...':'Paste the client\'s original email here...')+'" oninput="clientTxt=this.value">'+(clientTxt||'')+'</textarea>');
       html+='<button onclick="extractData()" id="extract-btn" style="margin-bottom:16px;background:transparent;border:1px solid '+BRONZE+';color:'+BRONZE+';border-radius:3px;padding:7px 16px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">'+(is?'Extrair dados automaticamente':'Extract data automatically')+'</button>';
       html+='<div id="extract-result"></div>';
     }
   } else if(curType==='envio_proposta'){
     html+=fld(is?'Espaço e regime':'Venue and regime',sel('espacoTipo',[
       {v:'hcta',l:'Hotel de Convenções de Talatona (HCTA)'},
-      {v:'ccta_excl',l:'CCTA — Com exclusividade'},
-      {v:'ccta_sem',l:'CCTA — Sem exclusividade'}
+      {v:'ccta_excl',l:is?'CCTA — Com exclusividade':'CCTA — Exclusive'},
+      {v:'ccta_sem',l:is?'CCTA — Sem exclusividade':'CCTA — Non-exclusive'}
     ],f.espacoTipo||'hcta'));
     html+=nameFld;
-    html+=fld((is?'Nº e nome do evento':'Event number and name')+req(),inp('numEvento','Ex: 922/26 — Conferência Anual BAI',f.numEvento));
-    html+=fld((is?'Datas':'Dates')+req(),inp('datas','Ex: 12 e 13 de Junho de 2026',f.datas));
+    html+=fld((is?'Nº e nome do evento':'Event number and name')+req(),inp('numEvento',is?'Ex: 922/26 — Conferência Anual BAI':'e.g. 922/26 — Annual BAI Conference',f.numEvento));
+    html+=fld((is?'Datas':'Dates')+req(),inp('datas',is?'Ex: 12 e 13 de Junho de 2026':'e.g. 12 and 13 June 2026',f.datas));
     html+=fld(is?'Situação da proposta':'Proposal status',sel('segundaOpcao',[
       {v:'nao',l:is?'1ª opção':'First option'},
       {v:'sim',l:is?'2ª opção — existe pré-reserva anterior':'2nd option — prior pre-booking exists'}
@@ -270,9 +863,9 @@ function renderFields(){
       {v:'falta',l:is?'Dados em falta — solicitar ao cliente':'Missing — request from client'}
     ],f.dadosFiscaisOpcao||'conhecidos'));
     if((f.dadosFiscaisOpcao||'conhecidos')==='conhecidos'){
-      html+=fld('Entidade'+req(),inp('entidade','Ex: Sonangol E.P.',f.entidade));
+      html+=fld('Entidade'+req(),inp('entidade',is?'Ex: Sonangol E.P.':'e.g. Sonangol E.P.',f.entidade));
       html+=fld('NIF'+req(),inp('nif','Ex: 5000012345',f.nif));
-      html+=fld((is?'Morada Fiscal':'Fiscal Address')+req(),inp('morada','Ex: Av. 4 de Fevereiro, Luanda',f.morada));
+      html+=fld((is?'Morada Fiscal':'Fiscal Address')+req(),inp('morada',is?'Ex: Av. 4 de Fevereiro, Luanda':'e.g. Av. 4 de Fevereiro, Luanda',f.morada));
     }
   } else if(curType==='cobranca'){
     html+=nameFld; html+=dataFld;
@@ -281,22 +874,22 @@ function renderFields(){
       {v:'2',l:is?'2º contacto — 1º follow-up':'2nd contact — 1st follow-up'},
       {v:'3',l:is?'3º contacto — 2º follow-up (urgente)':'3rd contact — 2nd follow-up (urgent)'}
     ],f.cobrancaModo||'1'));
-    html+=fld(is?'Nº da fatura (opcional)':'Invoice number (optional)',inp('fatura','Ex: FT 2025/0034',f.fatura));
-    html+=fld(is?'Valor (opcional)':'Amount (optional)',inp('valor','Ex: 1.400.000,00 Kzs',f.valor));
-    html+=fld(is?'Data de vencimento (opcional)':'Due date (optional)',inp('vencimento','Ex: 30 de Abril de 2026',f.vencimento));
+    html+=fld(is?'Nº da fatura (opcional)':'Invoice number (optional)',inp('fatura',is?'Ex: FT 2025/0034':'e.g. FT 2025/0034',f.fatura));
+    html+=fld(is?'Valor (opcional)':'Amount (optional)',inp('valor',is?'Ex: 1.400.000,00 Kzs':'e.g. 1,400,000.00 Kzs',f.valor));
+    html+=fld(is?'Data de vencimento (opcional)':'Due date (optional)',inp('vencimento',is?'Ex: 30 de Abril de 2026':'e.g. 30 April 2026',f.vencimento));
   } else if(curType==='satisfacao'){
     html+=nameFld;
   }
 
-  document.getElementById('form-fields').innerHTML=html;
-  // sync subtypeSel
-  var ss=document.getElementById('subtypeSel');
-  if(ss){ ss.onchange=function(){ curSubtype=this.value; fields['subtypeSel']=this.value; renderFields(); }; }
+  $('form-fields').innerHTML=html;
+  var ss=$('subtypeSel');
+  if(ss){ ss.onchange=function(){ curSubtype=this.value; renderFields(); }; }
   validateForm();
 }
 
+// ─── EMAIL BUILD ──────────────────────────────────────────────
 function buildEmail(){
-  var f=fields; var is=p();
+  var f=fields, is=p();
   var nome=f.nome||(is?'[Nome do Cliente]':'[Client Name]');
   var numEvento=f.numEvento||'[Nº Evento]';
   var datas=f.datas||'[Data(s)]';
@@ -304,195 +897,141 @@ function buildEmail(){
   var TBL='<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:600px;font-family:Aptos,Montserrat,Arial,sans-serif;font-size:12px;">'
     +'<tr><td colspan="2" style="background:#231F20;color:#887157;font-weight:bold;padding:7px 8px;">'+(is?'PEDIDO DE COTAÇÃO':'QUOTATION REQUEST')+'</td></tr>'
     +'<tr><td colspan="2" style="background:#887157;color:#fff;font-weight:bold;padding:5px 8px;font-size:11px;text-transform:uppercase;">'+(is?'Informações Gerais':'General Information')+'</td></tr>'
-    +'<tr><td style="width:60%;background:#FAF8F6;padding:5px 8px;">'+(is?'Nome da Entidade':'Entity Name')+'</td><td style="width:40%;padding:5px 8px;">'+(f.entidade||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'NIF':'Tax ID')+'</td><td style="padding:5px 8px;">'+(f.nif||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Morada Fiscal':'Fiscal Address')+'</td><td style="padding:5px 8px;">'+(f.morada||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Nome do Evento':'Event Name')+'</td><td style="padding:5px 8px;">'+(f.nomeEvento||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Data do Evento':'Event Date')+'</td><td style="padding:5px 8px;">'+(f.dataEvento||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Horário do Evento':'Event Schedule')+'</td><td style="padding:5px 8px;">'+(f.horario||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Nº Previsto de Participantes':'Expected Number of Attendees')+'</td><td style="padding:5px 8px;">'+(f.participantes||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Pessoa de Contacto':'Contact Person')+'</td><td style="padding:5px 8px;">'+(f.contacto||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Telefone / Email':'Phone / Email')+'</td><td style="padding:5px 8px;">'+(f.telEmail||'')+'</td></tr>'
+    +'<tr><td style="width:60%;background:#FAF8F6;padding:5px 8px;">'+(is?'Nome da Entidade':'Entity Name')+'</td><td style="width:40%;padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'NIF':'Tax ID')+'</td><td style="padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Morada Fiscal':'Fiscal Address')+'</td><td style="padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Nome do Evento':'Event Name')+'</td><td style="padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Data do Evento':'Event Date')+'</td><td style="padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Horário do Evento':'Event Schedule')+'</td><td style="padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Nº Previsto de Participantes':'Expected Number of Attendees')+'</td><td style="padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Pessoa de Contacto':'Contact Person')+'</td><td style="padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Telefone / Email':'Phone / Email')+'</td><td style="padding:5px 8px;"></td></tr>'
     +'<tr><td colspan="2" style="background:#887157;color:#fff;font-weight:bold;padding:5px 8px;font-size:11px;text-transform:uppercase;">'+(is?'Logística e Montagem':'Logistics and Setup')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Data e hora de montagem':'Setup date and time')+'</td><td style="padding:5px 8px;">'+(f.montagem||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Data e hora de desmontagem':'Breakdown date and time')+'</td><td style="padding:5px 8px;">'+(f.desmontagem||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Empresas envolvidas / Fornecedores montagem':'Companies involved / Setup suppliers')+'</td><td style="padding:5px 8px;">'+(f.fornecedores||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Disposição da sala (Plateia, Escola, Mesa U, Cabaret ou Banquete)':'Room layout (Theatre, Classroom, U-Shape, Cabaret or Banquet)')+'</td><td style="padding:5px 8px;">'+(f.disposicao||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Necessidades audiovisuais (PROJECTOR, LED, SOM, ILUMINAÇÃO, PALCO, TRADUÇÃO SIMULTÂNEA)':'Audiovisual requirements (PROJECTOR, LED, SOUND, LIGHTING, STAGE, SIMULTANEOUS TRANSLATION)')+'</td><td style="padding:5px 8px;">'+(f.av||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Data e hora de montagem':'Setup date and time')+'</td><td style="padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Data e hora de desmontagem':'Breakdown date and time')+'</td><td style="padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Empresas envolvidas / Fornecedores montagem':'Companies involved / Setup suppliers')+'</td><td style="padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Disposição da sala (Plateia, Escola, Mesa U, Cabaret ou Banquete)':'Room layout (Theatre, Classroom, U-Shape, Cabaret or Banquet)')+'</td><td style="padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Necessidades audiovisuais (PROJECTOR, LED, SOM, ILUMINAÇÃO, PALCO, TRADUÇÃO SIMULTÂNEA)':'Audiovisual requirements (PROJECTOR, LED, SOUND, LIGHTING, STAGE, SIMULTANEOUS TRANSLATION)')+'</td><td style="padding:5px 8px;"></td></tr>'
     +'<tr><td colspan="2" style="background:#887157;color:#fff;font-weight:bold;padding:5px 8px;font-size:11px;text-transform:uppercase;">'+(is?'Serviços de Catering · verificar Brochura de Banquetes em anexo':'Catering Services · please refer to the attached Banqueting Brochure')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">Coffee Break</td><td style="padding:5px 8px;">'+(f.cb||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Almoço':'Lunch')+'</td><td style="padding:5px 8px;">'+(f.almoco||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Jantar':'Dinner')+'</td><td style="padding:5px 8px;">'+(f.jantar||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">Cocktail</td><td style="padding:5px 8px;">'+(f.cocktail||'')+'</td></tr>'
-    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Outros serviços do menu':'Other menu services')+'</td><td style="padding:5px 8px;">'+(f.outros||'')+'</td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">Coffee Break</td><td style="padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Almoço':'Lunch')+'</td><td style="padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Jantar':'Dinner')+'</td><td style="padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">Cocktail</td><td style="padding:5px 8px;"></td></tr>'
+    +'<tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Outros serviços do menu':'Other menu services')+'</td><td style="padding:5px 8px;"></td></tr>'
     +'</table>';
 
   if(curType==='pedido_cotacao'){
     var geral=curSubtype==='geral';
-    return {
-      text: is
-        ?(geral?'Exmo(a). Sr(a). '+nome+',\n\nAgradecemos o vosso contacto e a preferência pela TD Hotels para a realização do vosso evento. Será com todo o gosto que daremos seguimento ao vosso pedido.\n\nPara que possamos elaborar uma proposta personalizada e detalhada, agradecemos que nos façam chegar as seguintes informações, que poderão preencher directamente na tabela abaixo:\n\n[TABELA]\n\nEm anexo, enviamos também a nossa Brochura de Banquetes, que contém diversas opções de serviços de alimentos e bebidas que poderão ser combinados conforme a vossa preferência.\n\nFicamos ao dispor para qualquer esclarecimento adicional.'
-          :'Exmo(a). Sr(a). '+nome+',\n\nAgradecemos o vosso contacto e a preferência pela TD Hotels para a realização do vosso evento. Será com todo o gosto que daremos seguimento ao vosso pedido.\n\nPara que possamos elaborar uma proposta personalizada e detalhada, agradecemos que nos façam chegar as informações em falta, que poderão preencher directamente na tabela abaixo:\n\n[TABELA]\n\nEm anexo, enviamos também a nossa Brochura de Banquetes, que contém diversas opções de serviços de alimentos e bebidas que poderão ser combinados conforme a vossa preferência.\n\nFicamos ao dispor para qualquer esclarecimento adicional.')
-        :(geral?'Dear '+nome+',\n\nThank you for your contact and for choosing TD Hotels for your event. It is with great pleasure that we will follow up on your request.\n\nIn order to prepare a personalised and detailed proposal, we kindly ask you to provide the following information in the table below:\n\n[TABELA]\n\nPlease find attached our Banqueting Brochure, which features a comprehensive selection of food and beverage options that can be tailored to suit your preferences and event requirements.\n\nWe remain at your disposal for any further clarification.'
-          :'Dear '+nome+',\n\nThank you for your contact and for choosing TD Hotels for your event. It is with great pleasure that we will follow up on your request.\n\nIn order to prepare a personalised and detailed proposal, we kindly ask you to complete the missing information in the table below:\n\n[TABELA]\n\nPlease find attached our Banqueting Brochure, which features a comprehensive selection of food and beverage options that can be tailored to suit your preferences and event requirements.\n\nWe remain at your disposal for any further clarification.'),
-      table: TBL
-    };
+    return {text:is
+      ?(geral?'Exmo(a). Sr(a). '+nome+',\n\nAgradecemos o vosso contacto e a preferência pela TD Hotels para a realização do vosso evento. Será com todo o gosto que daremos seguimento ao vosso pedido.\n\nPara que possamos elaborar uma proposta personalizada e detalhada, agradecemos que nos façam chegar as seguintes informações, que poderão preencher directamente na tabela abaixo:\n\n[TABELA]\n\nEm anexo, enviamos também a nossa Brochura de Banquetes, que contém diversas opções de serviços de alimentos e bebidas que poderão ser combinados conforme a vossa preferência.\n\nFicamos ao dispor para qualquer esclarecimento adicional.'
+        :'Exmo(a). Sr(a). '+nome+',\n\nAgradecemos o vosso contacto e a preferência pela TD Hotels para a realização do vosso evento. Será com todo o gosto que daremos seguimento ao vosso pedido.\n\nPara que possamos elaborar uma proposta personalizada e detalhada, agradecemos que nos façam chegar as informações em falta, que poderão preencher directamente na tabela abaixo:\n\n[TABELA]\n\nEm anexo, enviamos também a nossa Brochura de Banquetes, que contém diversas opções de serviços de alimentos e bebidas que poderão ser combinados conforme a vossa preferência.\n\nFicamos ao dispor para qualquer esclarecimento adicional.')
+      :(geral?'Dear '+nome+',\n\nThank you for your contact and for choosing TD Hotels for your event. It is with great pleasure that we will follow up on your request.\n\nIn order to prepare a personalised and detailed proposal, we kindly ask you to provide the following information in the table below:\n\n[TABELA]\n\nPlease find attached our Banqueting Brochure, which features a comprehensive selection of food and beverage options that can be tailored to suit your preferences and event requirements.\n\nWe remain at your disposal for any further clarification.'
+        :'Dear '+nome+',\n\nThank you for your contact and for choosing TD Hotels for your event. It is with great pleasure that we will follow up on your request.\n\nIn order to prepare a personalised and detailed proposal, we kindly ask you to complete the missing information in the table below:\n\n[TABELA]\n\nPlease find attached our Banqueting Brochure, which features a comprehensive selection of food and beverage options that can be tailored to suit your preferences and event requirements.\n\nWe remain at your disposal for any further clarification.'),
+      table:TBL};
   }
-
   if(curType==='envio_proposta'){
     var et=f.espacoTipo||'hcta';
-    var en=et==='hcta'?'Hotel de Convenções de Talatona':'Centro de Convenções de Talatona (CCTA)';
-    var ccta=et==='ccta_sem'?(is
-      ?'\n\nNo âmbito do regime de aluguer do Centro de Convenções de Talatona CCTA, e sempre que o mesmo não seja contratado em exclusividade, importa esclarecer que os espaços comuns, nomeadamente o lobby ou foyer, bem como as entradas e acessos ao edifício, não são de uso exclusivo do evento, podendo ser partilhados com outros clientes ou eventos em simultâneo.\n\nAdicionalmente, o hotel reserva-se ao direito de comercializar e utilizar os restantes espaços do CCTA que não estejam incluídos no âmbito do vosso aluguer.\n\nNeste sentido, agradecemos que nos informem previamente caso pretendam utilizar áreas comuns, tais como foyer, zonas de recepção ou circulação, bem como o tipo de ocupação ou elementos a instalar, para que possamos analisar a sua viabilidade e salvaguardar a inexistência de conflitos operacionais ou visuais com outros eventos.'
-      :'\n\nUnder the CCTA rental scheme, when not contracted exclusively, common areas are not for the exclusive use of any single event and may be shared simultaneously. The hotel reserves the right to use remaining spaces not included in your rental. Please inform us in advance should you intend to use any common areas.'):'';
-    var seg=f.segundaOpcao==='sim'?(is
-      ?'\n\nInformamos que existe uma consulta/pré-reserva anterior para as datas solicitadas, pelo que a vossa proposta será considerada em segunda opção, sujeita à disponibilidade. Para garantir a eventual disponibilidade, agradecemos a vossa confirmação com a maior brevidade possível. A confirmação definitiva será formalizada mediante o envio do comprovativo de pagamento de 50% do valor total da proposta.'
-      :'\n\nPlease note that there is a prior inquiry/pre-booking for the requested dates, and your proposal will be considered as a second option, subject to availability. Final confirmation will be formalised upon receipt of Proof of Payment (PoP) of 50% of the total proposal value.'):'';
-    return {
-      text: is
-        ?'Exmo(a). Sr(a). '+nome+',\n\nAgradecemos mais uma vez o vosso contacto e a preferência pelo Grupo TD Hotels.\n\nNo seguimento da vossa solicitação, é com gosto que partilhamos em anexo a nossa proposta para o evento '+numEvento+', previsto para os dias '+datas+', no '+en+'.\n\nJuntamente com a proposta, segue a nossa Brochura de Banquetes, que inclui todos os nossos serviços para melhor apoiar a vossa decisão.\n\n[NOTAS]Informamos que esta proposta está a ser considerada como uma consulta, pelo que, até ao momento, não foi efetuada qualquer pré-reserva de espaços ou quartos na nossa unidade. Em caso de confirmação, o pedido estará sujeito à disponibilidade do hotel nas datas solicitadas.\nInformamos que os valores apresentados poderão ser revistos caso se verifique uma variação cambial superior a 5% face ao câmbio de referência indicado.\nCaso venham a envolver fornecedores externos (ex: empresas de audiovisuais, decoração, segurança, etc.), pedimos que nos informem com a devida antecedência, de forma a submetermos a respectiva aprovação de entrada nas nossas instalações.'+ccta+seg+'\n\nMantemo-nos ao dispor para qualquer dúvida ou ajuste que considerem necessário.'
-        :'Dear '+nome+',\n\nThank you once again for your contact and for choosing TD Hotels Group.\n\nFollowing your request, we are pleased to share in attachment our proposal for the event '+numEvento+', scheduled for '+datas+', at '+en+'.\n\nAlongside the proposal, please find our Banqueting Brochure, which includes all our services to better support your decision.\n\n[NOTAS]Please note that this proposal is being considered as an enquiry only, and no pre-booking of spaces or rooms has been made at this stage. In the event of confirmation, the request will be subject to hotel availability on the requested dates.\nPlease note that the values presented may be revised should an exchange rate variation of more than 5% occur in relation to the reference rate indicated.\nShould you involve any external suppliers (e.g. audiovisual companies, decoration, security, etc.), we kindly ask that you inform us in advance so that we may process the corresponding entry approval for our premises.'+ccta+seg+'\n\nWe remain at your disposal for any questions or adjustments you may consider necessary.',
-      table: null
-    };
+    var en2=et==='hcta'?'Hotel de Convenções de Talatona':'Centro de Convenções de Talatona (CCTA)';
+    var ccta=et==='ccta_sem'?(is?'\n\nNo âmbito do regime de aluguer do Centro de Convenções de Talatona CCTA, e sempre que o mesmo não seja contratado em exclusividade, importa esclarecer que os espaços comuns, nomeadamente o lobby ou foyer, bem como as entradas e acessos ao edifício, não são de uso exclusivo do evento, podendo ser partilhados com outros clientes ou eventos em simultâneo.\n\nAdicionalmente, o hotel reserva-se ao direito de comercializar e utilizar os restantes espaços do CCTA que não estejam incluídos no âmbito do vosso aluguer.\n\nNeste sentido, agradecemos que nos informem previamente caso pretendam utilizar áreas comuns, tais como foyer, zonas de recepção ou circulação, bem como o tipo de ocupação ou elementos a instalar, para que possamos analisar a sua viabilidade e salvaguardar a inexistência de conflitos operacionais ou visuais com outros eventos.':'\n\nUnder the CCTA rental scheme, when not contracted exclusively, common areas are not for the exclusive use of any single event and may be shared simultaneously. The hotel reserves the right to use remaining spaces not included in your rental. Please inform us in advance should you intend to use any common areas.'):'';
+    var seg=f.segundaOpcao==='sim'?(is?'\n\nInformamos que existe uma consulta/pré-reserva anterior para as datas solicitadas, pelo que a vossa proposta será considerada em segunda opção, sujeita à disponibilidade. Para garantir a eventual disponibilidade, agradecemos a vossa confirmação com a maior brevidade possível. A confirmação definitiva será formalizada mediante o envio do comprovativo de pagamento de 50% do valor total da proposta.':'\n\nPlease note that there is a prior inquiry/pre-booking for the requested dates, and your proposal will be considered as a second option, subject to availability. Final confirmation will be formalised upon receipt of Proof of Payment (PoP) of 50% of the total proposal value.'):'';
+    return {text:is?'Exmo(a). Sr(a). '+nome+',\n\nAgradecemos mais uma vez o vosso contacto e a preferência pelo Grupo TD Hotels.\n\nNo seguimento da vossa solicitação, é com gosto que partilhamos em anexo a nossa proposta para o evento '+numEvento+', previsto para os dias '+datas+', no '+en2+'.\n\nJuntamente com a proposta, segue a nossa Brochura de Banquetes, que inclui todos os nossos serviços para melhor apoiar a vossa decisão.\n\n[NOTAS]Informamos que esta proposta está a ser considerada como uma consulta, pelo que, até ao momento, não foi efetuada qualquer pré-reserva de espaços ou quartos na nossa unidade. Em caso de confirmação, o pedido estará sujeito à disponibilidade do hotel nas datas solicitadas.\nInformamos que os valores apresentados poderão ser revistos caso se verifique uma variação cambial superior a 5% face ao câmbio de referência indicado.\nCaso venham a envolver fornecedores externos (ex: empresas de audiovisuais, decoração, segurança, etc.), pedimos que nos informem com a devida antecedência, de forma a submetermos a respectiva aprovação de entrada nas nossas instalações.'+ccta+seg+'\n\nMantemo-nos ao dispor para qualquer dúvida ou ajuste que considerem necessário.':'Dear '+nome+',\n\nThank you once again for your contact and for choosing TD Hotels Group.\n\nFollowing your request, we are pleased to share in attachment our proposal for the event '+numEvento+', scheduled for '+datas+', at '+en2+'.\n\nAlongside the proposal, please find our Banqueting Brochure, which includes all our services to better support your decision.\n\n[NOTAS]Please note that this proposal is being considered as an enquiry only, and no pre-booking of spaces or rooms has been made at this stage. In the event of confirmation, the request will be subject to hotel availability on the requested dates.\nPlease note that the values presented may be revised should an exchange rate variation of more than 5% occur in relation to the reference rate indicated.\nShould you involve any external suppliers (e.g. audiovisual companies, decoration, security, etc.), we kindly ask that you inform us in advance so that we may process the corresponding entry approval for our premises.'+ccta+seg+'\n\nWe remain at your disposal for any questions or adjustments you may consider necessary.',table:null};
   }
-
   if(curType==='follow_up'){
-    var de=f.dataEvento||'[data do evento]';
-    var dl=f.dataLimite||'[data limite]';
-    if((f.followUpModo||'proximo')==='conflito') return {text:is
-      ?'Exmo(a). Sr(a). '+nome+',\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento da proposta anteriormente enviada, gostaríamos de informar que recebemos um novo pedido de reserva para as mesmas datas — '+de+' — pelo que a vossa proposta passa a estar em risco de indisponibilidade.\n\nNeste sentido, solicitamos com carácter de urgência a vossa confirmação oficial, de forma a salvaguardar a reserva do espaço e dos serviços necessários para a realização do evento.\n\nA confirmação definitiva será formalizada mediante o envio do comprovativo de pagamento de 50% do valor total da proposta.\n\nAgradecemos antecipadamente pela vossa atenção e pronta resposta. Caso necessitem de qualquer informação adicional ou tenham alguma dúvida, não hesitem em nos contactar.'
-      :'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing the proposal previously sent, we wish to inform you that we have received a new booking request for the same dates — '+de+' — and your proposal is now at risk of unavailability.\n\nWe urgently request your official confirmation to secure the venue and services required.\n\nFinal confirmation will be formalised upon receipt of Proof of Payment (PoP) of 50% of the total proposal value.\n\nWe thank you in advance for your attention and prompt response.',table:null};
-    return {text:is
-      ?'Exmo(a). Sr(a). '+nome+',\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento da proposta anteriormente enviada, referente ao evento previsto para '+de+', gostaríamos de obter uma confirmação oficial quanto à realização da actividade, a fim de procedermos com o bloqueio da data solicitada.\n\nComo parte do processo de validação da reserva, solicitamos o envio do comprovativo de pagamento (PoP) para assegurar a reserva do espaço e dos serviços necessários para a realização do evento.\n\nGostaríamos de reiterar a importância da confirmação até '+dl+', sendo que em caso de ausência de resposta até à data referida, reservamo-nos o direito de proceder com o cancelamento da proposta.\n\nAgradecemos antecipadamente pela vossa atenção e pronta resposta. Caso necessitem de qualquer informação adicional ou tenham alguma dúvida, não hesitem em nos contactar.'
-      :'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing the proposal previously sent, regarding the event scheduled for '+de+', we would like to obtain an official confirmation in order to proceed with blocking the requested date.\n\nAs part of the booking validation process, we kindly request the submission of a Proof of Payment (PoP) to secure the venue and all services required for the event.\n\nWe would like to reiterate the importance of confirmation by '+dl+'. Should we not receive a response by the above date, we reserve the right to proceed with the cancellation of the proposal.\n\nWe thank you in advance for your attention and prompt response. Should you require any further information or have any questions, please do not hesitate to contact us.',table:null};
+    var de=f.dataEvento||'[data do evento]', dl=f.dataLimite||'[data limite]';
+    if((f.followUpModo||'proximo')==='conflito') return {text:is?'Exmo(a). Sr(a). '+nome+',\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento da proposta anteriormente enviada, gostaríamos de informar que recebemos um novo pedido de reserva para as mesmas datas — '+de+' — pelo que a vossa proposta passa a estar em risco de indisponibilidade.\n\nNeste sentido, solicitamos com carácter de urgência a vossa confirmação oficial, de forma a salvaguardar a reserva do espaço e dos serviços necessários para a realização do evento.\n\nA confirmação definitiva será formalizada mediante o envio do comprovativo de pagamento de 50% do valor total da proposta.\n\nAgradecemos antecipadamente pela vossa atenção e pronta resposta. Caso necessitem de qualquer informação adicional ou tenham alguma dúvida, não hesitem em nos contactar.':'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing the proposal previously sent, we wish to inform you that we have received a new booking request for the same dates — '+de+' — and your proposal is now at risk of unavailability.\n\nWe urgently request your official confirmation to secure the venue and services required.\n\nFinal confirmation will be formalised upon receipt of Proof of Payment (PoP) of 50% of the total proposal value.\n\nWe thank you in advance for your attention and prompt response.',table:null};
+    return {text:is?'Exmo(a). Sr(a). '+nome+',\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento da proposta anteriormente enviada, referente ao evento previsto para '+de+', gostaríamos de obter uma confirmação oficial quanto à realização da actividade, a fim de procedermos com o bloqueio da data solicitada.\n\nComo parte do processo de validação da reserva, solicitamos o envio do comprovativo de pagamento (PoP) para assegurar a reserva do espaço e dos serviços necessários para a realização do evento.\n\nGostaríamos de reiterar a importância da confirmação até '+dl+', sendo que em caso de ausência de resposta até à data referida, reservamo-nos o direito de proceder com o cancelamento da proposta.\n\nAgradecemos antecipadamente pela vossa atenção e pronta resposta. Caso necessitem de qualquer informação adicional ou tenham alguma dúvida, não hesitem em nos contactar.':'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing the proposal previously sent, regarding the event scheduled for '+de+', we would like to obtain an official confirmation in order to proceed with blocking the requested date.\n\nAs part of the booking validation process, we kindly request the submission of a Proof of Payment (PoP) to secure the venue and all services required for the event.\n\nWe would like to reiterate the importance of confirmation by '+dl+'. Should we not receive a response by the above date, we reserve the right to proceed with the cancellation of the proposal.\n\nWe thank you in advance for your attention and prompt response. Should you require any further information or have any questions, please do not hesitate to contact us.',table:null};
   }
-
   if(curType==='confirmacao'){
-    var de2=f.dataEvento||'[data do evento]';
-    var esp=f.espaco||'Hotel de Convenções de Talatona';
-    var df=(f.dadosFiscaisOpcao||'conhecidos')==='falta'
-      ?(is?'\n\nFicamos a aguardar, com a maior brevidade possível, o envio dos vossos dados fiscais (Entidade, NIF e Morada Fiscal). Caso não nos seja facultada esta informação dentro do prazo legal, a factura será emitida sob designação genérica de "Consumidor Final".'
-        :'\n\nWe kindly ask that you provide your fiscal details (Entity, Tax ID and Fiscal Address) at your earliest convenience. Should this information not be provided within the legal timeframe, the invoice will be issued under the generic designation of "Final Consumer".')
-      :(is?'\n\nAproveitamos para reconfirmar que o evento será facturado com os seguintes dados fiscais:\n\nEntidade: '+(f.entidade||'[Entidade]')+'\nNIF: '+(f.nif||'[NIF]')+'\nMorada Fiscal: '+(f.morada||'[Morada]')
-        :'\n\nWe would also like to reconfirm that the event will be invoiced under the following fiscal details:\n\nEntity: '+(f.entidade||'[Entity]')+'\nTax ID: '+(f.nif||'[Tax ID]')+'\nFiscal Address: '+(f.morada||'[Address]'));
-    return {text:is
-      ?'Exmo(a). Sr(a). '+nome+',\n\nAgradecemos a vossa preferência pelo Grupo TD Hotels e o envio do comprovativo de pagamento. Temos o prazer de confirmar a reserva do '+esp+' para a realização do vosso evento, previsto para '+de2+'.\n\nAssim que o nosso departamento financeiro confirmar a entrada dos valores, iremos partilhar a factura final.'+df+'\n\nFicamos ao dispor para qualquer esclarecimento adicional.'
-      :'Dear '+nome+',\n\nWe thank you for your preference for TD Hotels Group and for submitting the Proof of Payment (PoP). We are pleased to confirm the booking of '+esp+' for your event, scheduled for '+de2+'.\n\nOnce our Finance Department confirms receipt of the funds, we will issue the final invoice.'+df+'\n\nWe remain at your disposal for any further clarification.',table:null};
+    var de2=f.dataEvento||'[data do evento]', esp=f.espaco||'Hotel de Convenções de Talatona';
+    var df=(f.dadosFiscaisOpcao||'conhecidos')==='falta'?(is?'\n\nFicamos a aguardar, com a maior brevidade possível, o envio dos vossos dados fiscais (Entidade, NIF e Morada Fiscal). Caso não nos seja facultada esta informação dentro do prazo legal, a factura será emitida sob designação genérica de "Consumidor Final".':'\n\nWe kindly ask that you provide your fiscal details (Entity, Tax ID and Fiscal Address) at your earliest convenience. Should this information not be provided within the legal timeframe, the invoice will be issued under the generic designation of "Final Consumer".'):(is?'\n\nAproveitamos para reconfirmar que o evento será facturado com os seguintes dados fiscais:\n\nEntidade: '+(f.entidade||'[Entidade]')+'\nNIF: '+(f.nif||'[NIF]')+'\nMorada Fiscal: '+(f.morada||'[Morada]'):'\n\nWe would also like to reconfirm that the event will be invoiced under the following fiscal details:\n\nEntity: '+(f.entidade||'[Entity]')+'\nTax ID: '+(f.nif||'[Tax ID]')+'\nFiscal Address: '+(f.morada||'[Address]'));
+    return {text:is?'Exmo(a). Sr(a). '+nome+',\n\nAgradecemos a vossa preferência pelo Grupo TD Hotels e o envio do comprovativo de pagamento. Temos o prazer de confirmar a reserva do '+esp+' para a realização do vosso evento, previsto para '+de2+'.\n\nAssim que o nosso departamento financeiro confirmar a entrada dos valores, iremos partilhar a factura final.'+df+'\n\nFicamos ao dispor para qualquer esclarecimento adicional.':'Dear '+nome+',\n\nWe thank you for your preference for TD Hotels Group and for submitting the Proof of Payment (PoP). We are pleased to confirm the booking of '+esp+' for your event, scheduled for '+de2+'.\n\nOnce our Finance Department confirms receipt of the funds, we will issue the final invoice.'+df+'\n\nWe remain at your disposal for any further clarification.',table:null};
   }
-
   if(curType==='cobranca'){
     var de3=f.dataEvento||'[data do evento]';
-    var ex=[];
-    if(f.fatura) ex.push(is?'Fatura n.º: '+f.fatura:'Invoice no.: '+f.fatura);
-    if(f.valor) ex.push(is?'Valor: '+f.valor:'Amount: '+f.valor);
-    if(f.vencimento) ex.push(is?'Data de vencimento: '+f.vencimento:'Due date: '+f.vencimento);
-    var det=ex.length?'\n\n'+ex.join('\n'):'';
-    var modo=f.cobrancaModo||'1';
-    if(modo==='1') return {text:is
-      ?'Exmo(a). Sr(a). '+nome+',\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento do evento realizado em '+de3+', vimos por este meio partilhar a factura referente aos serviços prestados, que se encontra pendente de liquidação.'+det+'\n\nNeste sentido, e de forma a possibilitar o fecho do processo junto do nosso Departamento de Contabilidade, agradecíamos a partilha do respectivo comprovativo de pagamento.\n\nCaso o pagamento já tenha sido efectuado, pedimos que nos façam chegar o comprovativo para que possamos proceder à reconciliação dos registos.\n\nFicamos a aguardar o vosso retorno e permanecemos ao dispor para qualquer informação adicional que necessitem.'
-      :'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing the event held on '+de3+', we are hereby sharing the invoice related to the services rendered, which remains pending settlement.'+det+'\n\nIn order to allow for the closure of the process with our Accounting Department, we would kindly ask you to share the corresponding proof of payment.\n\nShould payment have already been made, please send us the proof so that we may proceed with the reconciliation of our records.\n\nWe look forward to your reply and remain at your disposal for any additional information.',table:null};
-    if(modo==='2') return {text:is
-      ?'Exmo(a). Sr(a). '+nome+',\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento do email anteriormente enviado, e dado que o valor referente aos serviços prestados no evento de '+de3+' se encontra ainda por liquidar, vimos reforçar o nosso pedido de regularização.'+det+'\n\nAgradecíamos, com a maior brevidade possível, a partilha do respectivo comprovativo de pagamento, de forma a possibilitar o fecho do processo junto do nosso Departamento de Contabilidade.\n\nFicamos a aguardar o vosso retorno e permanecemos ao dispor para qualquer esclarecimento adicional.'
-      :'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing our previous email, and given that the amount related to the services rendered at the event of '+de3+' remains outstanding, we would like to reiterate our request for settlement.'+det+'\n\nWe kindly ask that you share the corresponding proof of payment at your earliest convenience.\n\nWe look forward to your reply and remain at your disposal for any further clarification.',table:null};
-    return {text:is
-      ?'Exmo(a). Sr(a). '+nome+',\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento dos contactos anteriormente efectuados, e verificando-se que o valor referente aos serviços prestados no evento de '+de3+' permanece por liquidar, vimos, por este meio, reiterar com carácter de urgência o pedido de regularização da situação.'+det+'\n\nAgradecemos que procedam à liquidação e ao envio do respectivo comprovativo com a máxima brevidade, por forma a evitar que o processo seja escalado para a nossa área administrativa.\n\nFicamos a aguardar uma resposta com a maior brevidade possível.'
-      :'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing our previous contacts, and noting that the amount related to the services rendered at the event of '+de3+' remains outstanding, we hereby reiterate with urgency our request for settlement.'+det+'\n\nWe kindly ask that you proceed with payment at the earliest opportunity, in order to avoid this matter being escalated to our administrative team.\n\nWe look forward to your prompt response.',table:null};
+    var ex=[]; if(f.fatura) ex.push(is?'Fatura n.º: '+f.fatura:'Invoice no.: '+f.fatura); if(f.valor) ex.push(is?'Valor: '+f.valor:'Amount: '+f.valor); if(f.vencimento) ex.push(is?'Data de vencimento: '+f.vencimento:'Due date: '+f.vencimento);
+    var det=ex.length?'\n\n'+ex.join('\n'):'', modo=f.cobrancaModo||'1';
+    if(modo==='1') return {text:is?'Exmo(a). Sr(a). '+nome+',\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento do evento realizado em '+de3+', vimos por este meio partilhar a factura referente aos serviços prestados, que se encontra pendente de liquidação.'+det+'\n\nNeste sentido, e de forma a possibilitar o fecho do processo junto do nosso Departamento de Contabilidade, agradecíamos a partilha do respectivo comprovativo de pagamento.\n\nCaso o pagamento já tenha sido efectuado, pedimos que nos façam chegar o comprovativo para que possamos proceder à reconciliação dos registos.\n\nFicamos a aguardar o vosso retorno e permanecemos ao dispor para qualquer informação adicional que necessitem.':'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing the event held on '+de3+', we are hereby sharing the invoice related to the services rendered, which remains pending settlement.'+det+'\n\nIn order to allow for the closure of the process with our Accounting Department, we would kindly ask you to share the corresponding proof of payment.\n\nShould payment have already been made, please send us the proof so that we may proceed with the reconciliation of our records.\n\nWe look forward to your reply and remain at your disposal for any additional information.',table:null};
+    if(modo==='2') return {text:is?'Exmo(a). Sr(a). '+nome+',\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento do email anteriormente enviado, e dado que o valor referente aos serviços prestados no evento de '+de3+' se encontra ainda por liquidar, vimos reforçar o nosso pedido de regularização.'+det+'\n\nAgradecíamos, com a maior brevidade possível, a partilha do respectivo comprovativo de pagamento, de forma a possibilitar o fecho do processo junto do nosso Departamento de Contabilidade.\n\nFicamos a aguardar o vosso retorno e permanecemos ao dispor para qualquer esclarecimento adicional.':'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing our previous email, and given that the amount related to the services rendered at the event of '+de3+' remains outstanding, we would like to reiterate our request for settlement.'+det+'\n\nWe kindly ask that you share the corresponding proof of payment at your earliest convenience.\n\nWe look forward to your reply and remain at your disposal for any further clarification.',table:null};
+    return {text:is?'Exmo(a). Sr(a). '+nome+',\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento dos contactos anteriormente efectuados, e verificando-se que o valor referente aos serviços prestados no evento de '+de3+' permanece por liquidar, vimos, por este meio, reiterar com carácter de urgência o pedido de regularização da situação.'+det+'\n\nAgradecemos que procedam à liquidação e ao envio do respectivo comprovativo com a máxima brevidade, por forma a evitar que o processo seja escalado para a nossa área administrativa.\n\nFicamos a aguardar uma resposta com a maior brevidade possível.':'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing our previous contacts, and noting that the amount related to the services rendered at the event of '+de3+' remains outstanding, we hereby reiterate with urgency our request for settlement.'+det+'\n\nWe kindly ask that you proceed with payment at the earliest opportunity, in order to avoid this matter being escalated to our administrative team.\n\nWe look forward to your prompt response.',table:null};
   }
-
   if(curType==='satisfacao'){
     var ih='<a href="https://bit.ly/QuestionarioHCTAEventos" target="_blank"><img src="https://i.imgur.com/L0EkdiH.jpeg" alt="Questionario Satisfacao HCTA" style="width:100%;max-width:600px;display:block;border:none;"></a>'
-      +'<div style="background:#F0EAE3;border:1px dashed #887157;padding:14px;font-family:Aptos,Montserrat,Arial,sans-serif;font-size:12px;color:#5A5250;margin-top:8px;border-radius:3px;">'
-      +'<strong style="color:#887157;">Nota para a equipa:</strong> Se a imagem nao aparecer no Outlook apos colar, inserir manualmente: <em>Inserir - Imagens - Este dispositivo</em>. '
-      +'<a href="https://i.imgur.com/L0EkdiH.jpeg" download="questionario_satisfacao_hcta.jpeg" style="color:#887157;font-weight:600;">Fazer download da imagem</a> | '
-      +'Link do formulario: <a href="https://bit.ly/QuestionarioHCTAEventos" style="color:#887157;font-weight:600;">https://bit.ly/QuestionarioHCTAEventos</a></div>';
-    return {
-      text:is
-        ?'Exmo(a). Sr(a). '+nome+',\n\nFoi um gosto receber o seu evento no nosso hotel! Esperamos que tenha sido produtivo e tudo tenha correspondido as suas expectativas.\n\nPara nos, cada detalhe conta, e a sua opiniao faz toda a diferenca. Preparamos um questionario rapido para saber como correu a sua experiencia. Nao levara mais do que 2 minutos e ajudara a tornar os proximos eventos ainda melhores.\n\n[IMAGEM]\n\nMuito obrigados pela sua colaboracao e confianca.\n\nEstamos ao dispor para qualquer questao adicional.'
-        :'Dear '+nome+',\n\nIt was a pleasure to host your event at our hotel! We hope it was productive and that everything met your expectations.\n\nEvery detail matters to us, and your opinion makes all the difference. We have prepared a quick questionnaire to find out how your experience went. It will take no more than 2 minutes.\n\n[IMAGEM]\n\nThank you very much for your collaboration and trust.\n\nWe remain at your disposal for any further questions.',
-      table:null, imgHtml:ih
-    };
+      +'<div style="background:#F0EAE3;border:1px dashed #887157;padding:14px;font-size:12px;color:#5A5250;margin-top:8px;border-radius:3px;"><strong style="color:#887157;">'+(is?'Nota para a equipa:':'Team note:')+'</strong> '+(is?'Se a imagem não aparecer no Outlook após colar, inserir manualmente: Inserir → Imagens → Este dispositivo.':'If the image does not appear in Outlook after pasting, insert manually: Insert → Images → This device.')+' <a href="https://i.imgur.com/L0EkdiH.jpeg" download="questionario_satisfacao_hcta.jpeg" style="color:#887157;font-weight:600;">'+(is?'Fazer download da imagem':'Download image')+'</a> | Link: <a href="https://bit.ly/QuestionarioHCTAEventos" style="color:#887157;font-weight:600;">https://bit.ly/QuestionarioHCTAEventos</a></div>';
+    return {text:is?'Exmo(a). Sr(a). '+nome+',\n\nFoi um gosto receber o seu evento no nosso hotel! Esperamos que tenha sido produtivo e tudo tenha correspondido às suas expectativas.\n\nPara nós, cada detalhe conta, e a sua opinião faz toda a diferença. Preparámos um questionário rápido para saber como correu a sua experiência. Não levará mais do que 2 minutos e ajudará a tornar os próximos eventos ainda melhores.\n\n[IMAGEM]\n\nMuito obrigados pela sua colaboração e confiança.\n\nEstamos ao dispor para qualquer questão adicional.':'Dear '+nome+',\n\nIt was a pleasure to host your event at our hotel! We hope it was productive and that everything met your expectations.\n\nEvery detail matters to us, and your opinion makes all the difference. We have prepared a quick questionnaire to find out how your experience went. It will take no more than 2 minutes and will help us make future events even better.\n\n[IMAGEM]\n\nThank you very much for your collaboration and trust.\n\nWe remain at your disposal for any further questions.',table:null,imgHtml:ih};
   }
   return {text:'',table:null};
 }
 
 function renderParagraphs(text,result,forOutlook){
-  var html=''; var fs=forOutlook?'14px':'13px';
+  var html='', fs=forOutlook?'14px':'13px';
   text.split('\n\n').forEach(function(pp){
     if(pp==='[TABELA]'&&result.table){ html+='<div style="margin:16px 0;">'+result.table+'</div>'; }
     else if(pp==='[IMAGEM]'&&result.imgHtml){ html+='<div style="margin:16px 0;">'+result.imgHtml+'</div>'; }
     else if(pp.indexOf('[NOTAS]')===0){
       var lines=pp.replace('[NOTAS]','').split('\n').filter(function(l){ return l.length>0; });
-      html+='<p style="margin:0 0 4px;font-family:Aptos,Montserrat,Arial,sans-serif;font-size:'+fs+';line-height:1.8;color:#231F20;"><strong>Notas:</strong></p>';
-      lines.forEach(function(ln){ html+='<p style="margin:0;font-family:Aptos,Montserrat,Arial,sans-serif;font-size:11px;line-height:1.6;color:#231F20;">'+ln+'</p>'; });
+      html+='<p style="margin:0 0 4px;font-size:'+fs+';line-height:1.8;color:#231F20;"><strong>Notas:</strong></p>';
+      lines.forEach(function(ln){ html+='<p style="margin:0;font-size:11px;line-height:1.6;color:#231F20;">'+ln+'</p>'; });
       html+='<p style="margin:0 0 14px;"></p>';
     } else {
-      html+='<p style="margin:0 0 14px;font-family:Aptos,Montserrat,Arial,sans-serif;font-size:'+fs+';line-height:1.8;color:#231F20;">'+pp.replace(/\n/g,'<br>')+'</p>';
+      html+='<p style="margin:0 0 14px;font-size:'+fs+';line-height:1.8;color:#231F20;">'+pp.replace(/\n/g,'<br>')+'</p>';
     }
   });
   return html;
 }
 
 function generateEmail(){
-  var result=buildEmail();
-  if(!result||!result.text) return;
+  var result=buildEmail(); if(!result||!result.text) return;
   emailResult=result;
-  hide('formview');
-  show('resultview');
-  document.getElementById('result-label').textContent=p()?'Pronto para enviar':'Ready to send';
-  document.getElementById('result-title').textContent=p()?'Email gerado':'Email generated';
-  document.getElementById('copy-btn').textContent=p()?'Copiar':'Copy';
-  document.getElementById('edit-btn').textContent=p()?'← Editar':'← Edit';
-  document.getElementById('email-preview').innerHTML=renderParagraphs(result.text,result,false);
-}
-
-function backToForm(){
-  emailResult=null;
-  hide('resultview');
-  show('formview');
+  hide('formview'); show('resultview');
+  setText('result-label',T('ready'));
+  setText('result-title',T('email-generated'));
+  setText('copy-btn',T('copy'));
+  setText('edit-btn',T('edit'));
+  $('email-preview').innerHTML=renderParagraphs(result.text,result,false);
 }
 
 function copyEmail(){
   if(!emailResult) return;
   var html=renderParagraphs(emailResult.text,emailResult,true);
   var plain=emailResult.text.replace('[TABELA]','(tabela incluida)').replace('[IMAGEM]','(imagem incluida)').replace('[NOTAS]','Notas:\n');
-  var btn=document.getElementById('copy-btn');
+  var btn=$('copy-btn');
   try {
     navigator.clipboard.write([new ClipboardItem({'text/html':new Blob(['<meta charset="utf-8">'+html],{type:'text/html'}),'text/plain':new Blob([plain],{type:'text/plain'})})]).then(function(){
-      btn.textContent='Copiado'; setTimeout(function(){ btn.textContent=p()?'Copiar':'Copy'; },2500);
+      btn.textContent=T('copied'); setTimeout(function(){ btn.textContent=T('copy'); },2500);
     });
   } catch(e){
     navigator.clipboard.writeText(plain).then(function(){
-      btn.textContent='Copiado'; setTimeout(function(){ btn.textContent=p()?'Copiar':'Copy'; },2500);
+      btn.textContent=T('copied'); setTimeout(function(){ btn.textContent=T('copy'); },2500);
     });
   }
 }
 
 function extractData(){
-  var btn=document.getElementById('extract-btn'); if(!btn||!clientTxt.trim()) return;
+  var btn=$('extract-btn'); if(!btn||!clientTxt.trim()) return;
   var is=p(); btn.textContent=is?'A extrair...':'Extracting...'; btn.disabled=true;
   fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST', headers:{'Content-Type':'application/json'},
+    method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
       messages:[{role:'user',content:'Extrai do seguinte email os campos. Responde APENAS em JSON puro sem backticks. Se nao mencionado usa null.\nCampos: nome,entidade,nif,morada,nomeEvento,dataEvento,horario,participantes,contacto,telEmail,montagem,desmontagem,fornecedores,disposicao,av,cb,almoco,jantar,cocktail,outros\nEmail:\n'+clientTxt}]})
   }).then(function(r){ return r.json(); }).then(function(d){
     var txt=d.content?d.content.map(function(i){ return i.text||''; }).join(''):'';
     var parsed=JSON.parse(txt.replace(/```json|```/g,'').trim());
     Object.keys(parsed).forEach(function(k){ if(parsed[k]) fields[k]=parsed[k]; });
-    var keys=[['nome','Nome'],['entidade','Entidade'],['nif','NIF'],['nomeEvento','Evento'],['dataEvento','Data'],['horario','Horario'],['participantes','Participantes']];
+    var keys=[['nome','Nome'],['entidade','Entidade'],['nif','NIF'],['nomeEvento','Evento'],['dataEvento','Data'],['horario','Horário'],['participantes','Participantes']];
     var found=keys.filter(function(kv){ return fields[kv[0]]; }).map(function(kv){ return '<div style="margin-bottom:3px;"><strong>'+kv[1]+':</strong> '+fields[kv[0]]+'</div>'; }).join('');
-    var er=document.getElementById('extract-result');
+    var er=$('extract-result');
     if(er) er.innerHTML=found?'<div style="background:#F0EAE3;border:1px solid #DDD4C8;border-radius:3px;padding:10px 14px;margin-bottom:16px;font-size:12px;">'+found+'<div style="margin-top:8px;color:#9A918C;font-size:10px;">'+(is?'Verifica os dados antes de gerar.':'Review before generating.')+'</div></div>':'';
     btn.textContent=is?'Extrair dados automaticamente':'Extract data automatically'; btn.disabled=false;
   }).catch(function(e){
-    var er=document.getElementById('extract-result');
+    var er=$('extract-result');
     if(er) er.innerHTML='<div style="background:#fdecea;border:1px solid #e74c3c;border-radius:3px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#c0392b;">Erro ao extrair: '+e.message+'</div>';
     btn.textContent=is?'Extrair dados automaticamente':'Extract data automatically'; btn.disabled=false;
   });
 }
 
-// Init
-renderMenu();
-renderCards();
+// ─── BOOT ─────────────────────────────────────────────────────
+refreshAll();
+renderLanding();
 </script>
 </body>
 </html>
