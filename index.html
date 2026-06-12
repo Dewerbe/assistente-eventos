@@ -33,8 +33,6 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
 .etoggle button { flex:1; padding:10px 8px; border:none; background:#fff; font-size:11px; font-weight:600; color:#9A918C; letter-spacing:0.06em; text-transform:uppercase; border-right:1px solid #DDD4C8; transition:background 0.15s,color 0.15s; }
 .etoggle button:last-child { border-right:none; }
 .etoggle button.active { background:#231F20; color:#fff; }
-.ftab-btn { background:transparent; border:none; border-bottom:2px solid transparent; margin-bottom:-2px; padding:10px 20px; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#9A918C; }
-.ftab-btn.active { border-bottom-color:#887157; color:#231F20; }
 .chk-row { display:flex; align-items:center; gap:10px; padding:10px 14px; background:#F5F1EC; border-radius:3px; margin-bottom:8px; cursor:pointer; border:1px solid #DDD4C8; user-select:none; }
 .chk-row input[type=checkbox] { width:16px; height:16px; accent-color:#887157; cursor:pointer; flex-shrink:0; }
 .chk-row span { font-size:12px; color:#231F20; font-weight:500; }
@@ -119,11 +117,6 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
 
     <div id="fiscalview" style="display:none;">
       <div style="margin-bottom:16px;"><a href="#" onclick="goHome();return false;" style="font-size:11px;color:#887157;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;" id="fiscal-back-lbl">← Voltar</a></div>
-      <div style="display:flex;gap:0;border-bottom:2px solid #DDD4C8;margin-bottom:28px;">
-        <button class="ftab-btn active" id="ftab-calc" onclick="fiscalTab('calc')"></button>
-        <button class="ftab-btn" id="ftab-diag" onclick="fiscalTab('diag')"></button>
-        <button class="ftab-btn" id="ftab-info" onclick="fiscalTab('info')"></button>
-      </div>
 
       <div id="tab-calc">
         <div style="max-width:820px;">
@@ -194,7 +187,7 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
 <script>
 var BRONZE='#887157',BLACK='#231F20',WHITE='#fff',SUBTLE='#9A918C',MID='#5A5250',BORDER='#DDD4C8';
 var lang='PT',curType=null,curSubtype='geral',fields={},clientTxt='',emailResult=null;
-var curSection='email',entityType='pub',diagEntityType='pub';
+var curSection='email',entityType='pub',diagEntityType='pub',curFiscalTab='calc';
 var NUM_ROWS=10,foraRows=[],hotRows=[];
 var doCativacao=true,doCativacaoHot=false,doRetencao=true;
 
@@ -257,8 +250,6 @@ function T(key){
     'nav':['Navegação','Navigation'],'communications':['Comunicações','Communications'],
     'pre':['Pré-evento','Pre-event'],'durante':['Durante','During'],'pos':['Pós-evento','Post-event'],
     'fiscal-tools':['Ferramentas Fiscais','Fiscal Tools'],
-    'ret-calc-menu':['Retenção e Cativação','Retention & Withholding'],
-    'ret-calc-sub':['Calculadora · Diagnóstico','Calculator · Diagnosis'],
     'back':['← Voltar','← Back'],'hdr-events':['Departamento de Eventos','Events Department'],
     'land-title':['Bem-vindo ao Assistente de Comunicações','Welcome to the Communications Assistant'],
     'land-subtitle':['Departamento de Eventos · HCTA / CCTA','Events Department · HCTA / CCTA'],
@@ -269,6 +260,7 @@ function T(key){
     'ready':['Pronto para enviar','Ready to send'],'email-generated':['Email gerado','Email generated'],
     'copy':['Copiar','Copy'],'copied':['Copiado ✓','Copied ✓'],'edit':['← Editar','← Edit'],
     'tab-calc':['Calculadora','Calculator'],'tab-diag':['Diagnóstico','Diagnosis'],'tab-info':['Conceitos','Concepts'],
+    'sub-calc':['Retenção e Cativação','Withholding & Retention'],'sub-diag':['Análise de pagamentos','Payment analysis'],'sub-info':['Enquadramento legal','Legal framework'],
     'fc-title':['Calculadora de Retenção e Cativação','Retention & Withholding Calculator'],
     'fc-entity-lbl':['Tipo de entidade pagadora','Payer entity type'],
     'ent-pub':['🏛 Agente Cativador','🏛 Withholding Agent'],'ent-priv':['🏢 Entidade Privada','🏢 Private Entity'],
@@ -324,15 +316,16 @@ function refreshAll(){
 }
 function goHome(){ curType=null;curSubtype='geral';fields={};clientTxt='';emailResult=null;curSection='email'; show('landing');hide('formview');hide('resultview');hide('fiscalview'); renderMenu();renderLanding(); }
 function selectType(t){ curType=t;curSubtype='geral';fields={};clientTxt='';emailResult=null;curSection='email'; hide('landing');hide('resultview');hide('fiscalview');show('formview'); setText('back-lbl',T('back'));renderMenu();renderFields(); }
-function openFiscal(){ curType=null;curSection='fiscal'; hide('landing');hide('formview');hide('resultview');show('fiscalview'); setText('fiscal-back-lbl',T('back'));renderMenu();fiscalTab('calc');renderFiscalLabels(); }
+function openFiscal(tab){ curType=null;curSection='fiscal';curFiscalTab=tab||'calc'; hide('landing');hide('formview');hide('resultview');show('fiscalview'); setText('fiscal-back-lbl',T('back'));renderMenu();fiscalTab(curFiscalTab);renderFiscalLabels(); }
 function backToForm(){ emailResult=null;hide('resultview');show('formview');renderFields(); }
 
 function fiscalTab(tab){
+  curFiscalTab=tab;
   ['calc','diag','info'].forEach(function(t){
-    var b=$('ftab-'+t),c=$('tab-'+t);
-    if(b) b.classList.toggle('active',t===tab);
+    var c=$('tab-'+t);
     if(c) c.style.display=t===tab?'block':'none';
   });
+  renderMenu();
 }
 function setEntity(type){ entityType=type; $('ent-pub').classList.toggle('active',type==='pub'); $('ent-priv').classList.toggle('active',type==='priv'); updateEntityNote();renderCheckboxes();renderCalc(); }
 function setDiagEntity(type){ diagEntityType=type; $('dent-pub').classList.toggle('active',type==='pub'); $('dent-priv').classList.toggle('active',type==='priv'); setText('dent-pub',T('ent-pub'));setText('dent-priv',T('ent-priv')); diagCalc(); }
@@ -704,7 +697,6 @@ function copyDiagEmail(){
 }
 
 function renderFiscalLabels(){
-  setText('ftab-calc',T('tab-calc'));setText('ftab-diag',T('tab-diag'));setText('ftab-info',T('tab-info'));
   setText('fc-title',T('fc-title'));setText('fc-entity-lbl',T('fc-entity-lbl'));
   setText('ent-pub',T('ent-pub'));setText('ent-priv',T('ent-priv'));
   updateEntityNote();renderCheckboxes();
@@ -766,7 +758,10 @@ function renderMenu(){
   });
   var div=document.createElement('div'); div.style.cssText='margin:12px 16px;border-top:1px solid '+BORDER+';'; menu.appendChild(div);
   addMenuLabel(menu,T('fiscal-tools'));
-  menu.appendChild(makeMenuBtn(T('ret-calc-menu'),T('ret-calc-sub'),curSection==='fiscal',openFiscal));
+  [{id:'calc',main:'tab-calc',sub:'sub-calc'},{id:'diag',main:'tab-diag',sub:'sub-diag'},{id:'info',main:'tab-info',sub:'sub-info'}].forEach(function(f){
+    var active=curSection==='fiscal'&&curFiscalTab===f.id;
+    menu.appendChild(makeMenuBtn(T(f.main),T(f.sub),active,(function(id){ return function(){ openFiscal(id); }; })(f.id)));
+  });
 }
 function addMenuLabel(menu,text,size){ var d=document.createElement('div'); d.style.cssText='padding:'+(size==='small'?'6px':'10px')+' 16px 2px;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:'+(size==='small'?SUBTLE:BRONZE)+';font-weight:700;'; d.textContent=text; menu.appendChild(d); }
 function makeMenuBtn(main,sub,active,fn){ var btn=document.createElement('button'); btn.style.cssText='display:block;width:100%;text-align:left;padding:9px 16px;background:'+(active?'#fff':'transparent')+';border:none;border-left:'+(active?'3px solid '+BRONZE:'3px solid transparent')+';cursor:pointer;'; btn.innerHTML='<div style="font-size:12px;color:'+(active?BLACK:MID)+';font-weight:'+(active?600:400)+';">'+main+'</div><div style="font-size:10px;color:'+SUBTLE+';margin-top:1px;">'+sub+'</div>'; btn.onclick=fn; return btn; }
@@ -782,7 +777,11 @@ function renderLanding(){
     grid.appendChild(row);
   });
   var ftd=document.createElement('div'); ftd.style.cssText='font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:'+BRONZE+';font-weight:700;padding:8px 0 4px;border-top:1px solid #DDD4C8;margin-top:8px;text-align:center;'; ftd.textContent=T('fiscal-tools'); grid.appendChild(ftd);
-  var fr=document.createElement('div'); fr.style.cssText='display:flex;gap:12px;justify-content:center;'; fr.appendChild(makeCard(T('ret-calc-menu'),T('ret-calc-sub'),openFiscal)); grid.appendChild(fr);
+  var fr=document.createElement('div'); fr.style.cssText='display:flex;gap:12px;justify-content:center;flex-wrap:wrap;';
+  [{id:'calc',main:'tab-calc',sub:'sub-calc'},{id:'diag',main:'tab-diag',sub:'sub-diag'},{id:'info',main:'tab-info',sub:'sub-info'}].forEach(function(f){
+    fr.appendChild(makeCard(T(f.main),T(f.sub),(function(id){ return function(){ openFiscal(id); }; })(f.id)));
+  });
+  grid.appendChild(fr);
 }
 function makeCard(main,sub,fn){ var c=document.createElement('div'); c.style.cssText='background:#fff;border:1px solid '+BORDER+';border-radius:4px;padding:16px;cursor:pointer;text-align:center;width:190px;flex-shrink:0;'; c.innerHTML='<div style="font-size:12px;font-weight:600;color:'+BLACK+';margin-bottom:4px;">'+main+'</div><div style="font-size:10px;color:'+SUBTLE+';">'+sub+'</div>'; c.onmouseover=function(){ this.style.borderColor=BRONZE; }; c.onmouseout=function(){ this.style.borderColor=BORDER; }; c.onclick=fn; return c; }
 
