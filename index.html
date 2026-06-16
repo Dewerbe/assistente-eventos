@@ -201,7 +201,8 @@ var TYPES=[
   {id:'follow_up',pt:'Follow-up',en:'Follow-up',dpt:'Aguarda confirmação',den:'Awaiting confirmation',fase:'durante'},
   {id:'confirmacao',pt:'Confirmação',en:'Confirmation',dpt:'Reserva confirmada',den:'Booking confirmed',fase:'durante'},
   {id:'cancelamento',pt:'Cancelamento',en:'Cancellation',dpt:'Pré-reserva cancelada',den:'Pre-booking cancelled',fase:'durante'},
-  {id:'cobranca',pt:'Cobrança',en:'Payment',dpt:'1º contacto ou follow-up',den:'1st contact or follow-up',fase:'pos'},
+  {id:'cobranca',pt:'Cobrança',en:'Payment Follow-up',dpt:'Serviços adicionais por regularizar',den:'Additional services pending',fase:'pos'},
+  {id:'envio_factura',pt:'Envio de Factura Final',en:'Final Invoice Submission',dpt:'Emissão de factura final',den:'Final invoice issuance',fase:'pos'},
   {id:'satisfacao',pt:'Formulário de satisfação',en:'Satisfaction survey',dpt:'Pós-evento',den:'Post-event',fase:'pos'}
 ];
 
@@ -856,7 +857,8 @@ function getRequired(){
   if(curType==='follow_up'){ var b=['nome','dataEvento']; return (fields.followUpModo||'proximo')==='proximo'?b.concat(['dataLimite']):b; }
   if(curType==='confirmacao'){ var b=['nome','dataEvento']; return (fields.dadosFiscaisOpcao||'conhecidos')==='conhecidos'?b.concat(['entidade','nif','morada']):b; }
   if(curType==='cancelamento') return ['nome','dataEvento'];
-  if(curType==='cobranca') return ['nome','dataEvento'];
+  if(curType==='cobranca') return ['nome','dataEvento','valor'].concat((fields.cobrancaDoc||'proforma')==='factura'?['numDoc']:[]);
+  if(curType==='envio_factura') return ['nome','dataEvento','numFatura','valorFatura'];
   if(curType==='satisfacao') return ['nome'];
   return [];
 }
@@ -895,10 +897,13 @@ function renderFields(){
     html+=nameFld;html+=dataFld;
   } else if(curType==='cobranca'){
     html+=nameFld;html+=dataFld;
-    html+=fld(is?'Tipo de contacto':'Contact type',sel('cobrancaModo',[{v:'1',l:is?'1º contacto (envio de factura)':'1st contact (invoice submission)'},{v:'2',l:is?'2º contacto (1º follow-up)':'2nd contact (1st follow-up)'},{v:'3',l:is?'3º contacto (2º follow-up, urgente)':'3rd contact (2nd follow-up, urgent)'}],f.cobrancaModo||'1'));
-    html+=fld(is?'Nº da fatura (opcional)':'Invoice number (optional)',inp('fatura',is?'Ex: FT 2025/0034':'e.g. FT 2025/0034',f.fatura));
-    html+=fld(is?'Valor (opcional)':'Amount (optional)',inp('valor',is?'Ex: 1.400.000,00 Kzs':'e.g. 1,400,000.00 Kzs',f.valor));
-    html+=fld(is?'Data de vencimento (opcional)':'Due date (optional)',inp('vencimento',is?'Ex: 30 de Abril de 2026':'e.g. 30 April 2026',f.vencimento));
+    html+=fld(is?'Documento em cobrança':'Document being collected',sel('cobrancaDoc',[{v:'proforma',l:'Proforma'},{v:'factura',l:is?'Factura':'Invoice'}],f.cobrancaDoc||'proforma'));
+    if((f.cobrancaDoc||'proforma')==='factura') html+=fld((is?'Nº da factura':'Invoice number')+req(),inp('numDoc',is?'Ex: FT 2026/0034':'e.g. FT 2026/0034',f.numDoc));
+    html+=fld((is?'Valor':'Amount')+req(),inp('valor',is?'Ex: 1.400.000,00 Kzs':'e.g. 1,400,000.00 Kzs',f.valor));
+  } else if(curType==='envio_factura'){
+    html+=nameFld;html+=dataFld;
+    html+=fld((is?'Nº da factura':'Invoice number')+req(),inp('numFatura',is?'Ex: FT 2026/0034':'e.g. FT 2026/0034',f.numFatura));
+    html+=fld((is?'Valor':'Amount')+req(),inp('valorFatura',is?'Ex: 1.400.000,00 Kzs':'e.g. 1,400,000.00 Kzs',f.valorFatura));
   } else if(curType==='satisfacao'){ html+=nameFld; }
   $('form-fields').innerHTML=html;
   var ss=$('subtypeSel'); if(ss){ ss.onchange=function(){ curSubtype=this.value; renderFields(); }; }
@@ -957,7 +962,22 @@ function buildEmail(){
     return {text:is?'Exmos. Srs.,\n\nEsperamos que este e-mail o encontre bem.\n\nVimos por este meio informar que, não tendo sido recebida confirmação oficial até à data limite estabelecida, e existindo um outro pedido de reserva para as mesmas datas que entretanto foi confirmado, procedemos ao cancelamento da pré-reserva referente ao evento previsto para '+dc+'.\n\nCaso pretenda reagendar o evento ou necessite de qualquer outra assistência, estamos inteiramente à disposição para ajudar.\n\nAgradecemos a compreensão.':'Dear '+nome+',\n\nWe hope this email finds you well.\n\nWe wish to inform you that, as no official confirmation was received by the established deadline, and given that another booking request for the same dates has since been confirmed, we have proceeded with the cancellation of the pre-booking for the event scheduled for '+dc+'.\n\nShould you wish to reschedule the event or require any further assistance, we remain entirely at your disposal.\n\nThank you for your understanding.',table:null};
   }
 
-  if(curType==='cobranca'){ var de3=f.dataEvento||'[data do evento]',ex=[]; if(f.fatura) ex.push(is?'Fatura n.º: '+f.fatura:'Invoice no.: '+f.fatura); if(f.valor) ex.push(is?'Valor: '+f.valor:'Amount: '+f.valor); if(f.vencimento) ex.push(is?'Data de vencimento: '+f.vencimento:'Due date: '+f.vencimento); var det=ex.length?'\n\n'+ex.join('\n'):'',modo=f.cobrancaModo||'1'; if(modo==='1') return {text:is?'Exmos. Srs.,\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento do evento realizado em '+de3+', vimos por este meio partilhar a factura referente aos serviços prestados, que se encontra pendente de liquidação.'+det+'\n\nAgradecíamos a partilha do respectivo comprovativo de pagamento. Caso o pagamento já tenha sido efectuado, pedimos que nos façam chegar o comprovativo para que possamos proceder à reconciliação dos registos.\n\nFicamos a aguardar o vosso retorno.':'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing the event held on '+de3+', we are hereby sharing the invoice related to the services rendered, which remains pending settlement.'+det+'\n\nWe would kindly ask you to share the corresponding proof of payment. Should payment have already been made, please send us the proof so that we may proceed with reconciliation.\n\nWe look forward to your reply.',table:null}; if(modo==='2') return {text:is?'Exmos. Srs.,\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento do e-mail anteriormente enviado, e dado que o valor referente aos serviços prestados no evento de '+de3+' se encontra ainda por liquidar, vimos reforçar o nosso pedido de regularização.'+det+'\n\nAgradecíamos, com a maior brevidade possível, a partilha do respectivo comprovativo de pagamento.\n\nFicamos a aguardar o vosso retorno.':'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing our previous email, and given that the amount related to the services rendered at the event of '+de3+' remains outstanding, we would like to reiterate our request for settlement.'+det+'\n\nWe kindly ask that you share the corresponding proof of payment at your earliest convenience.\n\nWe look forward to your reply.',table:null}; return {text:is?'Exmos. Srs.,\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento dos contactos anteriormente efectuados, e verificando-se que o valor referente aos serviços prestados no evento de '+de3+' permanece por liquidar, vimos reiterar com carácter de urgência o pedido de regularização da situação.'+det+'\n\nAgradecemos que procedam à liquidação e ao envio do respectivo comprovativo com a máxima brevidade, por forma a evitar que o processo seja escalado para a nossa área administrativa.':'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing our previous contacts, and noting that the amount related to the services rendered at the event of '+de3+' remains outstanding, we hereby reiterate with urgency our request for settlement.'+det+'\n\nWe kindly ask that you proceed with payment at the earliest opportunity, in order to avoid this matter being escalated to our administrative team.',table:null}; }
+  if(curType==='cobranca'){
+    var de3=f.dataEvento||'[data do evento]';
+    var doc=f.cobrancaDoc||'proforma';
+    var valStr=f.valor?(is?' no valor de '+f.valor+' Kzs':' in the amount of '+f.valor+' Kzs'):'';
+    var docRefPT=doc==='factura'?'Factura n.\u00ba '+(f.numDoc||'[n\u00ba]'):'Proforma referente a servi\u00e7os adicionais prestados';
+    var docRefEN=doc==='factura'?'Invoice no. '+(f.numDoc||'[no.]'):'Proforma for additional services rendered';
+    return {text:is
+      ?'Exmos. Srs.,\n\nNo seguimento do evento realizado em '+de3+', encontra-se pendente de liquida\u00e7\u00e3o o valor referente \u00e0 '+docRefPT+valStr+'.\n\nAgradecemos que procedam \u00e0 regulariza\u00e7\u00e3o e ao envio do respectivo comprovativo de pagamento com a maior brevidade poss\u00edvel.\n\nFicamos ao dispor para qualquer esclarecimento adicional.'
+      :'Dear '+nome+',\n\nFollowing the event held on '+de3+', the amount related to the '+docRefEN+valStr+' remains pending settlement.\n\nWe kindly ask that you proceed with payment and share the corresponding proof of payment at the earliest convenience.\n\nWe remain at your disposal for any further clarification.',table:null};
+  }
+  if(curType==='envio_factura'){
+    var de4=f.dataEvento||'[data do evento]';
+    return {text:is
+      ?'Exmos. Srs.,\n\nNo seguimento do evento realizado em '+de4+', vimos por este meio partilhar a Factura n.\u00ba '+(f.numFatura||'[n\u00ba]')+', no valor de '+(f.valorFatura||'[valor]')+' Kzs, que segue em anexo para vossa refer\u00eancia e arquivo.\n\nFicamos ao dispor para qualquer esclarecimento adicional.'
+      :'Dear '+nome+',\n\nFollowing the event held on '+de4+', we are pleased to share herewith Invoice no. '+(f.numFatura||'[no.]')+', in the amount of '+(f.valorFatura||'[amount]')+' Kzs, enclosed for your reference and records.\n\nWe remain at your disposal for any further clarification.',table:null};
+  }
 
   if(curType==='satisfacao'){ var ih='<a href="https://bit.ly/QuestionarioHCTAEventos" target="_blank"><img src="https://i.imgur.com/L0EkdiH.jpeg" alt="Questionario Satisfacao HCTA" style="width:100%;max-width:600px;display:block;border:none;"></a><div style="background:#F0EAE3;border:1px dashed #887157;padding:14px;font-size:12px;color:#5A5250;margin-top:8px;border-radius:3px;"><strong style="color:#887157;">'+(is?'Nota para a equipa:':'Team note:')+'</strong> '+(is?'Se a imagem não aparecer no Outlook após colar, inserir manualmente: Inserir → Imagens → Este dispositivo.':'If the image does not appear in Outlook after pasting, insert manually: Insert → Images → This device.')+' <a href="https://i.imgur.com/L0EkdiH.jpeg" download style="color:#887157;font-weight:600;">Download</a> | <a href="https://bit.ly/QuestionarioHCTAEventos" style="color:#887157;">https://bit.ly/QuestionarioHCTAEventos</a></div>'; return {text:is?'Exmos. Srs.,\n\nFoi um gosto receber o seu evento no nosso hotel! Esperamos que tenha sido produtivo e tudo tenha correspondido às suas expectativas.\n\nPara nós, cada detalhe conta, e a sua opinião faz toda a diferença. Preparámos um questionário rápido, que não levará mais do que 2 minutos.\n\n[IMAGEM]\n\nMuito obrigados pela sua colaboração e confiança.\n\nEstamos ao dispor para qualquer questão adicional.':'Dear '+nome+',\n\nIt was a pleasure to host your event at our hotel! We hope it was productive and that everything met your expectations.\n\nEvery detail matters to us, and your opinion makes all the difference. We have prepared a quick questionnaire, which will take no more than 2 minutes.\n\n[IMAGEM]\n\nThank you very much for your collaboration and trust.\n\nWe remain at your disposal for any further questions.',table:null,imgHtml:ih}; }
   return {text:'',table:null};
