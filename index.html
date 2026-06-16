@@ -477,6 +477,45 @@ function diagCalc(){
       matched=true; scenarioFlag='retOnHotel';
     }
     if(!matched&&foraVal>0&&Math.abs(foraRet-foraRet_w)>TOL&&(Math.abs(diff-foraRet_w)<TOL||Math.abs(diff-(foraIVA+foraRet_w))<TOL)){ errs.push(p()?'❌ <strong>Retenção de 6,5% calculada sobre o valor total com IVA</strong> ('+fmt(foraVal)+' × 6,5% = '+fmt(foraRet_w)+' Kzs) em vez da base de incidência. Correcto: '+fmt(foraVal)+' ÷ 1,14 = '+fmt(foraBase)+' Kzs → Retenção = '+fmt(foraRet)+' Kzs.':'❌ <strong>6.5% retention calculated on the total value including VAT</strong> ('+fmt(foraVal)+' × 6.5% = '+fmt(foraRet_w)+' Kzs) instead of tax base. Correct: '+fmt(foraVal)+' ÷ 1.14 = '+fmt(foraBase)+' Kzs → Retention = '+fmt(foraRet)+' Kzs.'); matched=true; scenarioFlag='retWrongBase'; }
+
+    if(!matched&&foraVal>0&&hotVal>0){
+      // Whole proforma treated as fora hotelaria: (14%+6.5%) on pfVal/1.14
+      var pfBase114=pfVal/1.14;
+      var pfIVA_b114=pfBase114*0.14, pfRet_b114=pfBase114*0.065;
+      if(Math.abs(diff-(pfIVA_b114+pfRet_b114))<TOL){
+        errs.push(p()
+          ?'❌ <strong>Toda a proforma tratada como Serviços fora do âmbito da hotelaria.</strong> O cliente calculou cativação de IVA 14% e retenção 6,5% sobre a base de incidência do total da proforma ('+fmt(pfVal)+' ÷ 1,14 = '+fmt(pfBase114)+' Kzs), sem distinguir os Serviços do âmbito da hotelaria. Os Serviços do âmbito da hotelaria estão sujeitos a cativação de IVA a 7% (não 14%) e não estão sujeitos a retenção. O correcto seria: cativação 14% sobre '+fmt(foraVal)+' ÷ 1,14 = '+fmt(foraBase)+' Kzs → '+fmt(foraIVA)+' Kzs; cativação 7% sobre '+fmt(hotVal)+' ÷ 1,07 = '+fmt(hotBase)+' Kzs → '+fmt(hotIVA)+' Kzs; retenção 6,5% sobre '+fmt(foraBase)+' Kzs → '+fmt(foraRet)+' Kzs. Total correcto = '+fmt(foraIVA+hotIVA+foraRet)+' Kzs.'
+          :'❌ <strong>Entire invoice treated as Non-hotel services.</strong> The client calculated VAT withholding 14% and retention 6.5% on the tax base of the total invoice ('+fmt(pfVal)+' ÷ 1.14 = '+fmt(pfBase114)+' Kzs), without distinguishing Hotel services. Hotel services are subject to VAT withholding at 7% (not 14%) and are not subject to retention. Correct: withholding 14% on '+fmt(foraVal)+' ÷ 1.14 = '+fmt(foraBase)+' Kzs → '+fmt(foraIVA)+' Kzs; withholding 7% on '+fmt(hotVal)+' ÷ 1.07 = '+fmt(hotBase)+' Kzs → '+fmt(hotIVA)+' Kzs; retention 6.5% on '+fmt(foraBase)+' Kzs → '+fmt(foraRet)+' Kzs. Total correct = '+fmt(foraIVA+hotIVA+foraRet)+' Kzs.');
+        matched=true; scenarioFlag='pfTotalBase114';
+      }
+    }
+    if(!matched&&foraVal>0&&hotVal>0){
+      var combos=[
+        {val:foraIVA_w+hotIVA_w+foraRet_w, lbl:p()?'Cativação IVA 14% (fora hotelaria) + Cativação IVA 7% (hotelaria) + Retenção 6,5% (fora hotelaria)':'VAT withholding 14% (non-hotel) + VAT withholding 7% (hotel) + Retention 6.5% (non-hotel)', corrPT:fmt(foraIVA)+' + '+fmt(hotIVA)+' + '+fmt(foraRet)+' = '+fmt(foraIVA+hotIVA+foraRet), corrEN:fmt(foraIVA)+' + '+fmt(hotIVA)+' + '+fmt(foraRet)+' = '+fmt(foraIVA+hotIVA+foraRet)},
+        {val:foraIVA_w+foraRet_w, lbl:p()?'Cativação IVA 14% + Retenção 6,5% (ambas sobre fora hotelaria)':'VAT withholding 14% + Retention 6.5% (both on non-hotel services)', corrPT:fmt(foraIVA)+' + '+fmt(foraRet)+' = '+fmt(foraIVA+foraRet), corrEN:fmt(foraIVA)+' + '+fmt(foraRet)+' = '+fmt(foraIVA+foraRet)},
+        {val:hotIVA_w+foraRet_w, lbl:p()?'Cativação IVA 7% (hotelaria) + Retenção 6,5% (fora hotelaria), ambas com base errada':'VAT withholding 7% (hotel) + Retention 6.5% (non-hotel), both on wrong base', corrPT:fmt(hotIVA)+' + '+fmt(foraRet)+' = '+fmt(hotIVA+foraRet), corrEN:fmt(hotIVA)+' + '+fmt(foraRet)+' = '+fmt(hotIVA+foraRet)},
+        {val:foraIVA_w+hotIVA_w, lbl:p()?'Cativação IVA 14% (fora hotelaria) + Cativação IVA 7% (hotelaria), ambas calculadas sobre o valor total':'VAT withholding 14% (non-hotel) + VAT withholding 7% (hotel), both calculated on the full value', corrPT:fmt(foraIVA)+' + '+fmt(hotIVA)+' = '+fmt(foraIVA+hotIVA), corrEN:fmt(foraIVA)+' + '+fmt(hotIVA)+' = '+fmt(foraIVA+hotIVA)},
+      ];
+      var hit=combos.find(function(c){ return Math.abs(c.val)>TOL&&Math.abs(diff-c.val)<TOL; });
+      if(hit){
+        errs.push(p()
+          ?'❌ <strong>'+hit.lbl+', calculadas sobre o valor total em vez da base de incidência.</strong> As deduções foram aplicadas sobre os valores com IVA ('+fmt(foraVal)+' e '+fmt(hotVal)+' Kzs). O cálculo correcto incide sempre sobre a base de incidência (valor ÷ 1,taxa). Valores correctos: '+hit.corrPT+' Kzs.'
+          :'❌ <strong>'+hit.lbl+', calculated on the full value instead of the tax base.</strong> The deductions were applied on the values including VAT ('+fmt(foraVal)+' and '+fmt(hotVal)+' Kzs). The correct calculation must always be based on the tax base (value ÷ 1.rate). Correct values: '+hit.corrEN+' Kzs.');
+        matched=true;
+      }
+    }
+    if(!matched&&foraVal>0){
+      var combos1=[
+        {val:foraIVA_w+foraRet_w, lbl:p()?'Cativação IVA 14% + Retenção 6,5% sobre fora hotelaria, ambas calculadas sobre o valor total':'VAT withholding 14% + Retention 6.5% on non-hotel services, both calculated on the full value', corrPT:fmt(foraIVA)+' + '+fmt(foraRet)+' = '+fmt(foraIVA+foraRet), corrEN:fmt(foraIVA)+' + '+fmt(foraRet)+' = '+fmt(foraIVA+foraRet)},
+      ];
+      var hit1=combos1.find(function(c){ return Math.abs(c.val)>TOL&&Math.abs(diff-c.val)<TOL; });
+      if(hit1){
+        errs.push(p()
+          ?'❌ <strong>'+hit1.lbl+'.</strong> O cálculo correcto incide sobre a base de incidência ('+fmt(foraVal)+' ÷ 1,14 = '+fmt(foraBase)+' Kzs). Valores correctos: '+hit1.corrPT+' Kzs.'
+          :'❌ <strong>'+hit1.lbl+'.</strong> The correct calculation must be based on the tax base ('+fmt(foraVal)+' ÷ 1.14 = '+fmt(foraBase)+' Kzs). Correct values: '+hit1.corrEN+' Kzs.');
+        matched=true;
+      }
+    }
     if(!matched){ var pct=(diff/pfVal*100).toFixed(2); errs.push(p()?'⚠️ O valor deduzido (<strong>'+fmt(diff)+' Kzs</strong>, '+pct+'% da proforma) não corresponde a nenhum cenário padrão identificado. Recomenda-se verificar os detalhes com o cliente.':'⚠️ The deducted amount (<strong>'+fmt(diff)+' Kzs</strong>, '+pct+'% of invoice) does not match any standard scenario. Please verify the details with the client.'); }
     errs.forEach(function(e){ msgs.push({t:e.indexOf('⚠️')===0?'warn':'err',txt:e}); });
     }
@@ -560,6 +599,7 @@ function generateDiagEmail(){
   var isCatTotal14=d.scenarioFlag==='catTotal14';
   var isCatTotal7=d.scenarioFlag==='catTotal7';
   var isRetOnHotel=d.scenarioFlag==='retOnHotel';
+  var isPfTotalBase114=d.scenarioFlag==='pfTotalBase114';
   var missing=d.pfVal-d.paidVal;
   var corrRet=d.foraRet,corrCat=d.foraIVA;
   var corrPaidRetOnly=d.pfVal-corrRet,corrPaidCatOnly=d.pfVal-corrCat;
@@ -656,8 +696,25 @@ function generateDiagEmail(){
     body=is
       ?'Exmos. Srs.,\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento do pagamento recebido referente à nossa factura, verificámos uma divergência no valor liquidado que importa clarificar.\n\n[TABELA]\n\nA retenção de Imposto Industrial foi aplicada de forma incorrecta, por dois motivos: em primeiro lugar, os serviços do âmbito da hotelaria não estão sujeitos a retenção na fonte, ao abrigo da Lei 19/14 e Lei 26/20 (art.º 67.º); em segundo lugar, a retenção deve incidir sobre a base de incidência (valor sem IVA), e não sobre o valor com IVA.\n\nAssim, a retenção correcta seria apenas sobre os serviços fora do âmbito da hotelaria, calculada sobre a respectiva base de incidência: '+fmt(d.foraVal)+' ÷ 1,14 = '+fmt(d.foraBase)+' Kzs → Retenção correcta = '+fmt(corrRetHot)+' Kzs.\n\nO valor actualmente em falta é de '+fmt(missingRetHot)+' Kzs. Solicita-se a regularização com a maior brevidade possível, acompanhada do respectivo comprovativo de pagamento.\n\nFicamos ao dispor para qualquer esclarecimento adicional.'
       :'Dear Sir/Madam,\n\nWe hope this email finds you well.\n\nFollowing the payment received for our invoice, we have identified a discrepancy in the amount settled that we would like to clarify.\n\n[TABELA]\n\nThe industrial tax retention was applied incorrectly, for two reasons: firstly, hotel and similar services are not subject to withholding tax under Law 19/14 and Law 26/20 (art. 67); secondly, the retention must be based on the tax base (value excluding VAT), not on the value including VAT.\n\nAccordingly, the correct retention should be applied only to non-hotel services, calculated on the respective tax base: '+fmt(d.foraVal)+' ÷ 1.14 = '+fmt(d.foraBase)+' Kzs → Correct retention = '+fmt(corrRetHot)+' Kzs.\n\nThe amount currently outstanding is '+fmt(missingRetHot)+' Kzs. We kindly request that the outstanding amount be settled at the earliest convenience, with the corresponding proof of payment.\n\nWe remain at your disposal for any further clarification.';
+  } else if(isPfTotalBase114){
+    var pfBase114=d.pfVal/1.14,corrTotal=d.foraIVA+d.hotIVA+d.foraRet,corrPaid=d.pfVal-corrTotal,diffP=missing-corrTotal,isOverP=diffP<0;
+    subject=is?'Divergência no Pagamento: Esclarecimento sobre Cativação de IVA e Retenção na Fonte':'Payment Discrepancy: Clarification on VAT Withholding and Retention';
+    tableHtml=tbl1([
+      {lbl:is?'Valor total da proforma':'Total invoice value',val:fmt(d.pfVal)+' Kzs'},
+      {lbl:is?'Serviços fora do âmbito da hotelaria (IVA 14%)':'Non-hotel services (VAT 14%)',val:fmt(d.foraVal)+' Kzs'},
+      {lbl:is?'Serviços do âmbito da hotelaria (IVA 7%)':'Hotel services (VAT 7%)',val:fmt(d.hotVal)+' Kzs'},
+      {lbl:is?'Deduções efectuadas (14% + 6,5% sobre base total)':'Deductions applied (14% + 6.5% on total base)',val:fmt(missing)+' Kzs',color:'#e74c3c',highlight:true},
+      {lbl:is?'Cativação correcta (14% fora hotelaria + 7% hotelaria)':'Correct withholding (14% non-hotel + 7% hotel)',val:fmt(d.foraIVA+d.hotIVA)+' Kzs',color:'#1a6b3a'},
+      {lbl:is?'Retenção correcta (6,5% fora hotelaria, base de incidência)':'Correct retention (6.5% non-hotel, tax base)',val:fmt(d.foraRet)+' Kzs',color:'#1a6b3a'},
+      {lbl:is?'Total de deduções correcto':'Total correct deductions',val:fmt(corrTotal)+' Kzs',bold:true,color:'#1a6b3a'},
+      isOverP
+        ?{lbl:is?'Valor pago a mais (a favor do cliente)':'Amount overpaid (in favour of client)',val:fmt(Math.abs(diffP))+' Kzs',bold:true,color:'#1a6b3a'}
+        :{lbl:is?'Valor em falta':'Outstanding amount',val:fmt(diffP)+' Kzs',bold:true},
+    ],is?'Análise do Pagamento':'Payment Analysis');
+    body=is
+      ?'Exmos. Srs.,\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento do pagamento recebido referente à nossa factura, verificámos uma divergência no valor liquidado que importa clarificar.\n\n[TABELA]\n\nA nossa factura inclui dois tipos de serviços com enquadramento fiscal distinto: Serviços fora do âmbito da hotelaria ('+fmt(d.foraVal)+' Kzs, sujeitos a IVA de 14%) e Serviços do âmbito da hotelaria ('+fmt(d.hotVal)+' Kzs, sujeitos a IVA de 7%).\n\nVerificámos que as deduções foram calculadas aplicando cativação de IVA 14% e retenção de 6,5% sobre a base de incidência do total da proforma ('+fmt(d.pfVal)+' ÷ 1,14 = '+fmt(pfBase114)+' Kzs), sem distinguir os dois tipos de serviço. Esta abordagem não corresponde ao enquadramento legal: os Serviços do âmbito da hotelaria estão sujeitos a cativação de IVA à taxa de 7% (não 14%) e não estão sujeitos a retenção de Imposto Industrial.\n\nAs deduções correctas seriam: cativação de IVA 14% sobre os Serviços fora do âmbito da hotelaria ('+fmt(d.foraVal)+' ÷ 1,14 = '+fmt(d.foraBase)+' Kzs → '+fmt(d.foraIVA)+' Kzs); cativação de IVA 7% sobre os Serviços do âmbito da hotelaria ('+fmt(d.hotVal)+' ÷ 1,07 = '+fmt(d.hotBase)+' Kzs → '+fmt(d.hotIVA)+' Kzs); retenção de Imposto Industrial 6,5% sobre os Serviços fora do âmbito da hotelaria ('+fmt(d.foraBase)+' Kzs → '+fmt(d.foraRet)+' Kzs). Total correcto = '+fmt(corrTotal)+' Kzs.\n\n'+(isOverP?'O valor recebido ('+fmt(d.paidVal)+' Kzs) é superior ao que resultaria da aplicação correcta das deduções ('+fmt(corrPaid)+' Kzs). O valor pago a mais, no montante de '+fmt(Math.abs(diffP))+' Kzs, poderá ser regularizado a favor da vossa entidade, nomeadamente através de crédito em factura futura.':'O valor actualmente em falta é de '+fmt(diffP)+' Kzs. Solicita-se a regularização com a maior brevidade possível, acompanhada do respectivo comprovativo de pagamento.')+'\n\nFicamos ao dispor para qualquer esclarecimento adicional.'
+      :'Dear Sir/Madam,\n\nWe hope this email finds you well.\n\nFollowing the payment received for our invoice, we have identified a discrepancy in the amount settled that we would like to clarify.\n\n[TABELA]\n\nOur invoice includes two types of services with different tax treatment: Non-hotel services ('+fmt(d.foraVal)+' Kzs, subject to 14% VAT) and Hotel services ('+fmt(d.hotVal)+' Kzs, subject to 7% VAT).\n\nWe have noted that the deductions were calculated by applying VAT withholding at 14% and retention at 6.5% on the tax base of the total invoice ('+fmt(d.pfVal)+' ÷ 1.14 = '+fmt(pfBase114)+' Kzs), without distinguishing between the two types of service. This approach does not correspond to the applicable legal framework: Hotel services are subject to VAT withholding at 7% (not 14%) and are not subject to Industrial Tax retention.\n\nThe correct deductions would be: VAT withholding 14% on Non-hotel services ('+fmt(d.foraVal)+' ÷ 1.14 = '+fmt(d.foraBase)+' Kzs → '+fmt(d.foraIVA)+' Kzs); VAT withholding 7% on Hotel services ('+fmt(d.hotVal)+' ÷ 1.07 = '+fmt(d.hotBase)+' Kzs → '+fmt(d.hotIVA)+' Kzs); Industrial Tax retention 6.5% on Non-hotel services ('+fmt(d.foraBase)+' Kzs → '+fmt(d.foraRet)+' Kzs). Total correct = '+fmt(corrTotal)+' Kzs.\n\n'+(isOverP?'The amount received ('+fmt(d.paidVal)+' Kzs) is higher than what would result from the correct application of the deductions ('+fmt(corrPaid)+' Kzs). The overpaid amount of '+fmt(Math.abs(diffP))+' Kzs may be credited in favour of your entity, namely against a future invoice.':'The amount currently outstanding is '+fmt(diffP)+' Kzs. We kindly request that the outstanding amount be settled at the earliest convenience, with the corresponding proof of payment.')+'\n\nWe remain at your disposal for any further clarification.';
   } else {
-    subject=is?'Esclarecimento sobre Dedução Efectuada no Pagamento':'Clarification on Deduction Applied to Payment';
     tableHtml=tbl1([
       {lbl:is?'Valor da proforma':'Invoice value',val:fmt(d.pfVal)+' Kzs'},
       {lbl:is?'Valor recebido':'Amount received',val:fmt(d.paidVal)+' Kzs'},
