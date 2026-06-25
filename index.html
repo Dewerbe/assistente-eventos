@@ -103,23 +103,23 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
 .form-panel-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--bronze)}
 .form-body{padding:14px 16px;max-height:calc(100vh - 200px);overflow-y:auto}
 .fsec{margin-bottom:14px}
-.fsec-title{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--bronze);padding-bottom:5px;border-bottom:1px solid var(--gl);margin-bottom:8px}
+.fsec-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--bronze);padding-bottom:5px;border-bottom:1px solid var(--gl);margin-bottom:8px}
 .fg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .fg.full{grid-template-columns:1fr}
-.ff label{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--gm);display:block;margin-bottom:3px}
-.ff input,.ff select,.ff textarea{width:100%;border:1px solid var(--gl);border-radius:2px;padding:6px 9px;font-family:'Montserrat',sans-serif;font-size:11px;color:var(--black);outline:none;background:#fff}
+.ff label{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--gm);display:block;margin-bottom:3px}
+.ff input,.ff select,.ff textarea{width:100%;border:1px solid var(--gl);border-radius:2px;padding:6px 9px;font-family:'Montserrat',sans-serif;font-size:13px;color:var(--black);outline:none;background:#fff}
 .ff input:focus,.ff select:focus,.ff textarea:focus{border-color:var(--bronze)}
 .ff textarea{resize:vertical;min-height:44px}
 .day-blk{border:1px solid var(--gl);border-radius:2px;margin-bottom:8px;overflow:hidden}
 .day-blk-hdr{background:var(--black);color:#fff;padding:7px 12px;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:10}
-.day-blk-hdr span{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.day-blk-hdr span{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
 .day-blk-hdr .dx{margin-left:auto;background:none;border:none;color:#777;cursor:pointer;font-size:14px}
 .room-blk{border-bottom:1px solid var(--gl);padding:10px 12px}
 .room-blk:last-of-type{border-bottom:none}
 .room-row1{display:grid;grid-template-columns:1fr 58px;gap:6px;margin-bottom:6px}
 .room-row2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px}
-.rm-label{font-size:9px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--gm);margin-bottom:3px}
-.rm-input{width:100%;border:1px solid var(--gl);border-radius:2px;padding:5px 8px;font-family:'Montserrat',sans-serif;font-size:11px;color:var(--black);outline:none}
+.rm-label{font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--gm);margin-bottom:3px}
+.rm-input{width:100%;border:1px solid var(--gl);border-radius:2px;padding:6px 9px;font-family:'Montserrat',sans-serif;font-size:13px;color:var(--black);outline:none}
 .rm-input:focus{border-color:var(--bronze)}
 .svc-blk{background:var(--gbg);border-radius:2px;padding:7px 9px;margin-bottom:4px}
 /* Modal de escolhas */
@@ -146,10 +146,10 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
 /* Botão de escolhas inline no serviço */
 .choices-trigger-btn{font-size:8px;font-weight:700;padding:2px 8px;border-radius:2px;border:1px solid var(--bronze-l);background:var(--bronze-ll);color:var(--bronze);cursor:pointer;white-space:nowrap;font-family:'Montserrat',sans-serif}
 .choices-trigger-btn.has-choices{background:var(--bronze);color:#fff;border-color:var(--bronze)}
-.svc-nota{width:100%;border:none;border-top:1px dashed var(--gl);background:transparent;font-family:'Montserrat',sans-serif;font-size:8px;color:var(--gd);padding:4px 2px 2px;resize:none;outline:none;line-height:1.4;margin-top:4px}
+.svc-nota{width:100%;border:none;border-top:1px dashed var(--gl);background:transparent;font-family:'Montserrat',sans-serif;font-size:11px;color:var(--gd);padding:4px 2px 2px;resize:none;outline:none;line-height:1.4;margin-top:4px}
 .svc-nota::placeholder{color:#bbb;font-style:italic}
 .svc-row{display:grid;grid-template-columns:80px 1fr 52px 20px;gap:4px;align-items:center}
-.svc-input{border:1px solid var(--gl);border-radius:2px;padding:5px 8px;font-family:'Montserrat',sans-serif;font-size:11px;color:var(--black);outline:none;width:100%}
+.svc-input{border:1px solid var(--gl);border-radius:2px;padding:6px 9px;font-family:'Montserrat',sans-serif;font-size:13px;color:var(--black);outline:none;width:100%}
 .svc-input:focus{border-color:var(--bronze)}
 .btn-xs{font-size:11px;cursor:pointer;border:none;background:none;color:#bbb;padding:0 2px}
 .btn-xs:hover{color:var(--red)}
@@ -1621,7 +1621,7 @@ function addDay(dateVal){
   var id='day'+dayCounter;
   var div=document.createElement('div');
   div.className='day-blk';div.id=id;
-  div.innerHTML='<div class="day-blk-hdr"><span>Dia '+dayCounter+'</span><input type="date" id="'+id+'-date" value="'+(dateVal||'')+'" style="background:transparent;border:none;border-bottom:1px dashed #666;outline:none;color:var(--bronze-l);font-family:\'Montserrat\',sans-serif;font-size:9px;font-weight:700;cursor:pointer;padding:0 2px;color-scheme:dark"><button class="dx" title="Copiar dia" onclick="copyDay(\''+id+'\')" style="color:var(--bronze-l);font-size:11px;margin-right:2px">⧉</button><button class="dx" onclick="document.getElementById(\''+id+'\').remove()">×</button></div><div id="'+id+'-rooms"></div><div style="padding:6px 10px 8px"><button class="btn-add-sm" onclick="addRoom(\''+id+'\')">+ Sala</button></div>';
+  div.innerHTML='<div class="day-blk-hdr"><span>Dia '+dayCounter+'</span><input type="date" id="'+id+'-date" value="'+(dateVal||'')+'" style="background:transparent;border:none;border-bottom:1px dashed #666;outline:none;color:var(--bronze-l);font-family:\'Montserrat\',sans-serif;font-size:12px;font-weight:700;cursor:pointer;padding:0 2px;color-scheme:dark"><button class="dx" title="Copiar dia" onclick="copyDay(\''+id+'\')" style="color:var(--bronze-l);font-size:11px;margin-right:2px">⧉</button><button class="dx" onclick="document.getElementById(\''+id+'\').remove()">×</button></div><div id="'+id+'-rooms"></div><div style="padding:6px 10px 8px"><button class="btn-add-sm" onclick="addRoom(\''+id+'\')">+ Sala</button></div>';
   $('days-container').appendChild(div);
   addRoom(id);
   return id;
