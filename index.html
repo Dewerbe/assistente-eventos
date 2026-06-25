@@ -491,6 +491,10 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
       <div style="width:40px;height:1px;background:#887157;margin-bottom:20px;"></div>
       <div class="mapa-toolbar">
         <label class="tb-btn-sm open" style="cursor:pointer">
+          📂 Carregar OS
+          <input type="file" accept=".json" style="display:none" onchange="loadOSJson(event)">
+        </label>
+        <label class="tb-btn-sm open" style="cursor:pointer">
           📂 Carregar Proforma
           <input type="file" accept=".json" style="display:none" onchange="loadProformaJSON(event)">
         </label>
@@ -1939,23 +1943,30 @@ function collectForm(){
     var rooms=[];
     dayEl.querySelectorAll('.room-blk').forEach(function(roomEl){
       var rid=roomEl.id;
-      var sala=roomEl.querySelector('#'+rid+'-sala-wrap select')?roomEl.querySelector('#'+rid+'-sala-wrap select').value:'';
-      var hi=$(rid+'-hi')?$(rid+'-hi').value:'';
-      var hf=$(rid+'-hf')?$(rid+'-hf').value:'';
-      var pax=parseInt($(rid+'-pax')?$(rid+'-pax').value:0)||0;
-      var layout=roomEl.querySelector('#'+rid+'-layout-wrap select')?roomEl.querySelector('#'+rid+'-layout-wrap select').value:'';
+      // Sala
+      var salaWrap=$(rid+'-sala-wrap');
+      var salaEl=salaWrap?salaWrap.querySelector('select'):null;
+      var sala=salaEl?salaEl.value:'';
+      // Horários
+      var hiEl=$(rid+'-hi'); var hi=hiEl?hiEl.value:'';
+      var hfEl=$(rid+'-hf'); var hf=hfEl?hfEl.value:'';
+      // Pax — guardar como string para não perder valor
+      var paxEl=$(rid+'-pax'); var pax=paxEl?paxEl.value:'';
+      // Layout
+      var layoutWrap=$(rid+'-layout-wrap');
+      var layoutEl=layoutWrap?layoutWrap.querySelector('select'):null;
+      var layout=layoutEl?layoutEl.value:'—';
+      // Serviços
       var svcs=[];
       roomEl.querySelectorAll('.svc-blk').forEach(function(svcEl){
         var sid=svcEl.id;
-        var t=$(sid+'-t')?$(sid+'-t').value:'';
-        var n=$(sid+'-n')?$(sid+'-n').value:'';
-        var p2=parseInt($(sid+'-p')?$(sid+'-p').value:0)||0;
-        var descEl=$(sid+'-desc');
-        var desc=descEl?descEl.textContent:'';
-        var notaEl=$(sid+'-nota');
-        var nota=notaEl?notaEl.value.trim():'';
+        var tEl=$(sid+'-t'); var t=tEl?tEl.value:'';
+        var nEl=$(sid+'-n'); var n=nEl?nEl.value:'';
+        var pEl=$(sid+'-p'); var p2=pEl?pEl.value:'';
+        var descEl=$(sid+'-desc'); var desc=descEl?descEl.textContent:'';
+        var notaEl=$(sid+'-nota'); var nota=notaEl?notaEl.value.trim():'';
         var escolhas=getChoicesSummary(sid);
-        if(n)svcs.push({horario:t,nome:n,pax:p2,desc,nota,escolhas});
+        if(n)svcs.push({horario:t,nome:n,pax:p2,desc:desc,nota:nota,escolhas:escolhas});
       });
       rooms.push({sala:sala,horarioInicio:hi,horarioFim:hf,pax:pax,layout:layout,servicos:svcs});
     });
@@ -2183,6 +2194,7 @@ function generateOS(){
   }
 
   // ── DIAS ──
+  var dateLabel2=dateLabel;
   for(var di=0;di<allDays.length;di++){
     var day=allDays[di];
     var dayLabel=day.date?(function(dt){
@@ -2190,16 +2202,24 @@ function generateOS(){
     })(new Date(day.date+'T12:00:00')):'—';
 
     html+='<div class="os-day'+(di>0?' os-day-next':'')+'">';
-    // Cabeçalho compacto nos dias seguintes ao primeiro
+    // Cabeçalho completo repetido a partir do 2º dia
     if(di>0){
-      html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 6px;border-top:3px solid var(--bronze);margin-bottom:4px;">'
-        +'<div style="display:flex;align-items:center;gap:12px;">'
-        +'<img src="./FOTOS/Imagem1.png" alt="HCTA" style="height:36px;width:auto;display:block;" onerror="this.style.display=\'none\'">'
-        +'<div style="font-size:8px;color:var(--gd);line-height:1.6;"><strong style="font-size:9px;font-weight:700;color:var(--black);">'+(d.ent||'')+'</strong>'+(d.con?'<br>'+d.con:'')+'</div>'
+      html+='<div class="osdh"><div class="osdh-row">'
+        +'<div class="os-brand">'
+        +'<img src="./FOTOS/Imagem1.png" alt="HCTA" style="height:64px;width:auto;display:block;margin-bottom:6px;" onerror="this.style.display=\'none\'">'
+        +'<div class="ba">HENDA HOTELARIA, LDA — NIF: 5001094645<br>Av. Pedro de Castro Van-Dunen Loy, Luanda</div>'
         +'</div>'
-        +'<div style="text-align:right;font-size:8px;color:var(--gm);">'
-        +(d.rsv?'<div><span style="letter-spacing:.5px;text-transform:uppercase;">Nº Evento</span> <strong style="color:var(--black);">'+d.rsv+'</strong></div>':'')
-        +'<div><span style="letter-spacing:.5px;text-transform:uppercase;">Assessor</span> <strong style="color:var(--black);">'+signName+'</strong></div>'
+        +'<div class="os-title-area">'
+        +'<div class="os-title">Ordem de Serviço</div>'
+        +'<div class="ombox">'
+        +(d.rsv?'<div class="oml">Nº Evento</div><div class="omv">'+d.rsv+'</div>':'')
+        +'<div class="oml">Data de Emissão</div><div class="omv">'+fmtDate(todayIso())+'</div>'
+        +(signName?'<div class="oml">Assessor</div><div class="omv">'+signName+'</div>':'')
+        +'</div></div></div></div>';
+      html+='<div class="os-cli"><div class="ocg">'
+        +'<div class="ocl">Entidade</div><div class="ocv" style="font-weight:700">'+(d.ent||'—')+'</div>'
+        +(d.con?'<div class="ocl">Contacto</div><div class="ocv">'+d.con+'</div>':'')
+        +(dateLabel2?'<div class="ocl">Data</div><div class="ocv" style="font-weight:600">'+dateLabel2+'</div>':'')
         +'</div></div>';
     }
     html+='<div class="os-day-hdr"><div class="os-day-name">'+dayLabel+'</div></div>';
@@ -2276,6 +2296,19 @@ function generateOS(){
 
   $('os-output').innerHTML=html;
   $('os-output').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function loadOSJson(ev){
+  var file=ev.target.files[0];if(!file)return;
+  var r=new FileReader();
+  r.onload=function(e){
+    try{
+      var d=JSON.parse(e.target.result);
+      fillFormFromData(d);
+      geToast('OS carregada com sucesso.');
+    }catch(err){geToast('Erro ao ler ficheiro OS.');}
+  };
+  r.readAsText(file);ev.target.value='';
 }
 
 function saveOSJson(){
