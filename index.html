@@ -1381,12 +1381,21 @@ function parseXLS(rows){
         if(nome2==='Adicionais'){curEv=null;continue;}
         // Ignorar linhas que são contagens (números) ou cabeçalhos
         if(nome2==='Recurso'||/^\d+\.?\d*$/.test(nome2))continue;
+        var nomeOrig2=nome2;
+        // Guardar sufixo de restaurante antes de remover
+        var restMatch2=nome2.match(/RESTAURANTE\s+(HOTEL|CCTA)/i);
+        var restTipo2=restMatch2?restMatch2[1].toUpperCase():'';
         nome2=nome2.replace(/\s*-\s*RESTAURANTE\s+(HOTEL|CCTA|H[OC]\w*)/gi,'').trim();
         // Ignorar AV e logística
-        var ignorar2=['DATA SHOW','FLIPCHART','PAINEL LED','PROJETOR','MICROFONE','TELEVISAO','TELEVISÃO'];
+        var ignorar2=['DATA SHOW','FLIPCHART','PAINEL LED','PROJETOR','MICROFONE','TELEVISAO','TELEVISÃO','SUPLEMENTO','FUNDO DIA','ALOJAMENTO','TRANSFER','DECORAÇÃO','DECORACAO','SONORIZACAO','SONORIZAÇÃO','ILUMINACAO','ILUMINAÇÃO'];
         var skip2=false;for(var ig2=0;ig2<ignorar2.length;ig2++){if(nome2.toUpperCase().includes(ignorar2[ig2])){skip2=true;break;}}
         if(skip2)continue;
-        if(nome2&&!nome2.startsWith('Evento')){if(!curEv.servicos.find(function(s){return s.nome===nome2;})){curEv.servicos.push({nome:nome2,pax:parseInt(row[13])||0});}}
+        var svcPax2=parseInt(String(row[13])||'0')||0;
+        if(nome2&&!nome2.startsWith('Evento')){
+          // Permitir duplicados com pax diferentes (ex: BFE 40p e BFE 16p do mesmo evento)
+          // mas guardar o tipo de restaurante para filtragem posterior
+          curEv.servicos.push({nome:nome2,pax:svcPax2,rest:restTipo2});
+        }
       }
     }
   }
@@ -1402,9 +1411,11 @@ var SIGLAS={
   'pequeno-almoço continental':'PAC','pequeno-almoço hcta':'PAH',
   // Buffets
   'buffet executivo':'BFE','buffet do executivo':'BFE','buffet selecção':'BFS','buffet angolano':'BFA','buffet hcta':'BFH',
-  // Cocktails
+  // Cocktails e Canapés
   'cocktail dinatoire':'CDN',
   'canapés — package 1':'CN1','canapés — package 2':'CN2','canapés — package 3':'CN3',
+  'canapes - package 1':'CN1','canapes - package 2':'CN2','canapes - package 3':'CN3',
+  'canapes package 1':'CN1','canapes package 2':'CN2','canapes package 3':'CN3',
   // Menus
   'menu empratado i':'MEI','menu empratado ii':'MEII',
   // Finger food
@@ -1412,25 +1423,28 @@ var SIGLAS={
   // Bebidas
   'suplemento de bebidas — essential':'SBE','suplemento de bebidas — hcta':'SBH','suplemento de bebidas — premium':'SBP',
   'package bebidas — essential':'PBE','package bebidas — talatona':'PBT','package bebidas — hcta':'PBH','package bebidas — premium':'PBP',
+  'package bebidas essential':'PBE','package bebidas talatona':'PBT','package bebidas hcta':'PBH','package bebidas premium':'PBP',
   // Refeições genéricas
   'almoço':'ALM','jantar':'JNT','cocktail':'CKT','brunch':'BRN','gala dinner':'GAL',
-  'welcome drink':'WD','coffee break':'CB','ceia':'CEI'
+  'welcome drink':'WD','coffee break':'CB','ceia':'CEI',
+  // Alojamento e Fundo Dia
+  'alojamento':'A','fundo dia':'FID'
 };
 
-// Categorias a ignorar no mapa (logística, não F&B)
 var SIGLAS_IGNORAR=[
-  'projetor','data show','flip chart','microfone','televisão','painel led',
-  'breakfast box','lunch box','box','audiovisual'
+  'projetor','data show','flip chart','flipchart','microfone','televisão','televisao','painel led',
+  'breakfast box','lunch box','audiovisual','suplemento','fundo dia','alojamento',
+  'transfer','decoração','decoracao','sonorizacao','sonorização','iluminacao','iluminação'
 ];
 
 function svcSigla(nome){
   if(!nome)return'';
   var k=nome.toLowerCase().trim();
-  // Ignorar AV e Boxes
+  // Ignorar AV, logística e canapés (aparecem separados)
   for(var i=0;i<SIGLAS_IGNORAR.length;i++){if(k.includes(SIGLAS_IGNORAR[i]))return null;}
   for(var sig in SIGLAS){if(k.includes(sig))return SIGLAS[sig];}
-  // fallback: iniciais
-  return nome.split(/\s+/).map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,4);
+  // Sem fallback — se não reconhece, não mostra
+  return null;
 }
 
 function svcTurno(svc){
@@ -1533,7 +1547,7 @@ function renderMapa(){
           var matched=false;
           for(var k=0;k<siglasList.length;k++){
             var sig3=siglasList[k];
-            if(sig3==='BFE'&&nome3.includes('buffet executivo')){matched=true;break;}
+            if(sig3==='BFE'&&nome3.includes('buffet executivo')&&(sv.rest==='HOTEL'||sv.rest==='')){matched=true;break;}
             if(sig3==='BFS'&&nome3.includes('buffet selec')){matched=true;break;}
             if(sig3==='BFA'&&nome3.includes('buffet angolano')){matched=true;break;}
             if(sig3==='BFH'&&nome3.includes('buffet hcta')){matched=true;break;}
