@@ -1377,8 +1377,16 @@ function parseXLS(rows){
       }
       if(!c0&&curEv&&String(row[9]||'').trim()){
         var nome2=String(row[9]||'').trim();
+        // Parar de adicionar serviços quando encontra 'Adicionais'
+        if(nome2==='Adicionais'){curEv=null;continue;}
+        // Ignorar linhas que são contagens (números) ou cabeçalhos
+        if(nome2==='Recurso'||/^\d+\.?\d*$/.test(nome2))continue;
         nome2=nome2.replace(/\s*-\s*RESTAURANTE\s+(HOTEL|CCTA|H[OC]\w*)/gi,'').trim();
-        if(nome2&&!nome2.startsWith('Evento')&&nome2!=='Recurso'){if(!curEv.servicos.find(function(s){return s.nome===nome2;})){curEv.servicos.push({nome:nome2,pax:parseInt(row[13])||0});}}
+        // Ignorar AV e logística
+        var ignorar2=['DATA SHOW','FLIPCHART','PAINEL LED','PROJETOR','MICROFONE','TELEVISAO','TELEVISÃO'];
+        var skip2=false;for(var ig2=0;ig2<ignorar2.length;ig2++){if(nome2.toUpperCase().includes(ignorar2[ig2])){skip2=true;break;}}
+        if(skip2)continue;
+        if(nome2&&!nome2.startsWith('Evento')){if(!curEv.servicos.find(function(s){return s.nome===nome2;})){curEv.servicos.push({nome:nome2,pax:parseInt(row[13])||0});}}
       }
     }
   }
