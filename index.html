@@ -111,7 +111,7 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
 .ff input:focus,.ff select:focus,.ff textarea:focus{border-color:var(--bronze)}
 .ff textarea{resize:vertical;min-height:44px}
 .day-blk{border:1px solid var(--gl);border-radius:2px;margin-bottom:8px;overflow:hidden}
-.day-blk-hdr{background:var(--black);color:#fff;padding:7px 12px;display:flex;align-items:center;gap:8px}
+.day-blk-hdr{background:var(--black);color:#fff;padding:7px 12px;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:10}
 .day-blk-hdr span{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
 .day-blk-hdr .dx{margin-left:auto;background:none;border:none;color:#777;cursor:pointer;font-size:14px}
 .room-blk{border-bottom:1px solid var(--gl);padding:10px 12px}
@@ -1617,7 +1617,7 @@ function addDay(dateVal){
   var id='day'+dayCounter;
   var div=document.createElement('div');
   div.className='day-blk';div.id=id;
-  div.innerHTML='<div class="day-blk-hdr"><span>Dia '+dayCounter+'</span><input type="date" id="'+id+'-date" value="'+(dateVal||'')+'" style="background:transparent;border:none;border-bottom:1px dashed #666;outline:none;color:var(--bronze-l);font-family:\'Montserrat\',sans-serif;font-size:9px;font-weight:700;cursor:pointer;padding:0 2px;color-scheme:dark"><button class="dx" onclick="document.getElementById(\''+id+'\').remove()">×</button></div><div id="'+id+'-rooms"></div><div style="padding:6px 10px 8px"><button class="btn-add-sm" onclick="addRoom(\''+id+'\')">+ Sala</button></div>';
+  div.innerHTML='<div class="day-blk-hdr"><span>Dia '+dayCounter+'</span><input type="date" id="'+id+'-date" value="'+(dateVal||'')+'" style="background:transparent;border:none;border-bottom:1px dashed #666;outline:none;color:var(--bronze-l);font-family:\'Montserrat\',sans-serif;font-size:9px;font-weight:700;cursor:pointer;padding:0 2px;color-scheme:dark"><button class="dx" title="Copiar dia" onclick="copyDay(\''+id+'\')" style="color:var(--bronze-l);font-size:11px;margin-right:2px">⧉</button><button class="dx" onclick="document.getElementById(\''+id+'\').remove()">×</button></div><div id="'+id+'-rooms"></div><div style="padding:6px 10px 8px"><button class="btn-add-sm" onclick="addRoom(\''+id+'\')">+ Sala</button></div>';
   $('days-container').appendChild(div);
   addRoom(id);
   return id;
@@ -1864,6 +1864,64 @@ function addSvcManual(roomId,s){
   if(tSelSvc) tSelSvc.outerHTML=timeSelectHTML(sid+'-t',s.horario||'','svc-input');
 }
 
+function copyDay(srcId){
+  var srcDiv=document.getElementById(srcId);
+  if(!srcDiv)return;
+  var srcDateVal=document.getElementById(srcId+'-date')?document.getElementById(srcId+'-date').value:'';
+  // Data do novo dia = dia seguinte
+  var newDate='';
+  if(srcDateVal){
+    var d=new Date(srcDateVal+'T12:00:00');
+    d.setDate(d.getDate()+1);
+    newDate=d.toISOString().split('T')[0];
+  }
+  // Recolher dados do dia usando collectForm
+  var allDays=[];
+  document.querySelectorAll('.day-blk').forEach(function(dayEl){
+    if(dayEl.id!==srcId)return;
+    var rooms=[];
+    dayEl.querySelectorAll('.room-blk').forEach(function(roomEl){
+      var rid=roomEl.id;
+      var salaWrap=document.getElementById(rid+'-sala-wrap');
+      var sala=salaWrap&&salaWrap.querySelector('select')?salaWrap.querySelector('select').value:'';
+      var hi=document.getElementById(rid+'-hi')?document.getElementById(rid+'-hi').value:'';
+      var hf=document.getElementById(rid+'-hf')?document.getElementById(rid+'-hf').value:'';
+      var paxEl=document.getElementById(rid+'-pax');
+      var pax=paxEl?paxEl.value:'';
+      var layoutWrap=document.getElementById(rid+'-layout-wrap');
+      var layout=layoutWrap&&layoutWrap.querySelector('select')?layoutWrap.querySelector('select').value:'—';
+      var svcs=[];
+      roomEl.querySelectorAll('.svc-blk').forEach(function(svcEl){
+        var sid=svcEl.id;
+        var nEl=document.getElementById(sid+'-n');
+        var tEl=document.getElementById(sid+'-t');
+        var pEl=document.getElementById(sid+'-p');
+        var notaEl=document.getElementById(sid+'-nota');
+        var descEl=document.getElementById(sid+'-desc');
+        if(nEl&&nEl.value)svcs.push({
+          nome:nEl.value,
+          horario:tEl?tEl.value:'',
+          pax:pEl?pEl.value:'',
+          nota:notaEl?notaEl.value:'',
+          desc:descEl?descEl.textContent:''
+        });
+      });
+      rooms.push({sala:sala,horarioInicio:hi,horarioFim:hf,pax:pax,layout:layout,servicos:svcs});
+    });
+    allDays.push({date:newDate,rooms:rooms});
+  });
+  if(!allDays.length)return;
+  var dayData=allDays[0];
+  var newId=addDay(dayData.date);
+  // Remover a sala vazia que o addDay cria por defeito
+  var newDiv2=document.getElementById(newId);
+  if(newDiv2){var emptyRooms=newDiv2.querySelectorAll('.room-blk');emptyRooms.forEach(function(r){r.remove();});}
+  dayData.rooms.forEach(function(r){addRoom(newId,r);});
+  var newDiv=document.getElementById(newId);
+  if(newDiv)setTimeout(function(){newDiv.scrollIntoView({behavior:'smooth',block:'start'});},100);
+  geToast('Dia copiado para '+( newDate||'novo dia')+'. Ajusta a data se necessário.');
+}
+
 function clearForm(){
   ['f-rsv','f-ev-start','f-ev-end','f-ent','f-con','f-notas'].forEach(function(id){var el=$(id);if(el)el.value='';});
   $('f-sign').value='|';
@@ -1899,7 +1957,7 @@ function collectForm(){
         var escolhas=getChoicesSummary(sid);
         if(n)svcs.push({horario:t,nome:n,pax:p2,desc,nota,escolhas});
       });
-      if(sala)rooms.push({sala,horarioInicio:hi,horarioFim:hf,pax,layout,servicos:svcs});
+      rooms.push({sala:sala,horarioInicio:hi,horarioFim:hf,pax:pax,layout:layout,servicos:svcs});
     });
     days.push({date,rooms});
   });
@@ -2132,6 +2190,18 @@ function generateOS(){
     })(new Date(day.date+'T12:00:00')):'—';
 
     html+='<div class="os-day'+(di>0?' os-day-next':'')+'">';
+    // Cabeçalho compacto nos dias seguintes ao primeiro
+    if(di>0){
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 6px;border-top:3px solid var(--bronze);margin-bottom:4px;">'
+        +'<div style="display:flex;align-items:center;gap:12px;">'
+        +'<img src="./FOTOS/Imagem1.png" alt="HCTA" style="height:36px;width:auto;display:block;" onerror="this.style.display=\'none\'">'
+        +'<div style="font-size:8px;color:var(--gd);line-height:1.6;"><strong style="font-size:9px;font-weight:700;color:var(--black);">'+(d.ent||'')+'</strong>'+(d.con?'<br>'+d.con:'')+'</div>'
+        +'</div>'
+        +'<div style="text-align:right;font-size:8px;color:var(--gm);">'
+        +(d.rsv?'<div><span style="letter-spacing:.5px;text-transform:uppercase;">Nº Evento</span> <strong style="color:var(--black);">'+d.rsv+'</strong></div>':'')
+        +'<div><span style="letter-spacing:.5px;text-transform:uppercase;">Assessor</span> <strong style="color:var(--black);">'+signName+'</strong></div>'
+        +'</div></div>';
+    }
     html+='<div class="os-day-hdr"><div class="os-day-name">'+dayLabel+'</div></div>';
 
     // ── BLOCO 1: RECURSOS / MONTAGEM (ordenado por horário de início) ──
