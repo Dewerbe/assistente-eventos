@@ -442,7 +442,32 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
       </div>
       <!-- Mapa com dados -->
       <div id="mapa-data" style="display:none;">
-        <div id="print-week-title" style="display:none;text-align:center;font-size:12px;font-weight:700;margin-bottom:6px;color:#231F20;"></div>
+        <div id="mapa-legenda" style="margin-top:12px;padding:8px 12px;background:var(--gbg);border:1px solid var(--gl);border-radius:3px;font-size:9px;color:var(--gm);line-height:1.8;display:none">
+  <span style="font-weight:700;color:var(--bronze);letter-spacing:.5px;text-transform:uppercase;margin-right:8px">Legenda</span>
+  <span><b style="color:var(--black)">WC</b> Welcome Coffee &nbsp;·&nbsp;
+  <b style="color:var(--black)">CS</b> Coffee Station &nbsp;·&nbsp;
+  <b style="color:var(--black)">CBI/CBII/CBIII</b> Coffee Break I/II/III &nbsp;·&nbsp;
+  <b style="color:var(--black)">PAC</b> Peq. Almoço Continental &nbsp;·&nbsp;
+  <b style="color:var(--black)">PAH</b> Peq. Almoço HCTA &nbsp;·&nbsp;
+  <b style="color:var(--black)">BFE</b> Buffet Executivo &nbsp;·&nbsp;
+  <b style="color:var(--black)">BFS</b> Buffet Selecção &nbsp;·&nbsp;
+  <b style="color:var(--black)">BFA</b> Buffet Angolano &nbsp;·&nbsp;
+  <b style="color:var(--black)">BFH</b> Buffet HCTA &nbsp;·&nbsp;
+  <b style="color:var(--black)">BFV</b> Buffet Volante &nbsp;·&nbsp;
+  <b style="color:var(--black)">BFL</b> Buffet Finger Lunch &nbsp;·&nbsp;
+  <b style="color:var(--black)">CDN</b> Cocktail Dinatoire &nbsp;·&nbsp;
+  <b style="color:var(--black)">CN1/CN2/CN3</b> Canapés Pkg 1/2/3 &nbsp;·&nbsp;
+  <b style="color:var(--black)">MEI/MEII</b> Menu Empratado I/II &nbsp;·&nbsp;
+  <b style="color:var(--black)">ALM</b> Almoço &nbsp;·&nbsp;
+  <b style="color:var(--black)">JNT</b> Jantar &nbsp;·&nbsp;
+  <b style="color:var(--black)">CKT</b> Cocktail &nbsp;·&nbsp;
+  <b style="color:var(--black)">BE</b> Bebidas &nbsp;·&nbsp;
+  <b style="color:var(--black)">A</b> Alojamento &nbsp;·&nbsp;
+  <b style="color:var(--black)">FID</b> Fundo Dia &nbsp;·&nbsp;
+  <b style="color:var(--black)">PBT/PBH/PBP</b> Pkg Bebidas Talatona/HCTA/Premium
+  </span>
+</div>
+<div id="print-week-title" style="display:none;text-align:center;font-size:12px;font-weight:700;margin-bottom:6px;color:#231F20;"></div>
         <div class="mapa-bar">
           <div class="sec-label">Mapa Semanal</div>
           <div class="week-nav">
@@ -1440,6 +1465,7 @@ function renderMapa(){
   var ws0=new Date(weekStart+'T12:00:00'),we0=new Date(wEnd+'T12:00:00');
   var weekLabel=ws0.getDate()+' '+MESES[ws0.getMonth()]+' — '+we0.getDate()+' '+MESES[we0.getMonth()]+' '+we0.getFullYear();
   $('wn-label').textContent=weekLabel;
+  var leg=$('mapa-legenda');if(leg)leg.style.display='block';
   var pwt=$('print-week-title');if(pwt)pwt.textContent='Mapa Semanal de Eventos · '+weekLabel;
   var days=[];
   for(var i=0;i<7;i++){var iso=addDaysIso(weekStart,i);var d=new Date(iso+'T12:00:00');days.push({iso,label:DIAS_S[d.getDay()],num:d.getDate(),isToday:iso===todayIso()});}
@@ -1447,7 +1473,7 @@ function renderMapa(){
   var estadoOrder=['Confirmado','1ª Opção','2ª Opção','Consulta'];
   var sorted=estadoOrder.filter(function(e){return allEstados.includes(e);}).concat(allEstados.filter(function(e){return !estadoOrder.includes(e);}));
   $('filter-bar').innerHTML='<span class="fl">Mostrar:</span>'+sorted.map(function(e){var cls=ESTADO_CLS[e]||'';return'<div class="f-chip'+(activeFilters.has(e)?' on '+cls:'')+'" onclick="toggleFilter(\''+e+'\',\''+cls+'\')">'+e+'</div>';}).join('');
-  var html='<thead><tr><th class="s-th">Sala</th>'+days.map(function(d){return'<th class="day-th"'+(d.isToday?' style="background:var(--bronze-l)"':'')+'>'+d.label+' '+d.num+'</th>';}).join('')+'</tr></thead><tbody>';
+  var html='<thead><tr><th class="s-th">Sala</th>'+days.map(function(d){return'<th class="day-th"'+(d.isToday?' style="background:var(--bronze-l);color:#231F20"':' style="color:#fff"')+'>'+d.label+' '+d.num+'</th>';}).join('')+'</tr></thead><tbody>';
   if(!salas.length){
     html+='<tr><td class="s-td" colspan="8" style="text-align:center;color:var(--gm);font-style:italic;padding:20px">Sem eventos nesta semana para os filtros seleccionados.</td></tr>';
   }else{
@@ -1480,6 +1506,32 @@ function renderMapa(){
     }
   }
   html+='</tbody>';
+
+  // ── Linha de contagem de almoços no Restaurante ──
+  html+='<tfoot><tr><td class="s-td" style="font-weight:700;font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--bronze)">Almoços Restaurante</td>';
+  for(var di2=0;di2<days.length;di2++){
+    var day2=days[di2];
+    var totalAlmoco=0;
+    // Somar pax de todos os eventos com BFE (Buffet do Executivo) neste dia
+    for(var si3=0;si3<salas.length;si3++){
+      var sala2=salas[si3];
+      var ents=(cells[sala2]||{})[day2.iso]||[];
+      for(var ei2=0;ei2<ents.length;ei2++){
+        var en2=ents[ei2];
+        var hasBFE=en2.servicos.some(function(s){
+          var sig=svcSigla(s.nome||s.servico||'');
+          return sig==='BFE';
+        });
+        if(hasBFE&&en2.pax){
+          var paxNum=parseInt(String(en2.pax).replace(/[^0-9]/g,''));
+          if(!isNaN(paxNum))totalAlmoco+=paxNum;
+        }
+      }
+    }
+    html+='<td style="text-align:center;font-size:10px;font-weight:600;padding:4px 2px;'+(totalAlmoco>0?'color:var(--black)':'color:var(--gm)')+'">'+(totalAlmoco>0?totalAlmoco+'p':'—')+'</td>';
+  }
+  html+='</tr></tfoot>';
+
   $('mapa-table').innerHTML=html;
 }
 
@@ -2193,6 +2245,9 @@ function printMapa(){
     +'.mt td{border:1px solid #ccc;padding:2px;vertical-align:top}'
     +'.mt td.s-td{background:#f6f4f1;font-size:5.5px;font-weight:700;text-transform:uppercase;color:#555;border-right:2px solid #b09a80;padding:3px 5px;vertical-align:middle;white-space:nowrap}'
     +'.mt td.today-col{background:#fffcf6}'
+    +'.mt tfoot td{border-top:2px solid var(--bronze);padding:4px 2px;font-size:9px;font-weight:600}'
+    +'.mt tfoot .s-td{font-weight:700;font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--bronze)}'
+    +'#mapa-legenda{display:block!important;margin-top:8px;padding:6px 10px;background:#f6f4f1;border:1px solid #e0dbd5;border-radius:3px;font-size:8px;line-height:1.8}'
     +'.mt tr:nth-child(even) td.s-td{background:#ede9e4}'
     +'.ev-chip{border-radius:1px;padding:2px 3px;margin-bottom:1px;border-left:2px solid #887157}'
     +'.ev-chip.conf{background:#eaf4ef;border-left-color:#1e6e3e}'
