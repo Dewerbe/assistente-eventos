@@ -290,7 +290,7 @@ tr.dragging{opacity:0.4}
   #app{padding:0;max-width:100%;margin:0}
   .card,.card2{box-shadow:none;margin:0}
   .card2{page-break-before:always;break-before:page;margin-top:0}
-  .tot-sec{page-break-inside:avoid;break-inside:avoid}
+  .tot-sec{page-break-inside:avoid;break-inside:avoid;page-break-before:avoid;break-before:avoid;margin-top:16px}
   .fn{page-break-inside:avoid;break-inside:avoid}
   input,select,textarea{border:none!important;background:transparent!important;resize:none!important}
   #sign-sel{display:none!important}
@@ -1107,132 +1107,6 @@ function updatePageBreaks(){
 }
 
 
-function paginateLines(){
-  document.querySelectorAll('.tr-transport,.tr-carry,.pb-row').forEach(function(el){el.remove();});
-  var tbody=document.getElementById('lbody');
-  if(!tbody)return;
-  var rows=Array.from(tbody.querySelectorAll('tr:not(.add-row):not(.tr-transport):not(.tr-carry):not(.pb-row)'));
-  if(rows.length<2)return;
-
-  // Usar offsetTop (relativo ao documento, sem scroll, sem file:// restrictions)
-  var card=document.querySelector('.card');
-  var cardW=card?card.offsetWidth:860;
-  var scale=(186*3.7795)/cardW;
-  var pageH=(277*3.7795)/scale;
-
-  var hdrH=0;
-  if(card){card.querySelectorAll('.dh,.dh-bottom').forEach(function(el){hdrH+=el.offsetHeight;});}
-  var thead=tbody.closest('table').querySelector('thead');
-  var theadH=thead?thead.offsetHeight:30;
-  hdrH+=theadH;
-
-  var ftrH=0;
-  ['.tot-sec','.cambio','.fn'].forEach(function(sel){var el=document.querySelector(sel);if(el)ftrH+=el.offsetHeight;});
-  ftrH+=16;
-
-  var firstAvail=pageH-hdrH-ftrH;
-  var otherAvail=pageH-theadH-ftrH;
-
-  // offsetTop relativo ao tbody
-  var tbodyOffsetTop=tbody.offsetTop;
-  var pageTop=0;
-  var avail=firstAvail;
-  var breaks=[];
-
-  for(var i=0;i<rows.length;i++){
-    var rowTop=rows[i].offsetTop-tbodyOffsetTop;
-    var rowBottom=rowTop+rows[i].offsetHeight;
-    if(rowBottom-pageTop>avail && i>0){
-      breaks.push(i);
-      pageTop=rowTop;
-      avail=otherAvail;
-    }
-  }
-
-  breaks.forEach(function(bi){
-    var breakRow=rows[bi];
-    var total=0;
-    for(var j=0;j<bi;j++){
-      var rid=parseInt((rows[j].id||'').replace('r',''));
-      if(rid>0){var d=getRow(rid);if(d){var f=1+(d.tax/100);total+=(d.qty*d.days*(d.unit/f)-(d.disc||0)/f)*(1+d.tax/100);}}
-    }
-    var ts=fmt(total);
-    var t1=document.createElement('tr');t1.className='tr-transport';
-    t1.innerHTML='<td colspan="8">↓ A Transportar</td><td class="tr-val" colspan="2">'+ts+'</td>';
-    tbody.insertBefore(t1,breakRow);
-    var pb=document.createElement('tr');pb.className='pb-row';
-    pb.style.cssText='page-break-after:always;break-after:page;height:0;line-height:0';
-    pb.innerHTML='<td colspan="10" style="padding:0;border:none;height:0"></td>';
-    tbody.insertBefore(pb,breakRow);
-    var t2=document.createElement('tr');t2.className='tr-carry';
-    t2.innerHTML='<td colspan="8">↑ Transporte</td><td class="tr-val" colspan="2">'+ts+'</td>';
-    tbody.insertBefore(t2,breakRow);
-  });
-}
-
-function validateAndPrint(){
-  const missing = [];
-
-  // Required fields
-  const rsv = document.getElementById('f-rsv').value.trim();
-  const ev  = document.getElementById('f-ev').value.trim();
-  const ent = document.getElementById('f-ent').value.trim();
-  const con = document.getElementById('f-con').value.trim();
-  const nif = document.getElementById('f-nif').value.trim();
-  const mor = document.getElementById('f-mor').value.trim();
-  const cambio = document.getElementById('f-cambio').value.trim();
-  const sign = document.getElementById('sign-sel').value;
-
-  if(!rsv)              missing.push('RSV Nº');
-  if(!ev)               missing.push('Data do Evento');
-  if(!ent)              missing.push('Entidade');
-  if(!con)              missing.push('Contacto');
-  if(!nif)              missing.push('NIF do cliente');
-  if(!mor)              missing.push('Morada do cliente');
-  if(!cambio)           missing.push('Câmbio de referência');
-  if(!sign || sign==='|') missing.push('Colaborador responsável');
-
-  if(missing.length > 0){
-    showValidationModal(missing);
-    return;
-  }
-  showPrintTip();
-}
-
-function showPrintTip(){
-  var tip=document.createElement('div');
-  tip.id='print-tip';
-  tip.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center';
-  var box=document.createElement('div');
-  box.style.cssText='background:#fff;border-radius:4px;padding:24px 28px;max-width:360px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2);font-family:Montserrat,sans-serif';
-  box.innerHTML='<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--bronze);margin-bottom:14px">Antes de imprimir</div>'
-    +'<p style="font-size:10px;color:#444;line-height:1.7;margin-bottom:6px">No diálogo de impressão, em <strong>Mais definições</strong>, confirma:</p>'
-    +'<ul style="padding-left:16px;margin-bottom:18px">'
-    +'<li style="font-size:10px;color:#444;margin-bottom:5px"><strong>Cabeçalhos e rodapés</strong> — <span style="color:#c0392b">desactivado</span></li>'
-    +'<li style="font-size:10px;color:#444"><strong>Gráficos de fundo</strong> — <span style="color:#27ae60">activado</span></li>'
-    +'</ul>'
-    +'<div style="display:flex;gap:10px;justify-content:flex-end" id="print-tip-btns"></div>';
-  tip.appendChild(box);
-  document.body.appendChild(tip);
-  tip.addEventListener('click',function(e){if(e.target===tip){cleanupTransport();tip.remove();}});
-  var btns=document.getElementById('print-tip-btns');
-  var btnCancel=document.createElement('button');
-  btnCancel.textContent='Cancelar';
-  btnCancel.style.cssText='background:none;border:1px solid #ddd;border-radius:3px;padding:7px 14px;font-family:Montserrat,sans-serif;font-size:10px;color:#888;cursor:pointer';
-  btnCancel.onclick=function(){cleanupTransport();tip.remove();};
-  var btnPrint=document.createElement('button');
-  btnPrint.textContent='Imprimir';
-  btnPrint.style.cssText='background:#231F20;color:#fff;border:none;border-radius:3px;padding:7px 18px;font-family:Montserrat,sans-serif;font-size:10px;font-weight:700;letter-spacing:.5px;cursor:pointer;text-transform:uppercase';
-  btnPrint.onclick=function(){tip.remove();window.print();setTimeout(cleanupTransport,500);};
-  btns.appendChild(btnCancel);
-  btns.appendChild(btnPrint);
-}
-
-function cleanupTransport(){
-  document.querySelectorAll('.tr-transport,.tr-carry,.pb-row').forEach(function(el){el.remove();});
-}
-
-
 function showValidationModal(fields){
   // Remove existing modal
   const existing = document.getElementById('val-modal');
@@ -1250,13 +1124,6 @@ function showValidationModal(fields){
 
 // INIT
 document.addEventListener('DOMContentLoaded', function(){
-  // === 36 LINHAS DE TESTE ===
-  for(var _i=0;_i<36;_i++){addLine({desc:'Linha '+(_i+1)+' — Sala Talatona I-II-III / Coffee Break III',qty:1,days:1,unit:250000,tax:'7',disc:0});}
-  // === FIM TESTE ===
-  // Remover as 3 linhas padrão
-  var lbody=document.getElementById('lbody');
-  var defaultRows=lbody.querySelectorAll('tr:not(.add-row)');
-  if(defaultRows.length>36){for(var _d=defaultRows.length-1;_d>=36;_d--){defaultRows[_d].remove();}}
 
   document.getElementById('f-data').value=new Date().toISOString().split('T')[0];
   renderBanking();
