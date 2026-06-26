@@ -15,8 +15,8 @@ body{font-family:'Montserrat',sans-serif;background:var(--gbg);color:var(--black
 
 /* TOOLBAR */
 #toolbar{position:fixed;top:0;left:0;right:0;background:var(--black);color:var(--white);
-  display:flex;align-items:center;gap:10px;padding:8px 20px;z-index:1000;
-  box-shadow:0 2px 8px rgba(0,0,0,.35);flex-wrap:wrap}
+  display:flex;align-items:center;gap:8px;padding:8px 20px;z-index:1000;
+  box-shadow:0 2px 8px rgba(0,0,0,.35)}
 #toolbar .brand{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--bronze-l);text-transform:uppercase;margin-right:4px}
 #toolbar select{background:#2e2e2e;color:#fff;border:1px solid var(--bronze);border-radius:3px;
   padding:4px 8px;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;cursor:pointer}
@@ -284,22 +284,34 @@ tr.dragging{opacity:0.4}
   .tax-print{display:none}
 }
 @media print{
-  body{zoom:1;background:#fff;font-size:9px}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body{background:#fff;font-size:9px;margin:0;padding:0}
   #toolbar,.del-btn,.add-row{display:none!important}
-  #app{padding:0;max-width:100%}
+  #app{padding:0;max-width:100%;margin:0}
   .card,.card2{box-shadow:none;margin:0}
-  .card2{page-break-before:always;margin-top:0;page-break-inside:avoid}
-  input,select{border:none!important;background:transparent!important}
+  .card2{page-break-before:always;break-before:page;margin-top:0}
+  .tot-sec{page-break-inside:avoid;break-inside:avoid}
+  .fn{page-break-inside:avoid;break-inside:avoid}
+  input,select,textarea{border:none!important;background:transparent!important;resize:none!important}
   #sign-sel{display:none!important}
   .drag-handle{display:none!important}
-  th:first-child[style*="width:18px"]{display:none!important}
+  th:first-child[style*="width:18px"],td:first-child[style*="width:18px"]{display:none!important}
   .sec-del{display:none!important}
   .lt td select{display:none!important}
   .tax-print{display:inline!important}
   #sign-name,#sign-role{display:block!important}
   .pbm-row{display:none!important}
-  @page{margin:10mm 12mm;size:A4;marks:none}
+  .ta{height:auto!important;overflow:visible!important}
+  .tr-transport td,.tr-carry td{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  @page{margin:10mm 12mm;size:A4 portrait}
 }
+
+/* Linhas de transporte */
+.tr-transport td{background:#f6f4f1;border-top:2px solid var(--bronze);padding:5px 8px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;color:var(--bronze);letter-spacing:.5px;text-transform:uppercase}
+.tr-transport .tr-val{text-align:right;color:var(--black);font-size:10px}
+.tr-carry td{background:#fffbf5;border-bottom:2px solid var(--bronze);padding:5px 8px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;color:var(--bronze);letter-spacing:.5px;text-transform:uppercase}
+.tr-carry .tr-val{text-align:right;color:var(--black);font-size:10px}
+.pb-row td{padding:0!important;border:none!important;height:0!important;line-height:0!important}
 </style>
 </head>
 <body>
@@ -520,7 +532,7 @@ let _loadedFilename = null; // tracks the filename of the currently loaded JSON
 const TAX_OPTS=[['0','0%'],['7','7%'],['14','14%']];
 
 function taxSel(v){
-  return '<select onchange="updateTaxPrint(this);calcTot()">'+TAX_OPTS.map(o=>`<option value="${o[0]}"${o[0]===String(v)?' selected':''}>${o[1]}</option>`).join('')+'</select>';
+  return '<select onchange="updateTaxPrint(this);calcTot()">'+TAX_OPTS.map(o=>'<option value="'+(o[0])+'"'+(o[0]===String(v)?' selected':'')+'>'+(o[1])+'</option>').join('')+'</select>';
 }
 
 function updateTaxPrint(sel){
@@ -529,7 +541,7 @@ function updateTaxPrint(sel){
 }
 
 function renderBanking(){
-  document.getElementById('bank-grid').innerHTML=BANKING.map(b=>`<div class="bb"><h4>${b.title}</h4>${b.rows.map(r=>`<div class="br"><span class="bkl">${r[0]}</span><span class="bkv">${r[1]}</span></div>`).join('')}</div>`).join('');
+  document.getElementById('bank-grid').innerHTML=BANKING.map(b=>'<div class="bb"><h4>'+(b.title)+'</h4>'+(b.rows.map(function(r){return '<div class="br"><span class="bkl">'+r[0]+'</span><span class="bkv">'+r[1]+'</span></div>';}).join(''))+'</div>').join('');
 }
 
 function addSection(label){
@@ -538,17 +550,7 @@ function addSection(label){
   const tr = document.createElement('tr');
   tr.id = 'S'+id;
   tr.className = 'sec-row';
-  tr.innerHTML = `
-    <td class="drag-handle" draggable="false">⠿</td>
-    <td colspan="8" style="padding:0">
-      <input type="text" value="${label||''}" placeholder="DATA / DESCRIÇÃO DA SECÇÃO" 
-        style="width:100%;background:transparent;color:#fff;font-weight:700;font-size:9px;
-        letter-spacing:1.5px;text-transform:uppercase;text-align:center;border:none;outline:none;
-        padding:5px 8px;font-family:'Montserrat',sans-serif">
-    </td>
-    <td style="background:var(--bronze);text-align:center;padding:0 4px;width:22px">
-      <button class="sec-del" onclick="delSection(${id})">×</button>
-    </td>`;
+  tr.innerHTML = '\n    <td class="drag-handle" draggable="false">⠿</td>\n    <td colspan="8" style="padding:0">\n      <input type="text" value="'+(label||'')+'" placeholder="DATA / DESCRIÇÃO DA SECÇÃO" \n        style="width:100%;background:transparent;color:#fff;font-weight:700;font-size:9px;\n        letter-spacing:1.5px;text-transform:uppercase;text-align:center;border:none;outline:none;\n        padding:5px 8px;font-family:\'Montserrat\',sans-serif">\n    </td>\n    <td style="background:var(--bronze);text-align:center;padding:0 4px;width:22px">\n      <button class="sec-del" onclick="delSection('+(id)+')">×</button>\n    </td>';
   tbody.appendChild(tr);
   initDrag(tr);
   updatePageBreaks();
@@ -621,17 +623,7 @@ function addLine(d){
   const daysVal = d.days ? fmtNum(+d.days) : '';
   const unitVal = d.unit ? fmtInput(+d.unit) : '';
   const discVal = d.disc ? fmtInput(+d.disc) : '';
-  tr.innerHTML=`
-    <td class="drag-handle" draggable="false">⠿</td>
-    <td class="n tc">${n}</td>
-    <td class="ds" style="position:relative"><textarea class="ta" placeholder="Descrição do serviço" oninput="autoResize(this);calcTot();showCatalog(this)" onfocus="showCatalog(this)" onblur="hideCatalog()" rows="1">${d.desc}</textarea></td>
-    <td class="qt"><input type="text" class="tc" value="${qtyVal}" placeholder="1" oninput="fmtField(this)" onblur="fmtBlur(this,true)" data-raw="${+d.qty||1}"></td>
-    <td class="dy"><input type="text" class="tc" value="${daysVal}" placeholder="1" oninput="fmtField(this)" onblur="fmtBlur(this,true)" data-raw="${+d.days||1}"></td>
-    <td class="vu"><input type="text" class="tr" value="${unitVal}" placeholder="0,00" oninput="fmtField(this)" onblur="fmtBlur(this,false)" data-raw="${+d.unit||0}"></td>
-    <td class="tx tc"><span class="tax-print">${d.tax=='6.5'?'6,5':d.tax}%</span>${taxSel(d.tax)}</td>
-    <td class="dc"><input type="text" class="tr" value="${discVal}" placeholder="" oninput="fmtField(this)" onblur="fmtBlur(this,false)" data-raw="${+d.disc||0}"></td>
-    <td class="to tr" id="lt${id}">0,00</td>
-    <td class="dl"><button class="del-btn" onclick="delLine(${id})">×</button></td>`;
+  tr.innerHTML='\n    <td class="drag-handle" draggable="false">⠿</td>\n    <td class="n tc">'+(n)+'</td>\n    <td class="ds" style="position:relative"><textarea class="ta" placeholder="Descrição do serviço" oninput="autoResize(this);calcTot();showCatalog(this)" onfocus="showCatalog(this)" onblur="hideCatalog()" rows="1">'+(d.desc)+'</textarea></td>\n    <td class="qt"><input type="text" class="tc" value="'+(qtyVal)+'" placeholder="1" oninput="fmtField(this)" onblur="fmtBlur(this,true)" data-raw="'+(+d.qty||1)+'"></td>\n    <td class="dy"><input type="text" class="tc" value="'+(daysVal)+'" placeholder="1" oninput="fmtField(this)" onblur="fmtBlur(this,true)" data-raw="'+(+d.days||1)+'"></td>\n    <td class="vu"><input type="text" class="tr" value="'+(unitVal)+'" placeholder="0,00" oninput="fmtField(this)" onblur="fmtBlur(this,false)" data-raw="'+(+d.unit||0)+'"></td>\n    <td class="tx tc"><span class="tax-print">'+(d.tax=='6.5'?'6,5':d.tax)+'%</span>'+(taxSel(d.tax))+'</td>\n    <td class="dc"><input type="text" class="tr" value="'+(discVal)+'" placeholder="" oninput="fmtField(this)" onblur="fmtBlur(this,false)" data-raw="'+(+d.disc||0)+'"></td>\n    <td class="to tr" id="lt'+(id)+'">0,00</td>\n    <td class="dl"><button class="del-btn" onclick="delLine('+(id)+')">×</button></td>';
   tbody.appendChild(tr);
   initDrag(tr);
   calcTot();
@@ -777,7 +769,7 @@ function confirmSave(){
   const entClean  = ent.replace(/[^a-zA-Z0-9\u00C0-\u024F ]/g,'').trim().replace(/\s+/g,'_').toUpperCase();
   // Filename uses event date; folder suggestion uses today (date proposal is sent)
   const eventDate = evdata ? evdata.split('-').reverse().join('') : '';
-  const baseName  = `RSV${rsvClean}_${entClean}_${eventDate}`;
+  const baseName  = 'RSV'+(rsvClean)+'_'+(entClean)+'_'+(eventDate);
   const today     = new Date();
   const todayMonth = today.getMonth();
   const todayYear  = today.getFullYear();
@@ -790,12 +782,12 @@ function confirmSave(){
     const currentVer = getVersionSuffix(_loadedFilename);
     if(currentVer){
       const nextVer = currentVer + 1;
-      suggested = _loadedFilename.replace(/_v\d+$/i, `_v${nextVer}`);
-      versionMsg = `Versão detectada: <strong>v${currentVer}</strong> — sugiro guardar como <strong>v${nextVer}</strong>.`;
+      suggested = _loadedFilename.replace(/_v\d+$/i, '_v'+(nextVer));
+      versionMsg = 'Versão detectada: <strong>v'+(currentVer)+'</strong> — sugiro guardar como <strong>v'+(nextVer)+'</strong>.';
     } else {
       // First edit — suggest v2
       suggested = _loadedFilename + '_v2';
-      versionMsg = `Este ficheiro não tem versão. Sugiro guardar como <strong>v2</strong>.`;
+      versionMsg = 'Este ficheiro não tem versão. Sugiro guardar como <strong>v2</strong>.';
     }
   }
 
@@ -805,44 +797,9 @@ function confirmSave(){
 
   const modal = document.createElement('div');
   modal.id = 'save-modal';
-  modal.style.cssText = `position:fixed;top:0;left:0;right:0;bottom:0;
-    background:rgba(0,0,0,0.5);z-index:9999;
-    display:flex;align-items:center;justify-content:center`;
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;\n    background:rgba(0,0,0,0.5);z-index:9999;\n    display:flex;align-items:center;justify-content:center';
 
-  modal.innerHTML = `
-    <div style="background:#fff;border-radius:4px;padding:28px 32px;max-width:420px;width:92%;
-      box-shadow:0 8px 32px rgba(0,0,0,0.2);font-family:'Montserrat',sans-serif">
-      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
-        color:var(--bronze);margin-bottom:16px">Guardar Proforma</div>
-      ${versionMsg ? `<div style="font-size:10px;color:var(--bronze);background:#fffbf5;
-        border:1px solid var(--bronze-l);border-radius:3px;padding:7px 10px;margin-bottom:12px">
-        ℹ ${versionMsg}</div>` : ''}
-      <div style="font-size:10px;color:#666;margin-bottom:8px">Nome do ficheiro:</div>
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
-        <input id="save-filename" type="text" value="${suggested}"
-          style="flex:1;border:1px solid var(--gl);border-radius:3px;padding:8px 10px;
-          font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;color:#231F20;outline:none">
-        <span style="font-size:10px;color:#aaa">.json</span>
-      </div>
-      <div style="font-size:9px;color:#aaa;margin-bottom:14px;line-height:1.6;
-        background:var(--gbg);border-radius:3px;padding:8px 10px">
-        📁 Guardar em:<br>
-        <strong style="color:#666">Eventos HCTA - General \ PROPOSTAS \ ${todayYear} \ ${String(todayMonth+1).padStart(2,'0')}_${['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][todayMonth]}</strong>
-      </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button onclick="document.getElementById('save-modal').remove()"
-          style="background:none;border:1px solid #ddd;border-radius:3px;padding:7px 16px;
-          font-family:'Montserrat',sans-serif;font-size:10px;color:#888;cursor:pointer">
-          Cancelar
-        </button>
-        <button onclick="doSave()"
-          style="background:#231F20;color:#fff;border:none;border-radius:3px;padding:7px 18px;
-          font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;
-          letter-spacing:.5px;cursor:pointer;text-transform:uppercase">
-          💾 Guardar
-        </button>
-      </div>
-    </div>`;
+  modal.innerHTML = '\n    <div style="background:#fff;border-radius:4px;padding:28px 32px;max-width:420px;width:92%;\n      box-shadow:0 8px 32px rgba(0,0,0,0.2);font-family:\'Montserrat\',sans-serif">\n      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;\n        color:var(--bronze);margin-bottom:16px">Guardar Proforma</div>\n      '+(versionMsg ? '<div style="font-size:10px;color:var(--bronze);background:#fffbf5;border:1px solid var(--bronze-l);border-radius:3px;padding:7px 10px;margin-bottom:12px">ℹ '+versionMsg+'</div>' : '')+'\n      <div style="font-size:10px;color:#666;margin-bottom:8px">Nome do ficheiro:</div>\n      <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">\n        <input id="save-filename" type="text" value="'+(suggested)+'"\n          style="flex:1;border:1px solid var(--gl);border-radius:3px;padding:8px 10px;\n          font-family:\'Montserrat\',sans-serif;font-size:11px;font-weight:600;color:#231F20;outline:none">\n        <span style="font-size:10px;color:#aaa">.json</span>\n      </div>\n      <div style="font-size:9px;color:#aaa;margin-bottom:14px;line-height:1.6;\n        background:var(--gbg);border-radius:3px;padding:8px 10px">\n        📁 Guardar em:<br>\n        <strong style="color:#666">Eventos HCTA - General \\ PROPOSTAS \\ '+(todayYear)+' \\ '+(String(todayMonth+1).padStart(2,'0'))+'_'+(['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][todayMonth])+'</strong>\n      </div>\n      <div style="display:flex;gap:10px;justify-content:flex-end">\n        <button onclick="document.getElementById(\'save-modal\').remove()"\n          style="background:none;border:1px solid #ddd;border-radius:3px;padding:7px 16px;\n          font-family:\'Montserrat\',sans-serif;font-size:10px;color:#888;cursor:pointer">\n          Cancelar\n        </button>\n        <button onclick="doSave()"\n          style="background:#231F20;color:#fff;border:none;border-radius:3px;padding:7px 18px;\n          font-family:\'Montserrat\',sans-serif;font-size:10px;font-weight:700;\n          letter-spacing:.5px;cursor:pointer;text-transform:uppercase">\n          💾 Guardar\n        </button>\n      </div>\n    </div>';
 
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
@@ -1049,9 +1006,7 @@ function showCatalog(ta){
     CATALOG.forEach(g => {
       const grpItems = g.items;
       if(!grpItems.length) return;
-      html += `<div style="padding:4px 12px;font-size:8px;font-weight:700;letter-spacing:1px;
-        text-transform:uppercase;color:var(--bronze);background:var(--gbg);
-        border-bottom:1px solid var(--gl)">${g.group}</div>`;
+      html += '<div style="padding:4px 12px;font-size:8px;font-weight:700;letter-spacing:1px;\n        text-transform:uppercase;color:var(--bronze);background:var(--gbg);\n        border-bottom:1px solid var(--gl)">'+(g.group)+'</div>';
       grpItems.forEach(item => {
         const idx = _catItems.indexOf(item);
         html += catItemHTML(item, idx);
@@ -1069,11 +1024,7 @@ function showCatalog(ta){
 }
 
 function catItemHTML(item, idx){
-  return `<div class="cat-item" onmousedown="selectCatalogItem(${idx})">
-    <span class="cat-item-name">${item.name}</span>
-    <span class="cat-item-price">${fmtInput(item.price)}</span>
-    <span class="cat-item-tax">${item.tax}%</span>
-  </div>`;
+  return '<div class="cat-item" onmousedown="selectCatalogItem('+(idx)+')">\n    <span class="cat-item-name">'+(item.name)+'</span>\n    <span class="cat-item-price">'+(fmtInput(item.price))+'</span>\n    <span class="cat-item-tax">'+(item.tax)+'%</span>\n  </div>';
 }
 
 function hideCatalog(){
@@ -1155,6 +1106,70 @@ function updatePageBreaks(){
   });
 }
 
+
+function paginateLines(){
+  document.querySelectorAll('.tr-transport,.tr-carry,.pb-row').forEach(function(el){el.remove();});
+  var tbody=document.getElementById('lbody');
+  if(!tbody)return;
+  var rows=Array.from(tbody.querySelectorAll('tr:not(.add-row):not(.tr-transport):not(.tr-carry):not(.pb-row)'));
+  if(rows.length<2)return;
+
+  // Usar offsetTop (relativo ao documento, sem scroll, sem file:// restrictions)
+  var card=document.querySelector('.card');
+  var cardW=card?card.offsetWidth:860;
+  var scale=(186*3.7795)/cardW;
+  var pageH=(277*3.7795)/scale;
+
+  var hdrH=0;
+  if(card){card.querySelectorAll('.dh,.dh-bottom').forEach(function(el){hdrH+=el.offsetHeight;});}
+  var thead=tbody.closest('table').querySelector('thead');
+  var theadH=thead?thead.offsetHeight:30;
+  hdrH+=theadH;
+
+  var ftrH=0;
+  ['.tot-sec','.cambio','.fn'].forEach(function(sel){var el=document.querySelector(sel);if(el)ftrH+=el.offsetHeight;});
+  ftrH+=16;
+
+  var firstAvail=pageH-hdrH-ftrH;
+  var otherAvail=pageH-theadH-ftrH;
+
+  // offsetTop relativo ao tbody
+  var tbodyOffsetTop=tbody.offsetTop;
+  var pageTop=0;
+  var avail=firstAvail;
+  var breaks=[];
+
+  for(var i=0;i<rows.length;i++){
+    var rowTop=rows[i].offsetTop-tbodyOffsetTop;
+    var rowBottom=rowTop+rows[i].offsetHeight;
+    if(rowBottom-pageTop>avail && i>0){
+      breaks.push(i);
+      pageTop=rowTop;
+      avail=otherAvail;
+    }
+  }
+
+  breaks.forEach(function(bi){
+    var breakRow=rows[bi];
+    var total=0;
+    for(var j=0;j<bi;j++){
+      var rid=parseInt((rows[j].id||'').replace('r',''));
+      if(rid>0){var d=getRow(rid);if(d){var f=1+(d.tax/100);total+=(d.qty*d.days*(d.unit/f)-(d.disc||0)/f)*(1+d.tax/100);}}
+    }
+    var ts=fmt(total);
+    var t1=document.createElement('tr');t1.className='tr-transport';
+    t1.innerHTML='<td colspan="8">↓ A Transportar</td><td class="tr-val" colspan="2">'+ts+'</td>';
+    tbody.insertBefore(t1,breakRow);
+    var pb=document.createElement('tr');pb.className='pb-row';
+    pb.style.cssText='page-break-after:always;break-after:page;height:0;line-height:0';
+    pb.innerHTML='<td colspan="10" style="padding:0;border:none;height:0"></td>';
+    tbody.insertBefore(pb,breakRow);
+    var t2=document.createElement('tr');t2.className='tr-carry';
+    t2.innerHTML='<td colspan="8">↑ Transporte</td><td class="tr-val" colspan="2">'+ts+'</td>';
+    tbody.insertBefore(t2,breakRow);
+  });
+}
+
 function validateAndPrint(){
   const missing = [];
 
@@ -1185,44 +1200,38 @@ function validateAndPrint(){
 }
 
 function showPrintTip(){
-  const tip = document.createElement('div');
-  tip.id = 'print-tip';
-  tip.style.cssText = `position:fixed;top:0;left:0;right:0;bottom:0;
-    background:rgba(0,0,0,0.5);z-index:9999;
-    display:flex;align-items:center;justify-content:center`;
-  tip.innerHTML = `
-    <div style="background:#fff;border-radius:4px;padding:24px 28px;max-width:360px;width:90%;
-      box-shadow:0 8px 32px rgba(0,0,0,0.2);font-family:'Montserrat',sans-serif">
-      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
-        color:var(--bronze);margin-bottom:14px">Antes de imprimir</div>
-      <p style="font-size:10px;color:#444;line-height:1.7;margin-bottom:6px">
-        No diálogo de impressão, em <strong>Mais definições</strong>, confirma:
-      </p>
-      <ul style="padding-left:16px;margin-bottom:18px">
-        <li style="font-size:10px;color:#444;margin-bottom:5px">
-          <strong>Cabeçalhos e rodapés</strong> — <span style="color:#c0392b">desactivado</span>
-        </li>
-        <li style="font-size:10px;color:#444;margin-bottom:5px">
-          <strong>Gráficos de fundo</strong> — <span style="color:#27ae60">activado</span>
-        </li>
-      </ul>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button onclick="document.getElementById('print-tip').remove()"
-          style="background:none;border:1px solid #ddd;border-radius:3px;padding:7px 14px;
-          font-family:'Montserrat',sans-serif;font-size:10px;color:#888;cursor:pointer">
-          Cancelar
-        </button>
-        <button onclick="document.getElementById('print-tip').remove();window.print()"
-          style="background:#231F20;color:#fff;border:none;border-radius:3px;padding:7px 18px;
-          font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;
-          letter-spacing:.5px;cursor:pointer;text-transform:uppercase">
-          Imprimir
-        </button>
-      </div>
-    </div>`;
+  var tip=document.createElement('div');
+  tip.id='print-tip';
+  tip.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  var box=document.createElement('div');
+  box.style.cssText='background:#fff;border-radius:4px;padding:24px 28px;max-width:360px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2);font-family:Montserrat,sans-serif';
+  box.innerHTML='<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--bronze);margin-bottom:14px">Antes de imprimir</div>'
+    +'<p style="font-size:10px;color:#444;line-height:1.7;margin-bottom:6px">No diálogo de impressão, em <strong>Mais definições</strong>, confirma:</p>'
+    +'<ul style="padding-left:16px;margin-bottom:18px">'
+    +'<li style="font-size:10px;color:#444;margin-bottom:5px"><strong>Cabeçalhos e rodapés</strong> — <span style="color:#c0392b">desactivado</span></li>'
+    +'<li style="font-size:10px;color:#444"><strong>Gráficos de fundo</strong> — <span style="color:#27ae60">activado</span></li>'
+    +'</ul>'
+    +'<div style="display:flex;gap:10px;justify-content:flex-end" id="print-tip-btns"></div>';
+  tip.appendChild(box);
   document.body.appendChild(tip);
-  tip.addEventListener('click', e => { if(e.target===tip) tip.remove(); });
+  tip.addEventListener('click',function(e){if(e.target===tip){cleanupTransport();tip.remove();}});
+  var btns=document.getElementById('print-tip-btns');
+  var btnCancel=document.createElement('button');
+  btnCancel.textContent='Cancelar';
+  btnCancel.style.cssText='background:none;border:1px solid #ddd;border-radius:3px;padding:7px 14px;font-family:Montserrat,sans-serif;font-size:10px;color:#888;cursor:pointer';
+  btnCancel.onclick=function(){cleanupTransport();tip.remove();};
+  var btnPrint=document.createElement('button');
+  btnPrint.textContent='Imprimir';
+  btnPrint.style.cssText='background:#231F20;color:#fff;border:none;border-radius:3px;padding:7px 18px;font-family:Montserrat,sans-serif;font-size:10px;font-weight:700;letter-spacing:.5px;cursor:pointer;text-transform:uppercase';
+  btnPrint.onclick=function(){tip.remove();window.print();setTimeout(cleanupTransport,500);};
+  btns.appendChild(btnCancel);
+  btns.appendChild(btnPrint);
 }
+
+function cleanupTransport(){
+  document.querySelectorAll('.tr-transport,.tr-carry,.pb-row').forEach(function(el){el.remove();});
+}
+
 
 function showValidationModal(fields){
   // Remove existing modal
@@ -1231,26 +1240,9 @@ function showValidationModal(fields){
 
   const modal = document.createElement('div');
   modal.id = 'val-modal';
-  modal.style.cssText = `
-    position:fixed;top:0;left:0;right:0;bottom:0;
-    background:rgba(0,0,0,0.5);z-index:9999;
-    display:flex;align-items:center;justify-content:center`;
+  modal.style.cssText = '\n    position:fixed;top:0;left:0;right:0;bottom:0;\n    background:rgba(0,0,0,0.5);z-index:9999;\n    display:flex;align-items:center;justify-content:center';
 
-  modal.innerHTML = `
-    <div style="background:#fff;border-radius:4px;padding:28px 32px;max-width:380px;width:90%;
-      box-shadow:0 8px 32px rgba(0,0,0,0.2);font-family:'Montserrat',sans-serif">
-      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
-        color:#c0392b;margin-bottom:12px">Campos obrigatórios em falta</div>
-      <ul style="padding-left:16px;margin-bottom:20px">
-        ${fields.map(f=>`<li style="font-size:11px;color:#444;margin-bottom:5px">${f}</li>`).join('')}
-      </ul>
-      <button onclick="document.getElementById('val-modal').remove()"
-        style="background:#231F20;color:#fff;border:none;border-radius:3px;
-        padding:8px 20px;font-family:'Montserrat',sans-serif;font-size:10px;
-        font-weight:700;letter-spacing:1px;cursor:pointer;text-transform:uppercase">
-        OK, vou preencher
-      </button>
-    </div>`;
+  modal.innerHTML = '\n    <div style="background:#fff;border-radius:4px;padding:28px 32px;max-width:380px;width:90%;\n      box-shadow:0 8px 32px rgba(0,0,0,0.2);font-family:\'Montserrat\',sans-serif">\n      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;\n        color:#c0392b;margin-bottom:12px">Campos obrigatórios em falta</div>\n      <ul style="padding-left:16px;margin-bottom:20px">\n        '+(fields.map(function(f){return '<li style="font-size:11px;color:#444;margin-bottom:5px">'+f+'</li>';}).join(''))+'\n      </ul>\n      <button onclick="document.getElementById(\'val-modal\').remove()"\n        style="background:#231F20;color:#fff;border:none;border-radius:3px;\n        padding:8px 20px;font-family:\'Montserrat\',sans-serif;font-size:10px;\n        font-weight:700;letter-spacing:1px;cursor:pointer;text-transform:uppercase">\n        OK, vou preencher\n      </button>\n    </div>';
 
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
@@ -1258,6 +1250,14 @@ function showValidationModal(fields){
 
 // INIT
 document.addEventListener('DOMContentLoaded', function(){
+  // === 36 LINHAS DE TESTE ===
+  for(var _i=0;_i<36;_i++){addLine({desc:'Linha '+(_i+1)+' — Sala Talatona I-II-III / Coffee Break III',qty:1,days:1,unit:250000,tax:'7',disc:0});}
+  // === FIM TESTE ===
+  // Remover as 3 linhas padrão
+  var lbody=document.getElementById('lbody');
+  var defaultRows=lbody.querySelectorAll('tr:not(.add-row)');
+  if(defaultRows.length>36){for(var _d=defaultRows.length-1;_d>=36;_d--){defaultRows[_d].remove();}}
+
   document.getElementById('f-data').value=new Date().toISOString().split('T')[0];
   renderBanking();
   addLine();addLine();addLine();
