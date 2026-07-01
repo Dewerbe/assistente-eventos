@@ -83,7 +83,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--gbg);color:var(--black
 
 /* LINES TABLE */
 .lines-wrap{margin:0 22px}
-.lt{width:100%;border-collapse:collapse;font-size:10px}
+.lt{width:100%;border-collapse:collapse;font-size:10px;table-layout:auto}
 .lt th{background:var(--black);color:#fff;padding:6px 5px;text-align:center;
   font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
 .lt th.tl{text-align:left;padding-left:8px}
@@ -96,7 +96,8 @@ body{font-family:'Montserrat',sans-serif;background:var(--gbg);color:var(--black
 .lt td input.tc{text-align:center}
 .lt td input.tr{text-align:right}
 .lt td.n{width:26px;text-align:center;color:var(--bronze);font-weight:700;font-size:9px}
-.lt td.ds{min-width:180px}
+.lt td.ds{min-width:180px;max-width:100%;overflow:visible;word-wrap:break-word;overflow-wrap:break-word;white-space:normal}
+.lt .print-value{display:none}
 .lt td.qt{width:46px}
 .lt td.dy{width:46px}
 .lt td.vu{width:90px}
@@ -181,7 +182,8 @@ tr.dragging{opacity:0.4}
 /* TEXTAREA AUTO-RESIZE */
 .ta{border:none;outline:none;font-family:'Montserrat',sans-serif;font-size:10px;
   color:var(--black);background:transparent;width:100%;padding:1px 3px;
-  resize:none;overflow:hidden;line-height:1.4;min-height:18px;display:block}
+  resize:none;overflow:visible;line-height:1.4;min-height:18px;height:auto;display:block;
+  box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;white-space:normal}
 .ta:focus{background:#fffcf8;border-radius:2px}
 .ta-cli{border:none;outline:none;font-family:'Montserrat',sans-serif;font-size:11px;
   font-weight:500;color:var(--black);background:transparent;width:100%;
@@ -304,6 +306,32 @@ tr.dragging{opacity:0.4}
   .ta{height:auto!important;overflow:visible!important}
   .tr-transport td,.tr-carry td{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   @page{margin:10mm 12mm;size:A4 portrait}
+
+  /* Repetir cabeçalho da tabela em nova página */
+  .lt thead{display:table-header-group}
+
+  /* Evitar cortar uma linha de serviço ou secção a meio de uma página */
+  .lt tbody tr{page-break-inside:avoid;break-inside:avoid}
+
+  /* Evitar que uma secção fique isolada no fim da página, sem nenhuma linha a seguir */
+  .sec-row{page-break-after:avoid;break-after:avoid}
+
+  /* Manter totais, câmbio e nota final juntos sempre que possível */
+  .cambio{page-break-inside:avoid;break-inside:avoid;page-break-before:avoid;break-before:avoid}
+
+  /* Linhas da tabela de serviços: esconder controlos de edição, mostrar texto limpo em vez.
+     A versão editável em ecrã não é afectada — estas regras só se aplicam dentro de @media print. */
+  .lt .ds textarea.ta{display:none!important}
+  .lt .qt input,.lt .dy input,.lt .vu input,.lt .dc input{display:none!important}
+  .lt .ds .print-value,.lt .qt .print-value,.lt .dy .print-value,.lt .vu .print-value,.lt .dc .print-value{
+    display:block!important;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:break-word;
+    font-family:'Montserrat',sans-serif;padding:1px 3px
+  }
+  .lt .qt .print-value,.lt .dy .print-value{text-align:center}
+  .lt .vu .print-value,.lt .dc .print-value{text-align:right;padding-right:6px}
+
+  /* Linhas de serviço completamente vazias (sem descrição e sem valores) não saem no PDF */
+  .lt tbody tr.print-empty-row{display:none!important}
 }
 
 /* Linhas de transporte */
@@ -326,6 +354,7 @@ tr.dragging{opacity:0.4}
     <input type="file" id="fopen" accept=".json" style="display:none" onchange="loadJSON(event)">
   </label>
   <button class="tb-btn save" onclick="confirmSave()">💾 Guardar</button>
+  <button class="tb-btn new" onclick="openLodgingModal()" style="border-color:var(--bronze);color:var(--bronze-l)">🛏 Gerir Alojamento</button>
   <button class="tb-btn pdf" onclick="validateAndPrint()">🖨 PDF</button>
 </div>
 
@@ -519,357 +548,134 @@ tr.dragging{opacity:0.4}
 </div><!-- #app -->
 <div id="toast"></div>
 
+<!-- MODAL GERIR ALOJAMENTO (fora do layout da proforma, não é impresso) -->
+<div id="lod-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.5);z-index:9998;align-items:center;justify-content:center;
+  font-family:'Montserrat',sans-serif">
+  <div style="background:#fff;border-radius:4px;width:94%;max-width:980px;max-height:88vh;
+    display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25);overflow:hidden">
+
+    <div style="padding:16px 22px;border-bottom:1px solid #e0dbd5;display:flex;align-items:center;gap:14px">
+      <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#231F20">
+        🛏 Gestão de Alojamento
+      </div>
+      <div style="flex:1"></div>
+      <button id="lod-tab-summary" onclick="switchLodgingMode('summary')"
+        style="border:1px solid #887157;background:#887157;color:#fff;border-radius:3px 0 0 3px;
+        padding:6px 14px;font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;cursor:pointer">
+        Resumo
+      </button>
+      <button id="lod-tab-rooming" onclick="switchLodgingMode('rooming')"
+        style="border:1px solid #887157;background:#fff;color:#887157;border-radius:0 3px 3px 0;
+        margin-left:-1px;padding:6px 14px;font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;cursor:pointer">
+        Rooming List
+      </button>
+      <button onclick="closeLodgingModal()" style="background:none;border:none;color:#999;font-size:18px;cursor:pointer;padding:0 4px;margin-left:6px">×</button>
+    </div>
+
+    <div style="padding:16px 22px;overflow-y:auto;flex:1">
+
+      <!-- RESUMO -->
+      <div id="lod-view-summary">
+        <div style="font-size:9px;color:#888;margin-bottom:10px;line-height:1.6">
+          Registe blocos de quartos por período (ex.: 20 quartos de 20/11 a 23/11). O Resumo é o que alimenta a proforma. Pode gerar uma rooming list detalhada, hóspede a hóspede, a partir de cada bloco — a rooming list é apenas um anexo de suporte e não substitui o Resumo.
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:10px" id="lod-summary-table">
+          <thead>
+            <tr style="background:#231F20;color:#fff">
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Tipo Quarto</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Regime</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Check-in</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Check-out</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Noites</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Qtd. Quartos</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Preço/Noite</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">IVA</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Observações</th>
+              <th style="padding:5px 6px;width:24px"></th>
+              <th style="padding:5px 6px;width:96px"></th>
+            </tr>
+          </thead>
+          <tbody id="lod-summary-body"></tbody>
+        </table>
+        <button class="add-btn" onclick="addSummaryRow()" style="margin-top:10px">+ Adicionar bloco</button>
+      </div>
+
+      <!-- ROOMING LIST -->
+      <div id="lod-view-rooming" style="display:none">
+        <div style="font-size:9px;color:#888;margin-bottom:10px;line-height:1.6">
+          Lista detalhada por hóspede. O nome do hóspede é opcional — pode deixar por preencher e completar mais tarde.
+        </div>
+        <div id="lod-room-summary" style="display:flex;gap:18px;margin-bottom:10px;font-size:9px;color:#555"></div>
+        <table style="width:100%;border-collapse:collapse;font-size:10px" id="lod-rooming-table">
+          <thead>
+            <tr style="background:#231F20;color:#fff">
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Ocupação</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Hóspede(s)</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Tipo Quarto</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Regime</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Check-in</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Check-out</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Noites</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Qtd. Quartos</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Preço/Noite</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">IVA</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Early Check-in</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Late Check-out</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Observações</th>
+              <th style="padding:5px 6px;width:24px"></th>
+            </tr>
+          </thead>
+          <tbody id="lod-rooming-body"></tbody>
+        </table>
+        <button class="add-btn" onclick="addRoomingRow()" style="margin-top:10px">+ Adicionar hóspede</button>
+      </div>
+
+    </div>
+
+    <div style="padding:12px 22px;border-top:1px solid #e0dbd5;display:flex;justify-content:flex-end;gap:10px">
+      <button onclick="printRoomingList()"
+        style="background:none;border:1px solid var(--bronze);border-radius:3px;padding:7px 16px;
+        font-family:'Montserrat',sans-serif;font-size:10px;color:var(--bronze);cursor:pointer;
+        font-weight:700;letter-spacing:.5px;text-transform:uppercase">
+        🖨 Imprimir Rooming List
+      </button>
+      <button onclick="applyLodgingToProforma()"
+        style="background:var(--bronze);color:#fff;border:none;border-radius:3px;padding:7px 16px;
+        font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;
+        letter-spacing:.5px;cursor:pointer;text-transform:uppercase">
+        Atualizar Proforma com Alojamento
+      </button>
+      <div style="flex:1"></div>
+      <button onclick="closeLodgingModal()"
+        style="background:none;border:1px solid #ddd;border-radius:3px;padding:7px 16px;
+        font-family:'Montserrat',sans-serif;font-size:10px;color:#888;cursor:pointer">
+        Fechar
+      </button>
+      <button onclick="saveLodgingAndClose()"
+        style="background:#231F20;color:#fff;border:none;border-radius:3px;padding:7px 18px;
+        font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;
+        letter-spacing:.5px;cursor:pointer;text-transform:uppercase">
+        Guardar Alojamento
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
 <script>
+// ============================================================
+// 1. CONSTANTES E DADOS
+// ============================================================
 const BANKING=[
   {title:'Conta em AOA',rows:[['Beneficiário','Henda Hotelaria, Lda'],['Banco','Banco Caixa Geral Angola, S.A.'],['IBAN','AO06 0004 0000 1005 7242 1016 5'],['Swift/BIC','BCGAAOLU'],['Conta','10057242/10/001'],['NIF','5001094645'],['Despesas','A ordem do ordenante']]},
   {title:'Conta em USD',rows:[['Beneficiário','Henda Hotelaria, Lda'],['Banco','Banco Caixa Geral Angola, S.A.'],['IBAN','AO06 0004 0000 1005 7242 1511 2'],['Swift/BIC','BCGAAOLU'],['Conta','10057242/15/001'],['NIF','5001094645'],['Despesas','A ordem do ordenante']]},
   {title:'Conta em EUR',rows:[['Beneficiário','Henda Hotelaria, Lda'],['Banco','Banco Caixa Geral Angola, S.A.'],['IBAN','AO06 0004 0000 1005 7242 1520 9'],['Swift/BIC','BCGAAOLU'],['Conta','10057242/15/002'],['NIF','5001094645'],['Despesas','A ordem do ordenante']]}
 ];
-
 let lid=0;
 let _loadedFilename = null; // tracks the filename of the currently loaded JSON
-
 const TAX_OPTS=[['0','0%'],['7','7%'],['14','14%']];
-
-function taxSel(v){
-  return '<select onchange="updateTaxPrint(this);calcTot()">'+TAX_OPTS.map(o=>'<option value="'+(o[0])+'"'+(o[0]===String(v)?' selected':'')+'>'+(o[1])+'</option>').join('')+'</select>';
-}
-
-function updateTaxPrint(sel){
-  const span = sel.parentNode.querySelector('.tax-print');
-  if(span) span.textContent = sel.value=='6.5'?'6,5%':sel.value+'%';
-}
-
-function renderBanking(){
-  document.getElementById('bank-grid').innerHTML=BANKING.map(b=>'<div class="bb"><h4>'+(b.title)+'</h4>'+(b.rows.map(function(r){return '<div class="br"><span class="bkl">'+r[0]+'</span><span class="bkv">'+r[1]+'</span></div>';}).join(''))+'</div>').join('');
-}
-
-function addSection(label){
-  const id = ++lid;
-  const tbody = document.getElementById('lbody');
-  const tr = document.createElement('tr');
-  tr.id = 'S'+id;
-  tr.className = 'sec-row';
-  tr.innerHTML = '\n    <td class="drag-handle" draggable="false">⠿</td>\n    <td colspan="8" style="padding:0">\n      <input type="text" value="'+(label||'')+'" placeholder="DATA / DESCRIÇÃO DA SECÇÃO" \n        style="width:100%;background:transparent;color:#fff;font-weight:700;font-size:9px;\n        letter-spacing:1.5px;text-transform:uppercase;text-align:center;border:none;outline:none;\n        padding:5px 8px;font-family:\'Montserrat\',sans-serif">\n    </td>\n    <td style="background:var(--bronze);text-align:center;padding:0 4px;width:22px">\n      <button class="sec-del" onclick="delSection('+(id)+')">×</button>\n    </td>';
-  tbody.appendChild(tr);
-  initDrag(tr);
-  updatePageBreaks();
-  // focus input
-  tr.querySelector('input').focus();
-}
-
-function delSection(id){
-  const tr = document.getElementById('S'+id);
-  if(tr) tr.remove();
-  updatePageBreaks();
-}
-
-// ===== DRAG & DROP ROWS =====
-let dragSrc = null;
-
-function initDrag(tr){
-  const handle = tr.querySelector('.drag-handle');
-  if(!handle) return;
-
-  handle.addEventListener('mousedown', () => { tr.draggable = true; });
-  handle.addEventListener('mouseup',   () => { tr.draggable = false; });
-
-  tr.addEventListener('dragstart', e => {
-    dragSrc = tr;
-    tr.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-  });
-  tr.addEventListener('dragend', () => {
-    tr.draggable = false;
-    tr.classList.remove('dragging');
-    document.querySelectorAll('#lbody tr').forEach(r => r.classList.remove('drag-over'));
-    renum();
-    calcTot();
-    updatePageBreaks();
-  });
-  tr.addEventListener('dragover', e => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    document.querySelectorAll('#lbody tr').forEach(r => r.classList.remove('drag-over'));
-    if(tr !== dragSrc) tr.classList.add('drag-over');
-  });
-  tr.addEventListener('drop', e => {
-    e.preventDefault();
-    if(dragSrc && dragSrc !== tr){
-      const tbody = document.getElementById('lbody');
-      const rows = Array.from(tbody.querySelectorAll('tr'));
-      const srcIdx = rows.indexOf(dragSrc);
-      const tgtIdx = rows.indexOf(tr);
-      if(srcIdx < tgtIdx) tbody.insertBefore(dragSrc, tr.nextSibling);
-      else tbody.insertBefore(dragSrc, tr);
-    }
-    tr.classList.remove('drag-over');
-  });
-}
-
-function autoResize(el){
-  el.style.height='auto';
-  el.style.height=el.scrollHeight+'px';
-}
-
-function addLine(d){
-  d=d||{desc:'',qty:1,days:1,unit:'',tax:'14',disc:''};
-  const id=++lid;
-  const tbody=document.getElementById('lbody');
-  const n=tbody.children.length+1;
-  const tr=document.createElement('tr');
-  tr.id='L'+id;
-  const qtyVal  = d.qty  ? fmtNum(+d.qty)  : '';
-  const daysVal = d.days ? fmtNum(+d.days) : '';
-  const unitVal = d.unit ? fmtInput(+d.unit) : '';
-  const discVal = d.disc ? fmtInput(+d.disc) : '';
-  tr.innerHTML='\n    <td class="drag-handle" draggable="false">⠿</td>\n    <td class="n tc">'+(n)+'</td>\n    <td class="ds" style="position:relative"><textarea class="ta" placeholder="Descrição do serviço" oninput="autoResize(this);calcTot();showCatalog(this)" onfocus="showCatalog(this)" onblur="hideCatalog()" rows="1">'+(d.desc)+'</textarea></td>\n    <td class="qt"><input type="text" class="tc" value="'+(qtyVal)+'" placeholder="1" oninput="fmtField(this)" onblur="fmtBlur(this,true)" data-raw="'+(+d.qty||1)+'"></td>\n    <td class="dy"><input type="text" class="tc" value="'+(daysVal)+'" placeholder="1" oninput="fmtField(this)" onblur="fmtBlur(this,true)" data-raw="'+(+d.days||1)+'"></td>\n    <td class="vu"><input type="text" class="tr" value="'+(unitVal)+'" placeholder="0,00" oninput="fmtField(this)" onblur="fmtBlur(this,false)" data-raw="'+(+d.unit||0)+'"></td>\n    <td class="tx tc"><span class="tax-print">'+(d.tax=='6.5'?'6,5':d.tax)+'%</span>'+(taxSel(d.tax))+'</td>\n    <td class="dc"><input type="text" class="tr" value="'+(discVal)+'" placeholder="" oninput="fmtField(this)" onblur="fmtBlur(this,false)" data-raw="'+(+d.disc||0)+'"></td>\n    <td class="to tr" id="lt'+(id)+'">0,00</td>\n    <td class="dl"><button class="del-btn" onclick="delLine('+(id)+')">×</button></td>';
-  tbody.appendChild(tr);
-  initDrag(tr);
-  calcTot();
-  updatePageBreaks();
-}
-
-function delLine(id){
-  const tr=document.getElementById('L'+id);
-  if(tr)tr.remove();
-  renum();calcTot();updatePageBreaks();
-}
-
-function renum(){
-  document.querySelectorAll('#lbody tr:not(.sec-row):not(.pbm-row)').forEach((tr,i)=>{
-    const c=tr.querySelector('td.n');if(c)c.textContent=i+1;
-  });
-}
-
-function getRow(id){
-  const tr=document.getElementById('L'+id);if(!tr)return null;
-  const inp=tr.querySelectorAll('input');
-  const sel=tr.querySelector('select');
-  return{
-    qty: parseFloat(inp[0].dataset.raw)||0,
-    days:parseFloat(inp[1].dataset.raw)||0,
-    unit:parseFloat(inp[2].dataset.raw)||0,
-    tax: parseFloat(sel.value)||0,
-    disc:parseFloat(inp[3].dataset.raw)||0
-  };
-}
-
-// Format a decimal number with 2dp and thousand separators
-function fmtInput(n){
-  if(!n && n!==0) return '';
-  return n.toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2});
-}
-// Format an integer (qty/days) with thousand separators, no decimals
-function fmtNum(n){
-  if(!n && n!==0) return '';
-  return n.toLocaleString('pt-PT',{minimumFractionDigits:0,maximumFractionDigits:0});
-}
-// Generic input handler: parse raw value, store in data-raw, reformat on blur
-function fmtField(el){
-  const raw = el.value.replace(/\s/g,'').replace(/\./g,'').replace(',','.');
-  const num = parseFloat(raw) || 0;
-  el.dataset.raw = num;
-  calcTot();
-}
-// On blur: reformat display value neatly
-function fmtBlur(el, isInt){
-  const num = parseFloat(el.dataset.raw) || 0;
-  el.value = isInt ? fmtNum(num) : (num ? fmtInput(num) : '');
-}
-
-function calcTot(){
-  const rows=document.querySelectorAll('#lbody tr:not(.sec-row):not(.pbm-row)');
-  const map={};let grand=0,totalDisc=0,totalBruto=0;
-  rows.forEach(tr=>{
-    const id=parseInt(tr.id.replace('L',''));
-    const d=getRow(id);if(!d)return;
-    // V.Unit is WITH IVA — derive base: unit / (1 + tax/100)
-    const factor = 1 + (d.tax / 100);
-    const unitBase = d.unit / factor;          // unit s/ IVA
-    const brutoTotal = d.qty * d.days * d.unit; // total c/ IVA s/ desconto
-    const discBase = (d.disc || 0) / factor;    // desconto em base
-    const base = d.qty * d.days * unitBase - discBase;
-    const iva  = base * (d.tax / 100);
-    const tot  = base + iva;
-    grand += tot;
-    totalBruto += brutoTotal;
-    totalDisc  += d.disc || 0;
-    const c=document.getElementById('lt'+id);
-    if(c)c.textContent=fmt(tot);
-    if(!map[d.tax])map[d.tax]={base:0,iva:0};
-    map[d.tax].base+=base;map[d.tax].iva+=iva;
-  });
-  // Fixed incidência rows
-  const m7  = map[7]  || {base:0,iva:0};
-  const m14 = map[14] || {base:0,iva:0};
-  const ret = m14.base * 0.065;
-  const totalBase = (map[0]?map[0].base:0) + m7.base + m14.base;
-  const totalIva  = m7.iva + m14.iva;
-
-  document.getElementById('inc-base-7').textContent   = fmt(m7.base);
-  document.getElementById('inc-iva-7').textContent    = fmt(m7.iva);
-  document.getElementById('inc-base-14').textContent  = fmt(m14.base);
-  document.getElementById('inc-iva-14').textContent   = fmt(m14.iva);
-  document.getElementById('inc-base-ret').textContent = fmt(m14.base);
-  document.getElementById('inc-val-ret').textContent  = fmt(ret);
-  document.getElementById('t-base').textContent       = fmt(totalBase);
-  document.getElementById('t-iva').textContent        = fmt(totalIva);
-  document.getElementById('gt').textContent           = fmt(grand);
-
-  // Subtotal / desconto
-  document.getElementById('gt-subdesc').textContent=fmt(totalBruto);
-  const drow=document.getElementById('gt-disc-row');
-  if(totalDisc>0){
-    document.getElementById('gt-disc').textContent='— '+fmt(totalDisc);
-    drow.style.display='';
-  } else {
-    drow.style.display='none';
-  }
-}
-
-function fmt(n){return n.toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2})}
-
-function getData(){
-  const rows=document.querySelectorAll('#lbody tr:not(.sec-row):not(.pbm-row)');
-  const lines=[];
-  rows.forEach(tr=>{
-    if(tr.classList.contains('sec-row')){
-      const inp=tr.querySelector('input');
-      lines.push({type:'section',label:inp?inp.value:''});
-      return;
-    }
-    if(tr.classList.contains('pbm-row')) return;
-    const id=parseInt(tr.id.replace('L',''));
-    const ta=tr.querySelector('textarea');
-    const inp=tr.querySelectorAll('input');
-    const sel=tr.querySelector('select');
-    lines.push({type:'line',desc:ta?ta.value:'',qty:inp[0].dataset.raw||1,days:inp[1].dataset.raw||1,unit:inp[2].dataset.raw||0,tax:sel.value,disc:inp[3].dataset.raw||0});
-  });
-  return{data:document.getElementById('f-data').value,rsv:document.getElementById('f-rsv').value,sign:document.getElementById('sign-sel').value,
-    ev:document.getElementById('f-ev').value,ent:document.getElementById('f-ent').value,
-    con:document.getElementById('f-con').value,nif:document.getElementById('f-nif').value,
-    mor:document.getElementById('f-mor').value,cambio:document.getElementById('f-cambio').value,lines};
-}
-
-function getVersionSuffix(name){
-  // Extract version number from filename, e.g. _v3 -> 3
-  const match = name.match(/_v(\d+)$/i);
-  return match ? parseInt(match[1]) : null;
-}
-
-function confirmSave(){
-  const d = getData();
-  const rsv    = d.rsv.trim()    || 'SRSV';
-  const ent    = d.ent.trim()    || 'SEM-ENTIDADE';
-  const evdata = d.ev            || '';
-
-  // Build base filename
-  const rsvClean  = rsv.replace(/[^a-zA-Z0-9]/g,'');
-  const entClean  = ent.replace(/[^a-zA-Z0-9\u00C0-\u024F ]/g,'').trim().replace(/\s+/g,'_').toUpperCase();
-  // Filename uses event date; folder suggestion uses today (date proposal is sent)
-  const eventDate = evdata ? evdata.split('-').reverse().join('') : '';
-  const baseName  = 'RSV'+(rsvClean)+'_'+(entClean)+'_'+(eventDate);
-  const today     = new Date();
-  const todayMonth = today.getMonth();
-  const todayYear  = today.getFullYear();
-
-  let suggested = baseName;
-  let versionMsg = null;
-
-  // If editing an existing file, suggest next version
-  if(_loadedFilename){
-    const currentVer = getVersionSuffix(_loadedFilename);
-    if(currentVer){
-      const nextVer = currentVer + 1;
-      suggested = _loadedFilename.replace(/_v\d+$/i, '_v'+(nextVer));
-      versionMsg = 'Versão detectada: <strong>v'+(currentVer)+'</strong> — sugiro guardar como <strong>v'+(nextVer)+'</strong>.';
-    } else {
-      // First edit — suggest v2
-      suggested = _loadedFilename + '_v2';
-      versionMsg = 'Este ficheiro não tem versão. Sugiro guardar como <strong>v2</strong>.';
-    }
-  }
-
-  // Remove existing modal
-  const ex = document.getElementById('save-modal');
-  if(ex) ex.remove();
-
-  const modal = document.createElement('div');
-  modal.id = 'save-modal';
-  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;\n    background:rgba(0,0,0,0.5);z-index:9999;\n    display:flex;align-items:center;justify-content:center';
-
-  modal.innerHTML = '\n    <div style="background:#fff;border-radius:4px;padding:28px 32px;max-width:420px;width:92%;\n      box-shadow:0 8px 32px rgba(0,0,0,0.2);font-family:\'Montserrat\',sans-serif">\n      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;\n        color:var(--bronze);margin-bottom:16px">Guardar Proforma</div>\n      '+(versionMsg ? '<div style="font-size:10px;color:var(--bronze);background:#fffbf5;border:1px solid var(--bronze-l);border-radius:3px;padding:7px 10px;margin-bottom:12px">ℹ '+versionMsg+'</div>' : '')+'\n      <div style="font-size:10px;color:#666;margin-bottom:8px">Nome do ficheiro:</div>\n      <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">\n        <input id="save-filename" type="text" value="'+(suggested)+'"\n          style="flex:1;border:1px solid var(--gl);border-radius:3px;padding:8px 10px;\n          font-family:\'Montserrat\',sans-serif;font-size:11px;font-weight:600;color:#231F20;outline:none">\n        <span style="font-size:10px;color:#aaa">.json</span>\n      </div>\n      <div style="font-size:9px;color:#aaa;margin-bottom:14px;line-height:1.6;\n        background:var(--gbg);border-radius:3px;padding:8px 10px">\n        📁 Guardar em:<br>\n        <strong style="color:#666">Eventos HCTA - General \\ PROPOSTAS \\ '+(todayYear)+' \\ '+(String(todayMonth+1).padStart(2,'0'))+'_'+(['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][todayMonth])+'</strong>\n      </div>\n      <div style="display:flex;gap:10px;justify-content:flex-end">\n        <button onclick="document.getElementById(\'save-modal\').remove()"\n          style="background:none;border:1px solid #ddd;border-radius:3px;padding:7px 16px;\n          font-family:\'Montserrat\',sans-serif;font-size:10px;color:#888;cursor:pointer">\n          Cancelar\n        </button>\n        <button onclick="doSave()"\n          style="background:#231F20;color:#fff;border:none;border-radius:3px;padding:7px 18px;\n          font-family:\'Montserrat\',sans-serif;font-size:10px;font-weight:700;\n          letter-spacing:.5px;cursor:pointer;text-transform:uppercase">\n          💾 Guardar\n        </button>\n      </div>\n    </div>';
-
-  document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
-
-  // Select filename text for easy editing
-  setTimeout(() => {
-    const inp = document.getElementById('save-filename');
-    if(inp){ inp.focus(); inp.select(); }
-  }, 50);
-}
-
-function doSave(){
-  const filename = (document.getElementById('save-filename').value.trim() || 'proforma')
-    .replace(/\.json$/i,'');
-  document.getElementById('save-modal').remove();
-  _loadedFilename = filename; // track for future versioning
-  saveJSON(filename);
-}
-
-function saveJSON(filename){
-  const d=getData();
-  const name=(filename||d.rsv||'proforma').replace(/\//g,'_');
-  const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=name+'.json';a.click();
-  toast('Ficheiro guardado com sucesso.');
-}
-
-function loadJSON(ev){
-  const file=ev.target.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=e=>{
-    try{
-      const d=JSON.parse(e.target.result);
-      
-      document.getElementById('f-data').value=d.data||'';
-      document.getElementById('f-rsv').value=d.rsv||'';
-      document.getElementById('f-ev').value=d.ev||'';
-      document.getElementById('f-ent').value=d.ent||'';
-      document.getElementById('f-con').value=d.con||'';
-      document.getElementById('f-nif').value=d.nif||'';
-      const mor=document.getElementById('f-mor');mor.value=d.mor||'';autoResize(mor);
-      document.getElementById('f-cambio').value=d.cambio||'';
-      if(d.sign){document.getElementById('sign-sel').value=d.sign;updateSign();}
-      document.getElementById('lbody').innerHTML='';lid=0;
-      (d.lines||[]).forEach(l=>{
-        if(l.type==='section') addSection(l.label);
-        else addLine(l);
-      });
-      _loadedFilename = file.name.replace(/\.json$/i,''); updatePageBreaks();toast('Proforma carregada com sucesso.');
-    }catch(e){toast('Erro ao abrir ficheiro.');}
-  };
-  r.readAsText(file);ev.target.value='';
-}
-
-function newProforma(){
-  if(!confirm('Criar nova proforma? Os dados actuais serão apagados.'))return;
-  document.getElementById('lbody').innerHTML='';lid=0;
-  ['f-rsv','f-ev','f-ent','f-con','f-nif','f-mor','f-cambio'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-data').value=new Date().toISOString().split('T')[0];
-  addLine();addLine();addLine();
-  _loadedFilename = null; updatePageBreaks();toast('Nova proforma iniciada.');
-}
-
-function toast(msg){
-  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2800);
-}
-
-// ===== CATALOG =====
 const CATALOG = [
   { group: 'CCTA — Salas', items: [
     { name: 'CCTA Exclusividade', price: 15000000, tax: '14' },
@@ -956,7 +762,6 @@ const CATALOG = [
     { name: 'Dom Perignon', price: 630000, tax: '7' },
   ]},
 ];
-
 // Flat catalog items for autocomplete
 let _catItems = [];
 let _activeTA = null;
@@ -967,6 +772,502 @@ let _hideTimer = null;
   CATALOG.forEach(g => g.items.forEach(item => _catItems.push(item)));
 })();
 
+// ===== ALOJAMENTO =====
+const ROOM_TYPES = ['Standard','Suite Junior','Suite Executiva','Suite Presidencial'];
+const OCCUPANCY_OPTS = ['Single','Duplo','Twin'];
+const REGIME_OPTS = ['BB','HB','FB'];
+let LODGING = { mode:'summary', summaryRows:[], roomingRows:[] };
+let _lodRid = 0; // id counter for lodging rows (shared by summary/rooming)
+
+function normalizeLodging(d){
+  if(!d || typeof d!=='object') return { mode:'summary', summaryRows:[], roomingRows:[] };
+  return {
+    mode: d.mode==='rooming' ? 'rooming' : 'summary',
+    summaryRows: Array.isArray(d.summaryRows) ? d.summaryRows : [],
+    roomingRows: Array.isArray(d.roomingRows) ? d.roomingRows.map(normalizeRoomingRow) : []
+  };
+}
+
+// Garante que linhas antigas (gravadas antes desta melhoria) continuam a funcionar,
+// preenchendo os novos campos com valores neutros sem alterar o que já existia.
+function normalizeRoomingRow(r){
+  return Object.assign({
+    occupancy:'Single', guest2:'',
+    eciOn:false, eciTime:'', eciPrice:'',
+    lcoOn:false, lcoTime:'', lcoPrice:''
+  }, r);
+}
+
+// Duplo e Twin representam sempre 2 hóspedes no mesmo quarto; Single representa 1.
+function occupancyGuestCount(occupancy){
+  return (occupancy==='Duplo' || occupancy==='Twin') ? 2 : 1;
+}
+
+// ============================================================
+// 2. FUNCOES UTILITARIAS
+// ============================================================
+function autoResize(el){
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
+}
+function fmt(n){return n.toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtInput(n){
+  if(!n && n!==0) return '';
+  return n.toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+// Format an integer (qty/days) with thousand separators, no decimals
+function fmtNum(n){
+  if(!n && n!==0) return '';
+  return n.toLocaleString('pt-PT',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+// Generic input handler: parse raw value, store in data-raw, reformat on blur
+function toast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+function renderBanking(){
+  document.getElementById('bank-grid').innerHTML=BANKING.map(b=>'<div class="bb"><h4>'+(b.title)+'</h4>'+(b.rows.map(function(r){return '<div class="br"><span class="bkl">'+r[0]+'</span><span class="bkv">'+r[1]+'</span></div>';}).join(''))+'</div>').join('');
+}
+
+// ============================================================
+// 3. FUNCOES DE CALCULO
+// ============================================================
+function getRow(id){
+  const tr=document.getElementById('L'+id);if(!tr)return null;
+  const inp=tr.querySelectorAll('input');
+  const sel=tr.querySelector('select');
+  return{
+    qty: parseFloat(inp[0].dataset.raw)||0,
+    days:parseFloat(inp[1].dataset.raw)||0,
+    unit:parseFloat(inp[2].dataset.raw)||0,
+    tax: parseFloat(sel.value)||0,
+    disc:parseFloat(inp[3].dataset.raw)||0
+  };
+}
+
+// Format a decimal number with 2dp and thousand separators
+function fmtField(el){
+  const raw = el.value.replace(/\s/g,'').replace(/\./g,'').replace(',','.');
+  const num = parseFloat(raw) || 0;
+  el.dataset.raw = num;
+  calcTot();
+}
+// On blur: reformat display value neatly
+function fmtBlur(el, isInt){
+  const num = parseFloat(el.dataset.raw) || 0;
+  el.value = isInt ? fmtNum(num) : (num ? fmtInput(num) : '');
+}
+function calcTot(){
+  const rows=document.querySelectorAll('#lbody tr:not(.sec-row):not(.pbm-row)');
+  const map={};let grand=0,totalDisc=0,totalBruto=0;
+  rows.forEach(tr=>{
+    const id=parseInt(tr.id.replace('L',''));
+    const d=getRow(id);if(!d)return;
+    // V.Unit is WITH IVA — derive base: unit / (1 + tax/100)
+    const factor = 1 + (d.tax / 100);
+    const unitBase = d.unit / factor;          // unit s/ IVA
+    const brutoTotal = d.qty * d.days * d.unit; // total c/ IVA s/ desconto
+    const discBase = (d.disc || 0) / factor;    // desconto em base
+    const base = d.qty * d.days * unitBase - discBase;
+    const iva  = base * (d.tax / 100);
+    const tot  = base + iva;
+    grand += tot;
+    totalBruto += brutoTotal;
+    totalDisc  += d.disc || 0;
+    const c=document.getElementById('lt'+id);
+    if(c)c.textContent=fmt(tot);
+    if(!map[d.tax])map[d.tax]={base:0,iva:0};
+    map[d.tax].base+=base;map[d.tax].iva+=iva;
+  });
+  // Fixed incidência rows
+  const m7  = map[7]  || {base:0,iva:0};
+  const m14 = map[14] || {base:0,iva:0};
+  const ret = m14.base * 0.065;
+  const totalBase = (map[0]?map[0].base:0) + m7.base + m14.base;
+  const totalIva  = m7.iva + m14.iva;
+
+  document.getElementById('inc-base-7').textContent   = fmt(m7.base);
+  document.getElementById('inc-iva-7').textContent    = fmt(m7.iva);
+  document.getElementById('inc-base-14').textContent  = fmt(m14.base);
+  document.getElementById('inc-iva-14').textContent   = fmt(m14.iva);
+  document.getElementById('inc-base-ret').textContent = fmt(m14.base);
+  document.getElementById('inc-val-ret').textContent  = fmt(ret);
+  document.getElementById('t-base').textContent       = fmt(totalBase);
+  document.getElementById('t-iva').textContent        = fmt(totalIva);
+  document.getElementById('gt').textContent           = fmt(grand);
+
+  // Subtotal / desconto
+  document.getElementById('gt-subdesc').textContent=fmt(totalBruto);
+  const drow=document.getElementById('gt-disc-row');
+  if(totalDisc>0){
+    document.getElementById('gt-disc').textContent='— '+fmt(totalDisc);
+    drow.style.display='';
+  } else {
+    drow.style.display='none';
+  }
+}
+
+// ============================================================
+// 4. FUNCOES DE LINHAS / SERVICOS
+// ============================================================
+function taxSel(v){
+  return '<select onchange="updateTaxPrint(this);calcTot()">'+TAX_OPTS.map(o=>'<option value="'+(o[0])+'"'+(o[0]===String(v)?' selected':'')+'>'+(o[1])+'</option>').join('')+'</select>';
+}
+function updateTaxPrint(sel){
+  const span = sel.parentNode.querySelector('.tax-print');
+  if(span) span.textContent = sel.value=='6.5'?'6,5%':sel.value+'%';
+}
+function addSection(label){
+  const id = ++lid;
+  const tbody = document.getElementById('lbody');
+  const tr = document.createElement('tr');
+  tr.id = 'S'+id;
+  tr.className = 'sec-row';
+  tr.innerHTML = '\n    <td class="drag-handle" draggable="false">⠿</td>\n    <td colspan="8" style="padding:0">\n      <input type="text" value="'+(label||'')+'" placeholder="DATA / DESCRIÇÃO DA SECÇÃO" \n        style="width:100%;background:transparent;color:#fff;font-weight:700;font-size:9px;\n        letter-spacing:1.5px;text-transform:uppercase;text-align:center;border:none;outline:none;\n        padding:5px 8px;font-family:\'Montserrat\',sans-serif">\n    </td>\n    <td style="background:var(--bronze);text-align:center;padding:0 4px;width:22px">\n      <button class="sec-del" onclick="delSection('+(id)+')">×</button>\n    </td>';
+  tbody.appendChild(tr);
+  initDrag(tr);
+  updatePageBreaks();
+  // focus input
+  tr.querySelector('input').focus();
+}
+function delSection(id){
+  const tr = document.getElementById('S'+id);
+  if(tr) tr.remove();
+  updatePageBreaks();
+}
+// ===== DRAG & DROP ROWS =====
+let dragSrc = null;
+function initDrag(tr){
+  const handle = tr.querySelector('.drag-handle');
+  if(!handle) return;
+
+  handle.addEventListener('mousedown', () => { tr.draggable = true; });
+  handle.addEventListener('mouseup',   () => { tr.draggable = false; });
+
+  tr.addEventListener('dragstart', e => {
+    dragSrc = tr;
+    tr.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  tr.addEventListener('dragend', () => {
+    tr.draggable = false;
+    tr.classList.remove('dragging');
+    document.querySelectorAll('#lbody tr').forEach(r => r.classList.remove('drag-over'));
+    renum();
+    calcTot();
+    updatePageBreaks();
+  });
+  tr.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    document.querySelectorAll('#lbody tr').forEach(r => r.classList.remove('drag-over'));
+    if(tr !== dragSrc) tr.classList.add('drag-over');
+  });
+  tr.addEventListener('drop', e => {
+    e.preventDefault();
+    if(dragSrc && dragSrc !== tr){
+      const tbody = document.getElementById('lbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const srcIdx = rows.indexOf(dragSrc);
+      const tgtIdx = rows.indexOf(tr);
+      if(srcIdx < tgtIdx) tbody.insertBefore(dragSrc, tr.nextSibling);
+      else tbody.insertBefore(dragSrc, tr);
+    }
+    tr.classList.remove('drag-over');
+  });
+}
+function addLine(d){
+  d=d||{desc:'',qty:1,days:1,unit:'',tax:'14',disc:''};
+  const id=++lid;
+  const tbody=document.getElementById('lbody');
+  const n=tbody.children.length+1;
+  const tr=document.createElement('tr');
+  tr.id='L'+id;
+  const qtyVal  = d.qty  ? fmtNum(+d.qty)  : '';
+  const daysVal = d.days ? fmtNum(+d.days) : '';
+  const unitVal = d.unit ? fmtInput(+d.unit) : '';
+  const discVal = d.disc ? fmtInput(+d.disc) : '';
+  tr.innerHTML='\n    <td class="drag-handle" draggable="false">⠿</td>\n    <td class="n tc">'+(n)+'</td>\n    <td class="ds" style="position:relative"><textarea class="ta" placeholder="Descrição do serviço" oninput="autoResize(this);calcTot();showCatalog(this)" onfocus="showCatalog(this)" onblur="hideCatalog()" rows="1">'+(d.desc)+'</textarea></td>\n    <td class="qt"><input type="text" class="tc" value="'+(qtyVal)+'" placeholder="1" oninput="fmtField(this)" onblur="fmtBlur(this,true)" data-raw="'+(+d.qty||1)+'"></td>\n    <td class="dy"><input type="text" class="tc" value="'+(daysVal)+'" placeholder="1" oninput="fmtField(this)" onblur="fmtBlur(this,true)" data-raw="'+(+d.days||1)+'"></td>\n    <td class="vu"><input type="text" class="tr" value="'+(unitVal)+'" placeholder="0,00" oninput="fmtField(this)" onblur="fmtBlur(this,false)" data-raw="'+(+d.unit||0)+'"></td>\n    <td class="tx tc"><span class="tax-print">'+(d.tax=='6.5'?'6,5':d.tax)+'%</span>'+(taxSel(d.tax))+'</td>\n    <td class="dc"><input type="text" class="tr" value="'+(discVal)+'" placeholder="" oninput="fmtField(this)" onblur="fmtBlur(this,false)" data-raw="'+(+d.disc||0)+'"></td>\n    <td class="to tr" id="lt'+(id)+'">0,00</td>\n    <td class="dl"><button class="del-btn" onclick="delLine('+(id)+')">×</button></td>';
+  tbody.appendChild(tr);
+  initDrag(tr);
+  autoResize(tr.querySelector('.ta'));
+  calcTot();
+  updatePageBreaks();
+}
+function delLine(id){
+  const tr=document.getElementById('L'+id);
+  if(tr)tr.remove();
+  renum();calcTot();updatePageBreaks();
+}
+function renum(){
+  document.querySelectorAll('#lbody tr:not(.sec-row):not(.pbm-row)').forEach((tr,i)=>{
+    const c=tr.querySelector('td.n');if(c)c.textContent=i+1;
+  });
+}
+function updateSign(){
+  const val=document.getElementById('sign-sel').value.split('|');
+  document.getElementById('sign-name').textContent=val[0];
+  document.getElementById('sign-role').textContent=val[1]||'';
+}
+function updatePageBreaks(){
+  document.querySelectorAll('.pbm-row').forEach(el=>el.remove());
+
+  const rows=Array.from(document.querySelectorAll('#lbody tr:not(.pbm-row)'));
+  if(!rows.length) return;
+
+  const card = document.querySelector('.card');
+  const linesWrap = document.querySelector('.lines-wrap');
+  if(!card||!linesWrap) return;
+
+  // getBoundingClientRect returns CSS px which include the body zoom.
+  // To get print px we divide by the zoom factor.
+  const zoom = 1.25; // matches @media screen { body { zoom: 1.25 } }
+
+  // A4 usable height at 96 dpi with 10 mm top + 10 mm bottom margins
+  const a4px = (297 - 20) * 96 / 25.4; // ~1047 print-px
+
+  // Content above the table (header, meta box, client box, thead) in print-px
+  const cardRect  = card.getBoundingClientRect();
+  const linesRect = linesWrap.getBoundingClientRect();
+  const thead     = linesWrap.querySelector('thead');
+  const theadH    = thead ? thead.getBoundingClientRect().height / zoom : 0;
+  const aboveTable = (linesRect.top - cardRect.top) / zoom + theadH;
+
+  let used = aboveTable;
+
+  rows.forEach((tr, i) => {
+    const h = tr.getBoundingClientRect().height / zoom;
+    if(used + h > a4px && i > 0){
+      const markerTr = document.createElement('tr');
+      markerTr.className = 'pbm-row';
+      markerTr.innerHTML = '<td colspan="10"><div class="pbm-line"></div></td>';
+      tr.parentNode.insertBefore(markerTr, tr);
+      used = h;
+    } else {
+      used += h;
+    }
+  });
+}
+
+// ============================================================
+// 5. FUNCOES DE GUARDAR / CARREGAR JSON
+// ============================================================
+function getData(){
+  const rows=document.querySelectorAll('#lbody tr:not(.sec-row):not(.pbm-row)');
+  const lines=[];
+  rows.forEach(tr=>{
+    if(tr.classList.contains('sec-row')){
+      const inp=tr.querySelector('input');
+      lines.push({type:'section',label:inp?inp.value:''});
+      return;
+    }
+    if(tr.classList.contains('pbm-row')) return;
+    const id=parseInt(tr.id.replace('L',''));
+    const ta=tr.querySelector('textarea');
+    const inp=tr.querySelectorAll('input');
+    const sel=tr.querySelector('select');
+    lines.push({type:'line',desc:ta?ta.value:'',qty:inp[0].dataset.raw||1,days:inp[1].dataset.raw||1,unit:inp[2].dataset.raw||0,tax:sel.value,disc:inp[3].dataset.raw||0});
+  });
+  return{data:document.getElementById('f-data').value,rsv:document.getElementById('f-rsv').value,sign:document.getElementById('sign-sel').value,
+    ev:document.getElementById('f-ev').value,ent:document.getElementById('f-ent').value,
+    con:document.getElementById('f-con').value,nif:document.getElementById('f-nif').value,
+    mor:document.getElementById('f-mor').value,cambio:document.getElementById('f-cambio').value,lines,
+    lodging:LODGING};
+}
+function getVersionSuffix(name){
+  // Extract version number from filename, e.g. _v3 -> 3
+  const match = name.match(/_v(\d+)$/i);
+  return match ? parseInt(match[1]) : null;
+}
+function confirmSave(){
+  const d = getData();
+  const rsv    = d.rsv.trim()    || 'SRSV';
+  const ent    = d.ent.trim()    || 'SEM-ENTIDADE';
+  const evdata = d.ev            || '';
+
+  // Build base filename
+  const rsvClean  = rsv.replace(/[^a-zA-Z0-9]/g,'');
+  const entClean  = ent.replace(/[^a-zA-Z0-9\u00C0-\u024F ]/g,'').trim().replace(/\s+/g,'_').toUpperCase();
+  // Filename uses event date; folder suggestion uses today (date proposal is sent)
+  const eventDate = evdata ? evdata.split('-').reverse().join('') : '';
+  const baseName  = 'RSV'+(rsvClean)+'_'+(entClean)+'_'+(eventDate);
+  const today     = new Date();
+  const todayMonth = today.getMonth();
+  const todayYear  = today.getFullYear();
+
+  let suggested = baseName;
+  let versionMsg = null;
+
+  // If editing an existing file, suggest next version
+  if(_loadedFilename){
+    const currentVer = getVersionSuffix(_loadedFilename);
+    if(currentVer){
+      const nextVer = currentVer + 1;
+      suggested = _loadedFilename.replace(/_v\d+$/i, '_v'+(nextVer));
+      versionMsg = 'Versão detectada: <strong>v'+(currentVer)+'</strong> — sugiro guardar como <strong>v'+(nextVer)+'</strong>.';
+    } else {
+      // First edit — suggest v2
+      suggested = _loadedFilename + '_v2';
+      versionMsg = 'Este ficheiro não tem versão. Sugiro guardar como <strong>v2</strong>.';
+    }
+  }
+
+  // Remove existing modal
+  const ex = document.getElementById('save-modal');
+  if(ex) ex.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'save-modal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;\n    background:rgba(0,0,0,0.5);z-index:9999;\n    display:flex;align-items:center;justify-content:center';
+
+  modal.innerHTML = '\n    <div style="background:#fff;border-radius:4px;padding:28px 32px;max-width:420px;width:92%;\n      box-shadow:0 8px 32px rgba(0,0,0,0.2);font-family:\'Montserrat\',sans-serif">\n      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;\n        color:var(--bronze);margin-bottom:16px">Guardar Proforma</div>\n      '+(versionMsg ? '<div style="font-size:10px;color:var(--bronze);background:#fffbf5;border:1px solid var(--bronze-l);border-radius:3px;padding:7px 10px;margin-bottom:12px">ℹ '+versionMsg+'</div>' : '')+'\n      <div style="font-size:10px;color:#666;margin-bottom:8px">Nome do ficheiro:</div>\n      <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">\n        <input id="save-filename" type="text" value="'+(suggested)+'"\n          style="flex:1;border:1px solid var(--gl);border-radius:3px;padding:8px 10px;\n          font-family:\'Montserrat\',sans-serif;font-size:11px;font-weight:600;color:#231F20;outline:none">\n        <span style="font-size:10px;color:#aaa">.json</span>\n      </div>\n      <div style="font-size:9px;color:#aaa;margin-bottom:14px;line-height:1.6;\n        background:var(--gbg);border-radius:3px;padding:8px 10px">\n        📁 Guardar em:<br>\n        <strong style="color:#666">Eventos HCTA - General \\ PROPOSTAS \\ '+(todayYear)+' \\ '+(String(todayMonth+1).padStart(2,'0'))+'_'+(['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][todayMonth])+'</strong>\n      </div>\n      <div style="display:flex;gap:10px;justify-content:flex-end">\n        <button onclick="document.getElementById(\'save-modal\').remove()"\n          style="background:none;border:1px solid #ddd;border-radius:3px;padding:7px 16px;\n          font-family:\'Montserrat\',sans-serif;font-size:10px;color:#888;cursor:pointer">\n          Cancelar\n        </button>\n        <button onclick="doSave()"\n          style="background:#231F20;color:#fff;border:none;border-radius:3px;padding:7px 18px;\n          font-family:\'Montserrat\',sans-serif;font-size:10px;font-weight:700;\n          letter-spacing:.5px;cursor:pointer;text-transform:uppercase">\n          💾 Guardar\n        </button>\n      </div>\n    </div>';
+
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+
+  // Select filename text for easy editing
+  setTimeout(() => {
+    const inp = document.getElementById('save-filename');
+    if(inp){ inp.focus(); inp.select(); }
+  }, 50);
+}
+function doSave(){
+  const filename = (document.getElementById('save-filename').value.trim() || 'proforma')
+    .replace(/\.json$/i,'');
+  document.getElementById('save-modal').remove();
+  _loadedFilename = filename; // track for future versioning
+  saveJSON(filename);
+}
+function saveJSON(filename){
+  const d=getData();
+  const name=(filename||d.rsv||'proforma').replace(/\//g,'_');
+  const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=name+'.json';a.click();
+  toast('Ficheiro guardado com sucesso.');
+}
+function loadJSON(ev){
+  const file=ev.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      
+      document.getElementById('f-data').value=d.data||'';
+      document.getElementById('f-rsv').value=d.rsv||'';
+      document.getElementById('f-ev').value=d.ev||'';
+      document.getElementById('f-ent').value=d.ent||'';
+      document.getElementById('f-con').value=d.con||'';
+      document.getElementById('f-nif').value=d.nif||'';
+      const mor=document.getElementById('f-mor');mor.value=d.mor||'';autoResize(mor);
+      document.getElementById('f-cambio').value=d.cambio||'';
+      if(d.sign){document.getElementById('sign-sel').value=d.sign;updateSign();}
+      document.getElementById('lbody').innerHTML='';lid=0;
+      (d.lines||[]).forEach(l=>{
+        if(l.type==='section') addSection(l.label);
+        else addLine(l);
+      });
+      _loadedFilename = file.name.replace(/\.json$/i,'');
+      LODGING = normalizeLodging(d.lodging);
+      updatePageBreaks();toast('Proforma carregada com sucesso.');
+    }catch(e){toast('Erro ao abrir ficheiro.');}
+  };
+  r.readAsText(file);ev.target.value='';
+}
+function newProforma(){
+  if(!confirm('Criar nova proforma? Os dados actuais serão apagados.'))return;
+  document.getElementById('lbody').innerHTML='';lid=0;
+  ['f-rsv','f-ev','f-ent','f-con','f-nif','f-mor','f-cambio'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-data').value=new Date().toISOString().split('T')[0];
+  addLine();addLine();addLine();
+  _loadedFilename = null;
+  LODGING = normalizeLodging(null);
+  updatePageBreaks();toast('Nova proforma iniciada.');
+}
+
+// ============================================================
+// 6. FUNCOES DE IMPRESSAO / PDF
+// ============================================================
+function preparePrintLayout(){
+  // Remove quebras antigas (indicador visual) antes de recalcular
+  document.querySelectorAll('.pbm-row').forEach(el=>el.remove());
+
+  // Prepara as linhas de serviço para impressão: texto limpo em vez de campos editáveis,
+  // e marca como "vazias" as linhas sem descrição nem valores, para não saírem no PDF.
+  // Esta preparação é puramente visual/impressão e não altera os dados nem a versão em ecrã.
+  document.querySelectorAll('#lbody tr').forEach(tr=>{
+    if(tr.classList.contains('sec-row') || tr.classList.contains('pbm-row')) return;
+
+    const dsCell = tr.querySelector('td.ds');
+    const qtCell = tr.querySelector('td.qt');
+    const dyCell = tr.querySelector('td.dy');
+    const vuCell = tr.querySelector('td.vu');
+    const dcCell = tr.querySelector('td.dc');
+    if(!dsCell) return;
+
+    const ta = dsCell.querySelector('textarea.ta');
+    const descText = ta ? ta.value.trim() : '';
+    setPrintValue(dsCell, descText);
+
+    const qtyInput = qtCell ? qtCell.querySelector('input') : null;
+    setPrintValue(qtCell, qtyInput ? qtyInput.value.trim() : '');
+
+    const dayInput = dyCell ? dyCell.querySelector('input') : null;
+    setPrintValue(dyCell, dayInput ? dayInput.value.trim() : '');
+
+    const unitInput = vuCell ? vuCell.querySelector('input') : null;
+    setPrintValue(vuCell, unitInput ? unitInput.value.trim() : '');
+
+    const discInput = dcCell ? dcCell.querySelector('input') : null;
+    setPrintValue(dcCell, discInput ? discInput.value.trim() : '');
+
+    // Linha vazia/default: sem descrição e sem valor unitário lançado -> não sai no PDF
+    const unitRaw = unitInput ? parseFloat(unitInput.dataset.raw||'0') : 0;
+    const isEmptyRow = descText==='' && !unitRaw;
+    tr.classList.toggle('print-empty-row', isEmptyRow);
+  });
+
+  // Recalcula o indicador visual de quebra de página com base na altura útil A4
+  updatePageBreaks();
+}
+
+// Cria (ou actualiza) o span de texto limpo usado apenas em impressão,
+// mantendo o campo editável intacto para a versão em ecrã.
+function setPrintValue(cell, text){
+  if(!cell) return;
+  let span = cell.querySelector('.print-value');
+  if(!span){
+    span = document.createElement('span');
+    span.className = 'print-value';
+    cell.appendChild(span);
+  }
+  span.textContent = text;
+}
+
+function validateAndPrint(){
+  preparePrintLayout();
+  window.print();
+}
+
+function showValidationModal(fields){
+  // Remove existing modal
+  const existing = document.getElementById('val-modal');
+  if(existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'val-modal';
+  modal.style.cssText = '\n    position:fixed;top:0;left:0;right:0;bottom:0;\n    background:rgba(0,0,0,0.5);z-index:9999;\n    display:flex;align-items:center;justify-content:center';
+
+  modal.innerHTML = '\n    <div style="background:#fff;border-radius:4px;padding:28px 32px;max-width:380px;width:90%;\n      box-shadow:0 8px 32px rgba(0,0,0,0.2);font-family:\'Montserrat\',sans-serif">\n      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;\n        color:#c0392b;margin-bottom:12px">Campos obrigatórios em falta</div>\n      <ul style="padding-left:16px;margin-bottom:20px">\n        '+(fields.map(function(f){return '<li style="font-size:11px;color:#444;margin-bottom:5px">'+f+'</li>';}).join(''))+'\n      </ul>\n      <button onclick="document.getElementById(\'val-modal\').remove()"\n        style="background:#231F20;color:#fff;border:none;border-radius:3px;\n        padding:8px 20px;font-family:\'Montserrat\',sans-serif;font-size:10px;\n        font-weight:700;letter-spacing:1px;cursor:pointer;text-transform:uppercase">\n        OK, vou preencher\n      </button>\n    </div>';
+
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+}
+
+// ============================================================
+// 7. FUNCOES DE CATALOGO / AUTOCOMPLETE
+// ============================================================
+// ===== CATALOG =====
 function showCatalog(ta){
   _activeTA = ta;
   clearTimeout(_hideTimer);
@@ -1022,17 +1323,14 @@ function showCatalog(ta){
   dd.innerHTML = html;
   dd.style.display = 'block';
 }
-
 function catItemHTML(item, idx){
   return '<div class="cat-item" onmousedown="selectCatalogItem('+(idx)+')">\n    <span class="cat-item-name">'+(item.name)+'</span>\n    <span class="cat-item-price">'+(fmtInput(item.price))+'</span>\n    <span class="cat-item-tax">'+(item.tax)+'%</span>\n  </div>';
 }
-
 function hideCatalog(){
   _hideTimer = setTimeout(() => {
     document.getElementById('cat-dropdown').style.display = 'none';
   }, 200);
 }
-
 function selectCatalogItem(idx){
   const item = _catItems[idx];
   if(!item || !_activeTA) return;
@@ -1060,66 +1358,402 @@ function selectCatalogItem(idx){
   _activeTA.blur();
 }
 
-function updateSign(){
-  const val=document.getElementById('sign-sel').value.split('|');
-  document.getElementById('sign-name').textContent=val[0];
-  document.getElementById('sign-role').textContent=val[1]||'';
+// ============================================================
+// 8. MODULO DE ALOJAMENTO
+// ============================================================
+
+function openLodgingModal(){
+  renderLodging();
+  document.getElementById('lod-modal').style.display = 'flex';
 }
 
-function updatePageBreaks(){
-  document.querySelectorAll('.pbm-row').forEach(el=>el.remove());
+function closeLodgingModal(){
+  document.getElementById('lod-modal').style.display = 'none';
+}
 
-  const rows=Array.from(document.querySelectorAll('#lbody tr:not(.pbm-row)'));
-  if(!rows.length) return;
+function saveLodgingAndClose(){
+  closeLodgingModal();
+  toast('Alojamento actualizado.');
+}
 
-  const card = document.querySelector('.card');
-  const linesWrap = document.querySelector('.lines-wrap');
-  if(!card||!linesWrap) return;
+function switchLodgingMode(mode){
+  LODGING.mode = mode==='rooming' ? 'rooming' : 'summary';
+  const isSummary = LODGING.mode==='summary';
+  document.getElementById('lod-view-summary').style.display = isSummary ? '' : 'none';
+  document.getElementById('lod-view-rooming').style.display = isSummary ? 'none' : '';
+  const tS = document.getElementById('lod-tab-summary');
+  const tR = document.getElementById('lod-tab-rooming');
+  tS.style.background = isSummary ? '#887157' : '#fff';
+  tS.style.color      = isSummary ? '#fff' : '#887157';
+  tR.style.background = isSummary ? '#fff' : '#887157';
+  tR.style.color       = isSummary ? '#887157' : '#fff';
+}
 
-  // getBoundingClientRect returns CSS px which include the body zoom.
-  // To get print px we divide by the zoom factor.
-  const zoom = 1.25; // matches @media screen { body { zoom: 1.25 } }
+// Calcula número de noites entre check-in e check-out (datas yyyy-mm-dd)
+function calcNights(checkin, checkout){
+  if(!checkin || !checkout) return 0;
+  const d1 = new Date(checkin+'T00:00:00');
+  const d2 = new Date(checkout+'T00:00:00');
+  const diff = Math.round((d2 - d1) / 86400000);
+  return diff > 0 ? diff : 0;
+}
 
-  // A4 usable height at 96 dpi with 10 mm top + 10 mm bottom margins
-  const a4px = (297 - 20) * 96 / 25.4; // ~1047 print-px
+// ---- RESUMO ----
 
-  // Content above the table (header, meta box, client box, thead) in print-px
-  const cardRect  = card.getBoundingClientRect();
-  const linesRect = linesWrap.getBoundingClientRect();
-  const thead     = linesWrap.querySelector('thead');
-  const theadH    = thead ? thead.getBoundingClientRect().height / zoom : 0;
-  const aboveTable = (linesRect.top - cardRect.top) / zoom + theadH;
+function addSummaryRow(d){
+  d = d || {roomType:'Standard',regime:'BB',checkin:'',checkout:'',qty:1,price:'',tax:'7',notes:''};
+  const id = ++_lodRid;
+  LODGING.summaryRows.push(Object.assign({id}, d));
+  renderSummaryTable();
+}
 
-  let used = aboveTable;
+function delSummaryRow(id){
+  LODGING.summaryRows = LODGING.summaryRows.filter(r => r.id !== id);
+  renderSummaryTable();
+}
 
-  rows.forEach((tr, i) => {
-    const h = tr.getBoundingClientRect().height / zoom;
-    if(used + h > a4px && i > 0){
-      const markerTr = document.createElement('tr');
-      markerTr.className = 'pbm-row';
-      markerTr.innerHTML = '<td colspan="10"><div class="pbm-line"></div></td>';
-      tr.parentNode.insertBefore(markerTr, tr);
-      used = h;
-    } else {
-      used += h;
-    }
+function updateSummaryField(id, field, value){
+  const row = LODGING.summaryRows.find(r => r.id===id);
+  if(!row) return;
+  row[field] = value;
+  if(field==='checkin' || field==='checkout'){
+    const nightsEl = document.getElementById('lod-sum-nights-'+id);
+    if(nightsEl) nightsEl.textContent = calcNights(row.checkin, row.checkout);
+  }
+}
+
+function renderSummaryTable(){
+  const body = document.getElementById('lod-summary-body');
+  body.innerHTML = LODGING.summaryRows.map(r => {
+    const nights = calcNights(r.checkin, r.checkout);
+    return '<tr id="lod-sum-'+(r.id)+'">'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+roomTypeSelFor('summary',r.id,r.roomType)+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+regimeSelFor('summary',r.id,r.regime)+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px"><input type="date" value="'+(r.checkin||'')+'" style="width:100%;border:none;font-size:9px" onchange="updateSummaryField('+(r.id)+',\'checkin\',this.value)"></td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px"><input type="date" value="'+(r.checkout||'')+'" style="width:100%;border:none;font-size:9px" onchange="updateSummaryField('+(r.id)+',\'checkout\',this.value)"></td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px;text-align:center;font-weight:600" id="lod-sum-nights-'+(r.id)+'">'+(nights)+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px"><input type="text" value="'+(r.qty||'')+'" style="width:100%;border:none;font-size:9px;text-align:center" onchange="updateSummaryField('+(r.id)+',\'qty\',this.value)"></td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px"><input type="text" value="'+(r.price||'')+'" placeholder="0,00" style="width:100%;border:none;font-size:9px;text-align:right" onchange="updateSummaryField('+(r.id)+',\'price\',this.value)"></td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+taxSelForLodging('summary',r.id,r.tax)+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px"><input type="text" value="'+(r.notes||'')+'" style="width:100%;border:none;font-size:9px" onchange="updateSummaryField('+(r.id)+',\'notes\',this.value)"></td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px;text-align:center"><button class="del-btn" onclick="delSummaryRow('+(r.id)+')">×</button></td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px;text-align:center"><button class="add-btn" style="font-size:8px;padding:2px 6px" onclick="convertSummaryToRooming('+(r.id)+')">Gerar Rooming</button></td>'
+      + '</tr>';
+  }).join('');
+}
+
+// ---- ROOMING LIST ----
+
+function addRoomingRow(d){
+  d = d || {guest:'',occupancy:'Single',guest2:'',roomType:'Standard',regime:'BB',checkin:'',checkout:'',qty:1,price:'',tax:'7',notes:'',eciOn:false,eciTime:'',eciPrice:'',lcoOn:false,lcoTime:'',lcoPrice:''};
+  const id = ++_lodRid;
+  LODGING.roomingRows.push(normalizeRoomingRow(Object.assign({id}, d)));
+  renderRoomingTable();
+}
+
+function delRoomingRow(id){
+  LODGING.roomingRows = LODGING.roomingRows.filter(r => r.id !== id);
+  renderRoomingTable();
+}
+
+function updateRoomingField(id, field, value){
+  const row = LODGING.roomingRows.find(r => r.id===id);
+  if(!row) return;
+  row[field] = value;
+  if(field==='checkin' || field==='checkout'){
+    const nightsEl = document.getElementById('lod-room-nights-'+id);
+    if(nightsEl) nightsEl.textContent = calcNights(row.checkin, row.checkout);
+    renderRoomingSummary();
+  }
+  if(field==='occupancy' || field==='eciOn' || field==='lcoOn' || field==='qty'){
+    renderRoomingTable();
+  }
+}
+
+function occupancySelFor(id, value){
+  return '<select style="width:100%;font-size:9px;border:none" onchange="updateRoomingField('+(id)+',\'occupancy\',this.value)">'
+    + OCCUPANCY_OPTS.map(o=>'<option value="'+o+'"'+(o===value?' selected':'')+'>'+o+'</option>').join('')
+    + '</select>';
+}
+
+function guestFieldsFor(r){
+  const g1 = '<input type="text" value="'+(r.guest||'')+'" placeholder="Opcional" style="width:100%;border:none;font-size:9px;margin-bottom:2px" onchange="updateRoomingField('+(r.id)+',\'guest\',this.value)">';
+  if(occupancyGuestCount(r.occupancy)!==2) return g1;
+  const g2 = '<input type="text" value="'+(r.guest2||'')+'" placeholder="Opcional — 2º hóspede" style="width:100%;border:none;font-size:9px" onchange="updateRoomingField('+(r.id)+',\'guest2\',this.value)">';
+  return g1 + g2;
+}
+
+function earlyLateCellFor(r, kind){
+  // kind: 'eci' (Early Check-in) ou 'lco' (Late Check-out)
+  const onField    = kind+'On';
+  const timeField  = kind+'Time';
+  const priceField = kind+'Price';
+  const on = !!r[kind+'On'];
+  let html = '<label style="display:flex;align-items:center;gap:4px;font-size:8px;color:#555;white-space:nowrap">'
+    + '<input type="checkbox" '+(on?'checked':'')+' onchange="updateRoomingField('+(r.id)+',\''+(onField)+'\',this.checked)"> Activar'
+    + '</label>';
+  if(on){
+    html += '<div style="display:flex;gap:3px;margin-top:2px">'
+      + '<input type="time" value="'+(r[timeField]||'')+'" style="width:62px;border:1px solid #e0dbd5;font-size:8px;padding:1px" onchange="updateRoomingField('+(r.id)+',\''+(timeField)+'\',this.value)">'
+      + '<input type="text" value="'+(r[priceField]||'')+'" placeholder="Preço" style="width:56px;border:1px solid #e0dbd5;font-size:8px;padding:1px;text-align:right" onchange="updateRoomingField('+(r.id)+',\''+(priceField)+'\',this.value)">'
+      + '</div>';
+  }
+  return html;
+}
+
+function renderRoomingTable(){
+  const body = document.getElementById('lod-rooming-body');
+  body.innerHTML = LODGING.roomingRows.map(r => {
+    const nights = calcNights(r.checkin, r.checkout);
+    return '<tr id="lod-room-'+(r.id)+'">'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+occupancySelFor(r.id, r.occupancy)+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+guestFieldsFor(r)+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+roomTypeSelFor('rooming',r.id,r.roomType)+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+regimeSelFor('rooming',r.id,r.regime)+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px"><input type="date" value="'+(r.checkin||'')+'" style="width:100%;border:none;font-size:9px" onchange="updateRoomingField('+(r.id)+',\'checkin\',this.value)"></td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px"><input type="date" value="'+(r.checkout||'')+'" style="width:100%;border:none;font-size:9px" onchange="updateRoomingField('+(r.id)+',\'checkout\',this.value)"></td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px;text-align:center;font-weight:600" id="lod-room-nights-'+(r.id)+'">'+(nights)+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px"><input type="text" value="'+(r.qty||'')+'" style="width:100%;border:none;font-size:9px;text-align:center" onchange="updateRoomingField('+(r.id)+',\'qty\',this.value)"></td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px"><input type="text" value="'+(r.price||'')+'" placeholder="0,00" style="width:100%;border:none;font-size:9px;text-align:right" onchange="updateRoomingField('+(r.id)+',\'price\',this.value)"></td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+taxSelForLodging('rooming',r.id,r.tax)+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+earlyLateCellFor(r,'eci')+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+earlyLateCellFor(r,'lco')+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px"><input type="text" value="'+(r.notes||'')+'" style="width:100%;border:none;font-size:9px" onchange="updateRoomingField('+(r.id)+',\'notes\',this.value)"></td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px;text-align:center"><button class="del-btn" onclick="delRoomingRow('+(r.id)+')">×</button></td>'
+      + '</tr>';
+  }).join('');
+  renderRoomingSummary();
+}
+
+// Totais automáticos: Quartos, Hóspedes e Room Nights
+function getRoomingTotals(rows){
+  let totalRooms = 0, totalGuests = 0, totalRoomNights = 0;
+  rows.forEach(r => {
+    const qty = parseInt(r.qty) || 0;
+    const nights = calcNights(r.checkin, r.checkout);
+    const guestsPerRoom = occupancyGuestCount(r.occupancy);
+    totalRooms += qty;
+    totalGuests += qty * guestsPerRoom;
+    totalRoomNights += qty * nights;
   });
+  return { totalRooms, totalGuests, totalRoomNights };
 }
 
+function renderRoomingSummary(){
+  const el = document.getElementById('lod-room-summary');
+  if(!el) return;
+  const t = getRoomingTotals(LODGING.roomingRows);
+  el.innerHTML =
+    '<div><b style="color:#231F20">Total de Quartos:</b> '+(t.totalRooms)+'</div>'
+    + '<div><b style="color:#231F20">Total de Hóspedes:</b> '+(t.totalGuests)+'</div>'
+    + '<div><b style="color:#231F20">Total de Room Nights:</b> '+(t.totalRoomNights)+'</div>';
+}
 
-function showValidationModal(fields){
-  // Remove existing modal
-  const existing = document.getElementById('val-modal');
-  if(existing) existing.remove();
+// ---- SELECTS ligados a uma linha específica (resumo ou rooming) ----
 
-  const modal = document.createElement('div');
-  modal.id = 'val-modal';
-  modal.style.cssText = '\n    position:fixed;top:0;left:0;right:0;bottom:0;\n    background:rgba(0,0,0,0.5);z-index:9999;\n    display:flex;align-items:center;justify-content:center';
+function roomTypeSelFor(kind, id, value){
+  const fn = kind==='summary' ? 'updateSummaryField' : 'updateRoomingField';
+  return '<select style="width:100%;font-size:9px;border:none" onchange="'+(fn)+'('+(id)+',\'roomType\',this.value)">'
+    + ROOM_TYPES.map(t=>'<option value="'+t+'"'+(t===value?' selected':'')+'>'+t+'</option>').join('')
+    + '</select>';
+}
 
-  modal.innerHTML = '\n    <div style="background:#fff;border-radius:4px;padding:28px 32px;max-width:380px;width:90%;\n      box-shadow:0 8px 32px rgba(0,0,0,0.2);font-family:\'Montserrat\',sans-serif">\n      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;\n        color:#c0392b;margin-bottom:12px">Campos obrigatórios em falta</div>\n      <ul style="padding-left:16px;margin-bottom:20px">\n        '+(fields.map(function(f){return '<li style="font-size:11px;color:#444;margin-bottom:5px">'+f+'</li>';}).join(''))+'\n      </ul>\n      <button onclick="document.getElementById(\'val-modal\').remove()"\n        style="background:#231F20;color:#fff;border:none;border-radius:3px;\n        padding:8px 20px;font-family:\'Montserrat\',sans-serif;font-size:10px;\n        font-weight:700;letter-spacing:1px;cursor:pointer;text-transform:uppercase">\n        OK, vou preencher\n      </button>\n    </div>';
+function regimeSelFor(kind, id, value){
+  const fn = kind==='summary' ? 'updateSummaryField' : 'updateRoomingField';
+  return '<select style="width:100%;font-size:9px;border:none" onchange="'+(fn)+'('+(id)+',\'regime\',this.value)">'
+    + REGIME_OPTS.map(r=>'<option value="'+r+'"'+(r===value?' selected':'')+'>'+r+'</option>').join('')
+    + '</select>';
+}
 
-  document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+function taxSelForLodging(kind, id, value){
+  const fn = kind==='summary' ? 'updateSummaryField' : 'updateRoomingField';
+  return '<select style="width:100%;font-size:9px;border:none" onchange="'+(fn)+'('+(id)+',\'tax\',this.value)">'
+    + TAX_OPTS.map(o=>'<option value="'+(o[0])+'"'+(o[0]===String(value)?' selected':'')+'>'+(o[1])+'</option>').join('')
+    + '</select>';
+}
+
+// ---- Conversão Resumo -> Rooming List ----
+
+function convertSummaryToRooming(id){
+  const row = LODGING.summaryRows.find(r => r.id===id);
+  if(!row) return;
+  const qty = parseInt(row.qty, 10) || 0;
+  if(qty <= 0){ toast('Indique a quantidade de quartos antes de converter.'); return; }
+
+  if(!confirm('Gerar '+qty+' linha(s) de rooming list a partir deste bloco? O bloco de resumo mantém-se inalterado.')) return;
+
+  // Gera exactamente "qty" linhas, cada uma representando 1 quarto,
+  // sempre com ocupação Single por defeito (nunca herdada, nunca inferida).
+  let generated = 0;
+  while(generated < qty){
+    addRoomingRow({
+      guest:'',
+      occupancy:'Single',
+      guest2:'',
+      roomType:row.roomType,
+      regime:row.regime,
+      checkin:row.checkin,
+      checkout:row.checkout,
+      qty:1,
+      price:row.price,
+      tax:row.tax,
+      notes:row.notes,
+      eciOn:false,
+      eciTime:'',
+      eciPrice:'',
+      lcoOn:false,
+      lcoTime:'',
+      lcoPrice:''
+    });
+    generated++;
+  }
+
+  if(generated !== qty){
+    toast('Aviso: geradas '+generated+' de '+qty+' linhas esperadas.');
+  }
+
+  switchLodgingMode('rooming');
+  toast(qty+' quarto(s) adicionados à rooming list, todos com ocupação Single.');
+}
+
+function renderLodging(){
+  switchLodgingMode(LODGING.mode);
+  renderSummaryTable();
+  renderRoomingTable();
+}
+
+// ---- Actualizar Proforma com Alojamento (Resumo -> linhas da proforma) ----
+
+function fmtDatePT(iso){
+  if(!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  if(!y||!m||!d) return iso;
+  return d+'/'+m+'/'+y;
+}
+
+function applyLodgingToProforma(){
+  const rows = LODGING.summaryRows;
+  if(!rows.length){ toast('Não há blocos no Resumo de Alojamento.'); return; }
+
+  const tbody = document.getElementById('lbody');
+
+  // Remove linhas e secção de alojamento geradas anteriormente, para evitar duplicar
+  tbody.querySelectorAll('[data-lodging-gen="1"]').forEach(el => el.remove());
+
+  // Cria a secção "ALOJAMENTO"
+  addSection('ALOJAMENTO');
+  const secTr = tbody.lastElementChild;
+  secTr.setAttribute('data-lodging-gen','1');
+
+  // Gera uma linha normal da proforma por cada bloco do Resumo
+  rows.forEach(r => {
+    const nights = calcNights(r.checkin, r.checkout);
+    const qty = parseFloat(r.qty) || 0;
+    const unit = parseFloat((''+(r.price||'')).replace(/\s/g,'').replace(/\./g,'').replace(',','.')) || 0;
+    const desc = 'Alojamento — '+(qty)+' Quartos '+(r.roomType)+' | Regime '+(r.regime)+' | '+(fmtDatePT(r.checkin))+' a '+(fmtDatePT(r.checkout));
+
+    addLine({desc:desc, qty:qty, days:nights, unit:unit, tax:r.tax, disc:''});
+    const lineTr = tbody.lastElementChild;
+    lineTr.setAttribute('data-lodging-gen','1');
+  });
+
+  renum();
+  calcTot();
+  updatePageBreaks();
+  toast('Proforma actualizada com o alojamento.');
+}
+
+// ---- Imprimir Rooming List (documento separado, anexo) ----
+
+function printRoomingList(){
+  if(!LODGING.roomingRows.length){ toast('Não há linhas na Rooming List.'); return; }
+
+  const rows = LODGING.roomingRows;
+  const ent = document.getElementById('f-ent').value || '—';
+  const rsv = document.getElementById('f-rsv').value || '—';
+  const ev  = document.getElementById('f-ev').value;
+  const evFmt = ev ? fmtDatePT(ev) : '—';
+  const issuedFmt = fmtDatePT(new Date().toISOString().split('T')[0]);
+
+  // Período da estadia: do primeiro check-in ao último check-out registados
+  const checkins  = rows.map(r=>r.checkin).filter(Boolean).sort();
+  const checkouts = rows.map(r=>r.checkout).filter(Boolean).sort();
+  const periodoIni = checkins.length ? fmtDatePT(checkins[0]) : '—';
+  const periodoFim = checkouts.length ? fmtDatePT(checkouts[checkouts.length-1]) : '—';
+
+  const totals = getRoomingTotals(rows);
+
+  const rowsHtml = rows.map(r => {
+    const nights = calcNights(r.checkin, r.checkout);
+    const guests = occupancyGuestCount(r.occupancy)===2
+      ? [r.guest||'—', r.guest2||'—'].join('<br>')
+      : (r.guest||'—');
+    const eci = r.eciOn ? ((r.eciTime||'—')+' · '+(r.eciPrice?fmtInput(parseFloat((''+r.eciPrice).replace(',','.'))||0):'—')) : '—';
+    const lco = r.lcoOn ? ((r.lcoTime||'—')+' · '+(r.lcoPrice?fmtInput(parseFloat((''+r.lcoPrice).replace(',','.'))||0):'—')) : '—';
+    return '<tr>'
+      + '<td>'+(r.occupancy||'Single')+'</td>'
+      + '<td>'+(guests)+'</td>'
+      + '<td>'+(r.roomType)+'</td>'
+      + '<td>'+(r.regime)+'</td>'
+      + '<td>'+(fmtDatePT(r.checkin))+'</td>'
+      + '<td>'+(fmtDatePT(r.checkout))+'</td>'
+      + '<td style="text-align:center">'+(nights)+'</td>'
+      + '<td>'+(eci)+'</td>'
+      + '<td>'+(lco)+'</td>'
+      + '<td>'+(r.notes||'')+'</td>'
+      + '</tr>';
+  }).join('');
+
+  const html = '<!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8">'
+    + '<title>Rooming List</title>'
+    + '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">'
+    + '<style>'
+    + '*{box-sizing:border-box;margin:0;padding:0}'
+    + 'body{font-family:\'Montserrat\',sans-serif;color:#231F20;font-size:11px;padding:24px}'
+    + '.rl-header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:3px solid #887157;padding-bottom:12px;margin-bottom:16px}'
+    + '.rl-header img{height:60px;object-fit:contain;display:block;margin-bottom:6px}'
+    + '.rl-title{font-size:20px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#231F20}'
+    + '.rl-meta{font-size:9.5px;color:#555;line-height:1.7;margin-top:4px}'
+    + '.rl-meta b{color:#231F20}'
+    + '.rl-summary{text-align:right;font-size:9.5px;color:#555;line-height:1.8;white-space:nowrap}'
+    + '.rl-summary .rl-sum-item{margin-bottom:2px}'
+    + '.rl-summary .rl-sum-val{font-size:15px;font-weight:700;color:#887157;margin-left:4px}'
+    + 'table{width:100%;border-collapse:collapse;font-size:9.5px}'
+    + 'thead{display:table-header-group}'
+    + 'tr{page-break-inside:avoid;break-inside:avoid}'
+    + 'th{background:#231F20;color:#fff;padding:6px 6px;text-align:left;font-size:8.5px;text-transform:uppercase;letter-spacing:.4px}'
+    + 'td{padding:5px 6px;border-bottom:1px solid #e0dbd5;vertical-align:top}'
+    + 'tr:nth-child(even) td{background:#f6f4f1}'
+    + '@media print{ body{padding:0} @page{margin:12mm;size:A4 portrait} }'
+    + '</style></head><body>'
+    + '<div class="rl-header">'
+    + '<div>'
+    + '<img src="./FOTOS/Imagem1.png" alt="HCTA" onerror="this.style.display=\'none\'">'
+    + '<div class="rl-title">Rooming List</div>'
+    + '<div class="rl-meta">'
+    + '<div><b>Entidade:</b> '+(ent)+'</div>'
+    + '<div><b>RSV Nº:</b> '+(rsv)+'</div>'
+    + '<div><b>Data do Evento:</b> '+(evFmt)+'</div>'
+    + '<div><b>Data de Emissão:</b> '+(issuedFmt)+'</div>'
+    + '<div><b>Período da Estadia:</b> '+(periodoIni)+' a '+(periodoFim)+'</div>'
+    + '</div>'
+    + '</div>'
+    + '<div class="rl-summary">'
+    + '<div class="rl-sum-item">Total de Quartos<span class="rl-sum-val">'+(totals.totalRooms)+'</span></div>'
+    + '<div class="rl-sum-item">Total de Hóspedes<span class="rl-sum-val">'+(totals.totalGuests)+'</span></div>'
+    + '<div class="rl-sum-item">Total de Room Nights<span class="rl-sum-val">'+(totals.totalRoomNights)+'</span></div>'
+    + '</div>'
+    + '</div>'
+    + '<table><thead><tr>'
+    + '<th>Ocupação</th><th>Hóspede(s)</th><th>Tipo Quarto</th><th>Regime</th><th>Check-in</th><th>Check-out</th><th>Noites</th><th>Early Check-in</th><th>Late Check-out</th><th>Observações</th>'
+    + '</tr></thead><tbody>'+(rowsHtml)+'</tbody></table>'
+    + '</body></html>';
+
+  const win = window.open('', '_blank');
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  win.onload = function(){ win.focus(); win.print(); };
 }
 
 // INIT
@@ -1130,6 +1764,7 @@ document.addEventListener('DOMContentLoaded', function(){
   addLine();addLine();addLine();
   updatePageBreaks();
 });
+
 </script>
 </body>
 </html>
