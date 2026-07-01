@@ -614,7 +614,7 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
 </div>
 <script>
 // ══════════════════════════════════════════════════════
-// SECÇÃO 1 — VARIÁVEIS GLOBAIS E CONSTANTES
+// 1. CONFIGURAÇÃO GLOBAL E CONSTANTES
 // ══════════════════════════════════════════════════════
 var BRONZE='#887157',BLACK='#231F20',WHITE='#fff',SUBTLE='#9A918C',MID='#5A5250',BORDER='#DDD4C8';
 
@@ -629,7 +629,6 @@ var xlsData=[];
 var weekStart=null;
 var activeFilters=new Set(['Confirmado','1ª Opção','2ª Opção','Consulta']);
 var dayCounter=0,svcCounter=0;
-
 const DIAS_PT=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
 const DIAS_S=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -649,59 +648,175 @@ var TYPES=[
   {id:'envio_factura',pt:'Envio de Factura Final',en:'Final Invoice Submission',dpt:'Emissão de factura final',den:'Final invoice issuance',fase:'pos'},
   {id:'satisfacao',pt:'Formulário de satisfação',en:'Satisfaction survey',dpt:'Pós-evento',den:'Post-event',fase:'pos'}
 ];
-
 function emptyRow(){ return {conceito:'',valor:0}; }
 function initRows(){ foraRows=[]; hotRows=[]; for(var i=0;i<NUM_ROWS;i++){ foraRows.push(emptyRow()); hotRows.push(emptyRow()); } }
-initRows();
+function parseXLS(rows){
+  var SALA_NORM={'TALATONA I-II-III':'Talatona I-II-III','TALATONA II-III':'Talatona II-III','TALATONA I':'Talatona I','TALATONA II':'Talatona II','TALATONA III':'Talatona III','TALATONA IV':'Talatona IV','CABINDA I':'Cabinda I','CABINDA II':'Cabinda II','CABINDA III':'Cabinda III','CABINDA IV':'Cabinda IV','AUDITORIO':'CCTA Auditório','SALA 2':'CCTA 1º Piso / Sala 2','GIRASSOL I':'Girassol I','GIRASSOL II':'Girassol II','GIRASSOL III':'Girassol III','PATIO INTERIOR':'Pátio Interior','PISCINA':'Piscina','RESTAURANTE HOTEL':'Restaurante HCTA','RESTAURANTE CCTA':'Restaurante CCTA','TENDA':'Tenda'};
+  var DIAS_MAP={'Segunda':'x','Terça':'x','Quarta':'x','Quinta':'x','Sexta':'x','Sábado':'x','Domingo':'x'};
+  var rtype=detectReportType(rows);
+  var events=[],eventMap={},curDate=null,curEv=null,inTotals=false;
+  for(var ri=0;ri<rows.length;ri++){
+    var row=rows[ri];
+    var c0=String(row[0]||'').trim(),c1=String(row[1]||'').trim();
+    if(c0.startsWith('NPR')){inTotals=true;}
+    if(inTotals)continue;
+    if(DIAS_MAP[c0]!==undefined&&parseFloat(c1)){curDate=isoFromSerial(c1);curEv=null;continue;}
+    if(!curDate)continue;
+    if(rtype==='NPR168'){
+      var c3_168=String(row[3]||'').trim(),c5_168=String(row[5]||'').trim(),c8_168=String(row[8]||'').trim(),c6_168=parseFloat(String(row[6]||''));
+      var isEvento168=c0&&c0.includes('/')&&c3_168&&c5_168&&c8_168&&!(c6_168>40000);
+      if(isEvento168){
+        var sala=SALA_NORM[c8_168.toUpperCase()]||c8_168,rsv=c0,key=rsv+'|'+sala+'|'+curDate;
+        var horaFim=String(row[7]||'').trim(),layout=String(row[13]||'').trim(),tipo=c3_168;
+        if(eventMap[key]){curEv=eventMap[key];if(horaFim&&(!curEv.horaFim||horaFim>curEv.horaFim))curEv.horaFim=horaFim;}
+        else{var clienteRaw=String(row[6]||'').trim()||String(row[1]||'').trim();curEv={id:'_'+Math.random().toString(36).slice(2,8),rsv,reserva:String(row[4]||'').trim(),estado:String(row[5]||'').trim(),cliente:clienteRaw,sala,pax:parseInt(row[12])||0,date:curDate,tipo,layout,horaInicio:'08:00',horaFim,servicos:[]};events.push(curEv);eventMap[key]=curEv;}
+        continue;
+      }
+      if(!c0&&curEv&&String(row[8]||'').trim()){
+        var nome=String(row[8]||'').trim();
+        if(/-BEBIDAS$/i.test(nome))continue;
+        nome=nome.replace(/\s*-\s*(COMIDAS|BEBIDAS)$/i,'').trim();
+        nome=nome.replace(/\s*-\s*RESTAURANTE\s+(HOTEL|CCTA|H[OC]\w*)/gi,'').trim();
+        var hiSerial=String(row[6]||''),hfSerial=String(row[7]||'');
+        var hi=serialToTime(hiSerial),hf=serialToTime(hfSerial);
+        var pax=parseInt(row[12])||0;
+        if(hi&&curEv.horaInicio==='08:00')curEv.horaInicio=hi;
+        if(!curEv.servicos.find(function(s){return s.nome===nome;})){curEv.servicos.push({nome,pax,horaInicio:hi,horaFim:hf});}
+        continue;
+      }
+    }
+    if(rtype==='NPR202'){
+      // RSV bullet-proof — c0 tem sempre o nº ('394/26'), c1 pode ser qualquer coisa
+      var rsv2raw=c0;
+      if(c0&&(c0.includes('/')||/^\d+$/.test(c0))){
+        // c0 é o RSV (ex: '394/26' ou '394')
+        var raw_sala=String(row[9]||'').trim(),sala2=SALA_NORM[raw_sala.toUpperCase()]||raw_sala,rsv2=rsv2raw,key2=rsv2+'|'+sala2+'|'+curDate;
+        if(eventMap[key2]){curEv=eventMap[key2];}
+        else{curEv={id:'_'+Math.random().toString(36).slice(2,8),rsv:rsv2,reserva:String(row[4]||'').trim(),estado:String(row[5]||'').trim(),cliente:String(row[6]||'').trim(),sala:sala2,pax:parseInt(row[13])||0,date:curDate,tipo:'',layout:'',horaInicio:'',horaFim:'',servicos:[]};events.push(curEv);eventMap[key2]=curEv;}
+        continue;
+      }
+      if(!c0&&curEv&&String(row[9]||'').trim()){
+        var nome2=String(row[9]||'').trim();
+        // Parar de adicionar serviços quando encontra 'Adicionais'
+        if(nome2==='Adicionais'){curEv=null;continue;}
+        // Ignorar linhas que são contagens (números) ou cabeçalhos
+        if(nome2==='Recurso'||/^\d+\.?\d*$/.test(nome2))continue;
+        var nomeOrig2=nome2;
+        // Guardar sufixo de restaurante antes de remover
+        var restMatch2=nome2.match(/RESTAURANTE\s+(HOTEL|CCTA)/i);
+        var restTipo2=restMatch2?restMatch2[1].toUpperCase():'';
+        nome2=nome2.replace(/\s*-\s*RESTAURANTE\s+(HOTEL|CCTA|H[OC]\w*)/gi,'').trim();
+        // Ignorar AV e logística
+        var ignorar2=['DATA SHOW','FLIPCHART','PAINEL LED','PROJETOR','MICROFONE','TELEVISAO','TELEVISÃO','SUPLEMENTO','FUNDO DIA','ALOJAMENTO','TRANSFER','DECORAÇÃO','DECORACAO','SONORIZACAO','SONORIZAÇÃO','ILUMINACAO','ILUMINAÇÃO'];
+        var skip2=false;for(var ig2=0;ig2<ignorar2.length;ig2++){if(nome2.toUpperCase().includes(ignorar2[ig2])){skip2=true;break;}}
+        if(skip2)continue;
+        var svcPax2=parseInt(String(row[13])||'0')||0;
+        if(nome2&&!nome2.startsWith('Evento')){
+          // Permitir duplicados com pax diferentes (ex: BFE 40p e BFE 16p do mesmo evento)
+          // mas guardar o tipo de restaurante para filtragem posterior
+          curEv.servicos.push({nome:nome2,pax:svcPax2,rest:restTipo2});
+        }
+      }
+    }
+  }
+  return events;
+}
+
+// ── SIGLAS DE SERVIÇOS ──
+var SIGLAS={
+  // Coffee Breaks
+  'welcome coffee':'WC','coffee station':'CS',
+  'coffee break i':'CBI','coffee break ii':'CBII','coffee break iii':'CBIII',
+  // Pequenos-almoços
+  'pequeno-almoço continental':'PAC','pequeno-almoço hcta':'PAH',
+  // Buffets
+  'buffet executivo':'BFE','buffet do executivo':'BFE','buffet selecção':'BFS','buffet angolano':'BFA','buffet hcta':'BFH',
+  // Cocktails e Canapés
+  'cocktail dinatoire':'CDN',
+  'canapés — package 1':'CN1','canapés — package 2':'CN2','canapés — package 3':'CN3',
+  'canapes - package 1':'CN1','canapes - package 2':'CN2','canapes - package 3':'CN3',
+  'canapes package 1':'CN1','canapes package 2':'CN2','canapes package 3':'CN3',
+  // Menus
+  'menu empratado i':'MEI','menu empratado ii':'MEII',
+  // Finger food
+  'buffet volante':'BFV','buffet finger lunch':'BFL',
+  // Bebidas
+  'suplemento de bebidas — essential':'SBE','suplemento de bebidas — hcta':'SBH','suplemento de bebidas — premium':'SBP',
+  'package bebidas — essential':'PBE','package bebidas — talatona':'PBT','package bebidas — hcta':'PBH','package bebidas — premium':'PBP',
+  'package bebidas essential':'PBE','package bebidas talatona':'PBT','package bebidas hcta':'PBH','package bebidas premium':'PBP',
+  // Refeições genéricas
+  'almoço':'ALM','jantar':'JNT','cocktail':'CKT','brunch':'BRN','gala dinner':'GAL',
+  'welcome drink':'WD','coffee break':'CB','ceia':'CEI',
+  // Alojamento e Fundo Dia
+  'alojamento':'A','fundo dia':'FID'
+};
+var CATALOGO={
+  '— Seleccionar serviço —':null,
+  '── COFFEE BREAKS ──':null,
+  'Welcome Coffee (9.000 AKZ/pax)':{nome:'Welcome Coffee',desc:'Água mineral · Água aromatizada · Café · Descafeinado · Leite · Selecção de chás · Biscoitos caseiros · Napolitana de queijo e fiambre'},
+  'Coffee Station (10.000 AKZ/pax)':{nome:'Coffee Station',desc:'Água mineral · Água aromatizada · Café · Descafeinado · Leite · Selecção de chás · Biscoitos caseiros · Napolitana de queijo e fiambre'},
+  'Coffee Break I (14.000 AKZ/pax)':{nome:'Coffee Break I',desc:'Água mineral · Água aromatizada · Café · Descafeinado · Selecção de chás · Leite · Sumo néctar · Espetadas de fruta · Selecção de muffins · Profiteroles de chocolate com doce de ovos · Pão de leite com queijo e fiambre · Sanduíches veggie (queijo creme, alface, tomate e abacate)'},
+  'Coffee Break II (17.000 AKZ/pax)':{nome:'Coffee Break II',desc:'Água mineral · Água aromatizada · Café · Descafeinado · Selecção de chás · Leite · Sumo néctar · Espetadas de fruta · Pão de leite com queijo e fiambre · Sanduíches de atum · Sanduíches veggie (queijo creme, alface, tomate e abacate) · Pastéis de nata · Mini croissants de chocolate · Bolo mármore'},
+  'Coffee Break III (22.000 AKZ/pax)':{nome:'Coffee Break III',desc:'Água mineral · Água aromatizada · Café · Descafeinado · Leite · Selecção de chás · Sumo natural de fruta · Sumo néctar · Pão de leite com queijo e fiambre · Sanduíches de atum · Sanduíches de frango · Sanduíches veggie (queijo creme, alface, tomate e abacate) · Espetadas de fruta · Mini salgadinhos · Croissants de chocolate · Pastéis de nata · Tarte de maçã · Palmiers recheados'},
+  '── PEQUENOS-ALMOÇOS ──':null,
+  'Pequeno-almoço Continental (27.000 AKZ/pax)':{nome:'Pequeno-almoço Continental',desc:'Variedade de pão · Croissants, brioches e muffins · Bolo mármore · Crepes e panquecas · Corn flakes e muesli · Iogurte natural, aroma e grego · Bacon, cogumelos e ovos mexidos · Variedades de compotas · Manteiga · Queijo e fiambre laminado · Variedades de fruta laminada · Café, chá e leite · Sumo néctar · Água mineral'},
+  'Pequeno-almoço HCTA (32.000 AKZ/pax)':{nome:'Pequeno-almoço HCTA',desc:'Café, chá e leite · Sumo natural de fruta · Sumo néctar · Variedade de pão · Croissants, brioches e muffins · Bolo mármore · Corn flakes e muesli · Iogurtes · Variedades de compotas · Manteiga · Queijo e fiambre laminado · Sortido de charcutaria · Ovos mexidos, fritos e omeletes · Bacon · Salsichas · Tomate grelhado · Cogumelos · Baked beans · Batata rústica · Papas de aveia · Crepes e panquecas · Variedade de fruta laminada'},
+  '── BUFFETS ──':null,
+  'Buffet do Executivo (52.000 AKZ/pax)':{nome:'Buffet do Executivo',desc:'Saladas simples (6) · Saladas compostas (6) · Entradas (6) · Sopa\nPratos quentes: Peixes (2 variedades) · Carnes (2 variedades) · Massa vegetariana · Acompanhamentos\nSobremesas · Fruta laminada · Tábua de queijos · Água ou refrigerante'},
+  'Buffet Selecção (57.000 AKZ/pax)':{nome:'Buffet Selecção',desc:'Saladas simples: alface, cenoura, tomate, pepino, milho, couve roxa\nSaladas compostas: polvo, niçoise, bacalhau com grão, beterraba e maçã, beringela com atum, grega\nEntradas: carpaccio de novilho, ceviche de garoupa, folhado de pato, mini salgadinhos, ovos verdes, quiche lorraine\nPratos quentes: Peixes (2) · Carnes (2) · Vegetariano (1)\nAcompanhamentos: arroz branco, banana pão, mandioca, batata-doce, legumes ao vapor e batata dourada\nSobremesas: ao cuidado do chefe'},
+  'Buffet Angolano (65.000 AKZ/pax)':{nome:'Buffet Angolano',desc:'Saladas simples: alface, cenoura, tomate, pepino, milho, ervilhas\nSaladas compostas: polvo com vinagrete, frutos do mar com molho de coco e ginguba, choco grelhado com batata-doce, frango frito com banana pão e cebola\nEntradas: selecção de salgados, mandioca frita, pastéis de massa tenra, choco frito\nMarisco: camarão cozido, mexilhão\nSalgados: pastéis de bacalhau, rissóis de camarão e croquetes\nSopa: caldo de peixe\nPrato principal de peixe: Calulu de corvina seca · Mufete de peixe\nPrato principal de carne: Muamba de frango · Peito alto\nGuarnições: batata-doce, mandioca, banana pão, feijão com óleo de palma, farinha do musseque, funge, kizaca\nSobremesas: kitutes da terra, tarte de abacaxi, pudim de ovos, mousse de maracujá, semifrio de múcua, pera bêbeda, bolo de banana da terra, fruta da época laminada'},
+  'Buffet HCTA (75.000 AKZ/pax)':{nome:'Buffet HCTA',desc:'Saladas simples: cenoura, pepino, alface, tomate, milho, beterraba, couve roxa, espargos\nSaladas compostas: polvo em vinagrete, niçoise com abacate, bacalhau com grão de bico, beterraba e maçã, beringela com pimentos e atum, grega, frutos do mar com vinagrete de frutos vermelhos, carnes frias com cogumelos\nEntradas: carpaccio de novilho, ceviche de garoupa, bacalhau marinado com alho/gindungo/tapenade, folhado de pato com maçã, melão com presunto, nuggets de bacalhau com mousse de abacate, camarão cozido, tataki de atum com molho teriyaki\nMini salgadinhos: chamuças, rissóis e croquetes\nSopa (escolha 1): vichyssoise de alho francês, creme de aves aveludado, creme de abóbora\nPratos quentes: Peixes (2) · Carnes (2) · Vegetariano (1)\nGuarnições: arroz branco, arroz de legumes, batata torneada, puré de batata-doce e aipo, legumes salteados\nSobremesas: tarte de caju, bolo húmido de chocolate, mousse de maracujá, mousse de chocolate, tiramisu, parfait de praliné, cheesecake de manga, fruta laminada'},
+  '── COCKTAILS & FINGER FOOD ──':null,
+  'Cocktail Dinatoire (41.000 AKZ/pax)':{nome:'Cocktail Dinatoire',desc:'Frios: ceviche de cherne, camarão em guacamole, tataki de atum e pepino, bruschetta de rosbife com tomate seco/azeite/alho, espetada de ananás e presunto, salada Caesar, salada tropical, sanduíche veggie\nQuentes: espetada de frango em tempura, mini pregos do lombo, mini pregos de atum, folhado de pato com maçã, ovos verdes de atum, folhado de enchidos\nMini salgadinhos: chamuças de frango, croquetes de carne, rissóis de camarão, coxinhas de frango, pão de queijo\nSobremesas: pastéis de nata, mousse de chocolate, bolo de banana, quindins, éclair de chocolate, espetadas de fruta'},
+  'Canapés — Package 1 (14.000 AKZ/pax)':{nome:'Canapés — Package 1',desc:'Selecção de 6 canapés (Frios + Quentes + Doces)'},
+  'Canapés — Package 2 (19.500 AKZ/pax)':{nome:'Canapés — Package 2',desc:'Selecção de 9 canapés (Frios + Quentes + Doces)'},
+  'Canapés — Package 3 (24.000 AKZ/pax)':{nome:'Canapés — Package 3',desc:'Selecção de 12 canapés (Frios + Quentes + Doces)'},
+  '── MENUS EMPRATADOS ──':null,
+  'Menu Empratado I (42.000 AKZ/pax)':{nome:'Menu Empratado I',desc:'Entrada · Prato principal · Sobremesa'},
+  'Menu Empratado II (49.000 AKZ/pax)':{nome:'Menu Empratado II',desc:'Entrada · Prato principal (2 opções) · Sobremesa'},
+  '── FINGER FOOD & OUTROS ──':null,
+  'Buffet Volante (43.000 AKZ/pax)':{nome:'Buffet Volante',desc:'Saladas simples: alface, cenoura, tomate, pepino, couve roxa\nSaladas compostas: polvo em vinagrete, niçoise com abacate, bacalhau com grão de bico, beterraba e maçã, grega\nEntradas: folhado de queijo feta, bola de enchidos, tataki de atum, quiche lorraine, rosbife laminado\nMini salgadinhos: chamuças, rissóis de camarão, croquetes\nSopa (escolha 1): vichyssoise de alho francês, creme de legumes, creme de abóbora\nPratos quentes: Peixe (1) · Carne (1) · Vegetariano (1)\nGuarnições: arroz branco, feijão encarnado com bacon, batata dourada\nSobremesas: tarte de amêndoa, bolo de chocolate, pastéis de nata, cheesecake de manga, espetadas de fruta'},
+  'Buffet Finger Lunch (37.000 AKZ/pax)':{nome:'Buffet Finger Lunch',desc:'Entradas: espetada caprese, ceviche de cherne, tataki de atum e pepino, bruschetta de guacamole e camarão, quiche lorraine, vol-au-vent de camarão, tartelete de legumes, gaspacho de meloa e hortelã, espetada de frango com molho picante, espetada de ananás e bacon, chamuças, rissóis de camarão, croquetes de vitela, folhado de pato com maçã, mini pastéis de massa tenra, mini merendas de chouriço, vol-au-vent de cogumelos\nSopa: creme de cenoura com ervilhas e coentros\nSanduíches: bruschetta de rosbife com tomate seco e azeite com alho, peito de frango com bacon e maionese de alho, atum com ovo e azeitona, lombo de porco assado com mostarda, sanduíche veggie\nSobremesas: espetadas de fruta, pastéis de nata, quindins, tarte de maçã, cheesecake, torta de laranja, trufa de chocolate e ginguba'},
+  '── SUPLEMENTOS DE BEBIDAS ──':null,
+  'Suplemento Bebidas Essential (9.500 AKZ/pax)':{nome:'Suplemento de Bebidas — Essential',desc:'Água mineral · Sumo néctar de fruta · Refrigerantes'},
+  'Suplemento Bebidas HCTA (19.500 AKZ/pax)':{nome:'Suplemento de Bebidas — HCTA',desc:'Água com e sem gás · Sumo néctar de fruta · Refrigerantes · Cerveja nacional · Vinho branco selecção do sommelier · Vinho tinto selecção do sommelier'},
+  'Suplemento Bebidas Premium (38.000 AKZ/pax)':{nome:'Suplemento de Bebidas — Premium',desc:'Água com e sem gás · Sumo néctar · Refrigerantes · Cerveja nacional · Vinho branco e tinto selecção do sommelier · Whisky novo · Amarula · Cognac · Vinho do Porto'},
+  '── PACKAGE BEBIDAS COCKTAIL ──':null,
+  'Package Bebidas Essential (17.000 AKZ/pax)':{nome:'Package Bebidas — Essential',desc:'Vinho branco · Vinho tinto · Cerveja · Sumo néctar de fruta · Refrigerantes · Água mineral'},
+  'Package Bebidas Talatona (24.000 AKZ/pax)':{nome:'Package Bebidas — Talatona',desc:'Vinho branco · Vinho tinto · Martini rosso · Martini bianco · Gin · Whisky novo · Cerveja · Sumo néctar · Refrigerantes · Água mineral'},
+  'Package Bebidas HCTA (27.000 AKZ/pax)':{nome:'Package Bebidas — HCTA',desc:'Vinho branco · Vinho tinto · Martini rosso · Martini bianco · Gin · Vodka · Amarula · Whisky novo · Vinho do Porto Tawny · Cerveja · Sumo néctar · Refrigerantes · Água mineral'},
+  'Package Bebidas Premium (38.000 AKZ/pax)':{nome:'Package Bebidas — Premium',desc:'Vinho branco · Vinho tinto · Vinho rosé · Espumante · Martini rosso · Martini bianco · Gin · Amarula · Whisky novo · Whisky velho · Cognac · Cerveja · Sumo néctar · Refrigerantes · Água mineral'},
+  'Suplemento Extra Cocktails (6.000 AKZ/cocktail)':{nome:'Suplemento Extra Cocktails',desc:'Caipirinha · Mojito · Dry Martini · Negroni · Moove HCTA (vodka, ananás, hortelã, gengibre)\nNota: cada cocktail extra além do package base'},
+  '── AUDIOVISUAIS ──':null,
+  'Data Show / Projetor (150.000 AKZ/dia)':{nome:'Projetor de Vídeo / Data Show',desc:''},
+  'Flip Chart + Canetas (35.000 AKZ/dia)':{nome:'Flip Chart + Canetas',desc:''},
+  'Laser Point (25.000 AKZ/dia)':{nome:'Laser Point',desc:''},
+  'Fotocópias (500 AKZ/página)':{nome:'Fotocópias por página',desc:''},
+  'Microfone (50.000 AKZ/dia)':{nome:'Microfone',desc:''},
+  'Televisão (250.000 AKZ/dia)':{nome:'Televisão',desc:''},
+  'Painel LED 4×3 m':{nome:'Painel LED 4×3 m',desc:''},
+  'Painel LED 5×3 m':{nome:'Painel LED 5×3 m',desc:''},
+  '── BOXES TAKE AWAY ──':null,
+  'Breakfast Box (18.000 AKZ/pax)':{nome:'Breakfast Box',desc:'Sanduíche mista · Pastel de nata · Croissant · Iogurte · Manteiga e compota · Peça de fruta · Sumo néctar · Água'},
+  'Lunch Box (22.000 AKZ/pax)':{nome:'Lunch Box',desc:'Sanduíche (frango / Club / atum) · Salada tropical · Salgados · Pastel de nata · Peça de fruta · Sumo néctar · Água'},
+  '── SERVIÇO PERSONALIZADO ──':null,
+  'Serviço Personalizado':{nome:'Serviço Personalizado',desc:''}
+};
+var ESCOLHAS={
+  'Canapés — Package 1 (14.000 AKZ/pax)':{max:6,label:'Escolha 6 canapés no total (das 3 categorias)',cats:{'Frios':['Espetada caprese','Tártaro de atum','Ceviche de cherne','Tataki de atum e pepino','Rosbife em rúcula','Bruschetta de guacamole e camarão','Quiche Lorraine','Vol-au-vent de camarão','Tartelete de legumes','Gaspacho de meloa e hortelã'],'Quentes':['Espetada de frango com molho picante','Espetada de ananás e bacon','Chamuças','Rissóis de camarão','Croquetes de vitela','Folhado de pato com maçã','Mini pastéis de massa tenra','Tempura de legumes','Mini merendas de chouriço','Vol-au-vent de cogumelos'],'Doces':['Espetadas de fruta','Pastéis de Nata','Quindins','Tarte de maçã','Cheesecake','Profiteroles de chocolate com doce de ovos','Palmiers','Torta de laranja','Bola de Berlim','Trufa de chocolate e ginguba']}},
+  'Canapés — Package 2 (19.500 AKZ/pax)':{max:9,label:'Escolha 9 canapés no total (das 3 categorias)',cats:{'Frios':['Espetada caprese','Tártaro de atum','Ceviche de cherne','Tataki de atum e pepino','Rosbife em rúcula','Bruschetta de guacamole e camarão','Quiche Lorraine','Vol-au-vent de camarão','Tartelete de legumes','Gaspacho de meloa e hortelã'],'Quentes':['Espetada de frango com molho picante','Espetada de ananás e bacon','Chamuças','Rissóis de camarão','Croquetes de vitela','Folhado de pato com maçã','Mini pastéis de massa tenra','Tempura de legumes','Mini merendas de chouriço','Vol-au-vent de cogumelos'],'Doces':['Espetadas de fruta','Pastéis de Nata','Quindins','Tarte de maçã','Cheesecake','Profiteroles de chocolate com doce de ovos','Palmiers','Torta de laranja','Bola de Berlim','Trufa de chocolate e ginguba']}},
+  'Canapés — Package 3 (24.000 AKZ/pax)':{max:12,label:'Escolha 12 canapés no total (das 3 categorias)',cats:{'Frios':['Espetada caprese','Tártaro de atum','Ceviche de cherne','Tataki de atum e pepino','Rosbife em rúcula','Bruschetta de guacamole e camarão','Quiche Lorraine','Vol-au-vent de camarão','Tartelete de legumes','Gaspacho de meloa e hortelã'],'Quentes':['Espetada de frango com molho picante','Espetada de ananás e bacon','Chamuças','Rissóis de camarão','Croquetes de vitela','Folhado de pato com maçã','Mini pastéis de massa tenra','Tempura de legumes','Mini merendas de chouriço','Vol-au-vent de cogumelos'],'Doces':['Espetadas de fruta','Pastéis de Nata','Quindins','Tarte de maçã','Cheesecake','Profiteroles de chocolate com doce de ovos','Palmiers','Torta de laranja','Bola de Berlim','Trufa de chocolate e ginguba']}},
+  'Buffet Selecção (57.000 AKZ/pax)':{label:'Seleccione os pratos (2 peixes + 2 carnes + 1 vegetariano)',cats:{'Peixe (escolha 2)':{max:2,items:['Lombinhos de cherne com molho de manteiga','Bacalhau lascado em crosta de broa de milho','Arroz de garoupa malandrinho com camarão','Polvo braseado com batata a murro e migas da Beira Alta','Calulu de peixe']},'Carne (escolha 2)':{max:2,items:['Lombinho de porco com ananás','Medalhões de vitela com cogumelos','Caril de vitela com beringela e gengibre','Grelhada mista (frango, bife da vazia, lombinho de porco)','Moamba de frango']},'Vegetariano (escolha 1)':{max:1,items:['Penne à napolitana','Tagliatelli com pesto e legumes assados','Caril de legumes']}}},
+  'Buffet HCTA (75.000 AKZ/pax)':{label:'Seleccione os pratos (2 peixes + 2 carnes + 1 vegetariano)',cats:{'Peixe (escolha 2)':{max:2,items:['Bacalhau recheado com queijo e migas de grão de bico','Tranches de cherne com gambas e espargos','Medalhões de lagosta com puré de bacalhau','Arroz de garoupa com gambas']},'Carne (escolha 2)':{max:2,items:['Filet mignon braseado, couve roxa e esmagada de batata-doce','Tornedó de porco com batata rústica e grelos salteados','Rolinhos de vitela com camarão e coentros','Cabrito salteado com castanhas e cogumelos frescos']},'Vegetariano (escolha 1)':{max:1,items:['Penne à napolitana','Tagliatelli com pesto e legumes assados','Caril de legumes']}}},
+  'Buffet Volante (43.000 AKZ/pax)':{label:'Seleccione os pratos e a sopa',cats:{'Sopa (escolha 1)':{max:1,items:['Vichyssoise de alho francês','Creme de legumes','Creme de abóbora']},'Peixe (escolha 1)':{max:1,items:['Bacalhau com natas','Arroz de garoupa malandrinho','Moqueca de peixe e camarão com batata-doce']},'Carne (escolha 1)':{max:1,items:['Arroz de pato com passas','Strogonoff de supremo de frango com cogumelos','Ragout de vitela com brunesa de legumes']},'Vegetariano (escolha 1)':{max:1,items:['Penne à napolitana','Tagliatelli com pesto e legumes assados','Caril de legumes']}}},
+  'Menu Empratado I (42.000 AKZ/pax)':{label:'Seleccione (1 entrada + 1 prato principal + 1 sobremesa)',cats:{'Entrada (escolha 1)':{max:1,items:['Salada de camarão com abacate e vinagrete de frutos vermelhos','Creme aveludado de aves']},'Prato Principal (escolha 1)':{max:1,items:['Filete de atum selado com sementes de sésamo, puré de batata-doce e molho agridoce','Canellonis de queijo e espinafres','Mil folhas de vitela com legumes confitados']},'Sobremesa (escolha 1)':{max:1,items:['Cheesecake de manga e menta','Crumble de banana e coco']}}},
+  'Menu Empratado II (49.000 AKZ/pax)':{label:'Seleccione (1 entrada + 2 pratos principais + 1 sobremesa)',cats:{'Entrada (escolha 1)':{max:1,items:['Camarão salteado em leite de coco e coentros','Carpaccio de vitela, rúcula e lascas de parmesão']},'Prato Principal (escolha 2)':{max:2,items:['Bacalhau lascado em crosta de broa, batata grelhada e grelos salteados','Tortellini recheado com espinafres e molho gorgonzola','Tornedó corado com puré de batata-doce e abóbora, bouquet de legumes e molho sherry shallot']},'Sobremesa (escolha 1)':{max:1,items:['Fondant de chocolate com sorbet de tangerina','Duo de doce de ovos e natas com crumble de biscoito']}}}
+};
 
 // ══════════════════════════════════════════════════════
-// SECÇÃO 2 — UTILITÁRIOS
+// 2. SISTEMA DE TRADUÇÃO
 // ══════════════════════════════════════════════════════
 function p(){ return lang==='PT'; }
-function $(id){ return document.getElementById(id); }
-function show(id){ var e=$(id); if(e) e.style.display='block'; }
-function hide(id){ var e=$(id); if(e) e.style.display='none'; }
-function setText(id,v){ var e=$(id); if(e) e.textContent=v; }
-function fmt(n){ if(isNaN(n)||n===null) return '0,00'; return n.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
-function parseNum(s){
-  if(!s&&s!==0) return 0;
-  var str=s.toString().trim().replace(/\s/g,'');
-  var lc=str.lastIndexOf(','),ld=str.lastIndexOf('.');
-  if(lc>ld) str=str.replace(/\./g,'').replace(',','.');
-  else if(ld>lc) str=str.replace(/,/g,'');
-  var n=parseFloat(str); return isNaN(n)?0:n;
-}
-function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function geToast(msg){var t=$('ge-toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
-
-function fmtDate(iso){if(!iso)return'—';var p=iso.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
-function fmtDateLong(iso){if(!iso)return'—';var dt=new Date(iso+'T12:00:00');return DIAS_PT[dt.getDay()]+', '+dt.getDate()+' de '+MESES[dt.getMonth()]+' de '+dt.getFullYear();}
-function isoFromSerial(s){var d=new Date(Math.round((parseFloat(s)-25569)*86400*1000));return d.toISOString().split('T')[0];}
-function mondayOf(iso){var d=new Date(iso+'T12:00:00');var day=d.getDay();var diff=day===0?-6:1-day;d.setDate(d.getDate()+diff);return d.toISOString().split('T')[0];}
-function addDaysIso(iso,n){var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];}
-function todayIso(){return new Date().toISOString().split('T')[0];}
-
-function copyToClipboard(html,plain,btn){
-  var fullHtml='<meta charset="utf-8"><html><body style="font-family:Aptos,Montserrat,Arial,sans-serif;margin:0;">'+html+'</body></html>';
-  function done(){ btn.textContent=T('copied'); setTimeout(function(){ btn.textContent=T('copy'); },2500); }
-  function execFallback(){
-    var ok=false,container=document.createElement('div');
-    container.innerHTML=html;
-    container.style.cssText='position:fixed;left:-9999px;top:0;';
-    document.body.appendChild(container);
-    try{ var range=document.createRange(); range.selectNodeContents(container); var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range); ok=document.execCommand('copy'); sel.removeAllRanges(); }catch(e){ ok=false; }
-    document.body.removeChild(container);
-    if(ok) done(); else navigator.clipboard.writeText(plain).then(done).catch(function(){});
-  }
-  if(navigator.clipboard&&window.ClipboardItem){
-    try{ navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([fullHtml],{type:'text/html'}),'text/plain':new Blob([plain],{type:'text/plain'})})]).then(done).catch(execFallback); }catch(e){ execFallback(); }
-  } else { execFallback(); }
-}
-
-// ══════════════════════════════════════════════════════
-// SECÇÃO 3 — DICIONÁRIO DE TEXTOS
-// ══════════════════════════════════════════════════════
 function T(key){
   var S={
     'nav':['Navegação','Navigation'],'communications':['Comunicações','Communications'],
@@ -758,10 +873,6 @@ function T(key){
   };
   var row=S[key]; if(!row) return key; return p()?row[0]:row[1];
 }
-
-// ══════════════════════════════════════════════════════
-// SECÇÃO 4 — NAVEGAÇÃO PRINCIPAL
-// ══════════════════════════════════════════════════════
 function setLang(l){
   lang=l; var isPT=l==='PT';
   $('btn-pt').style.background=isPT?BRONZE:'transparent'; $('btn-pt').style.color=isPT?WHITE:SUBTLE; $('btn-pt').style.borderColor=isPT?BRONZE:'#3A3636';
@@ -769,10 +880,12 @@ function setLang(l){
   refreshAll();
 }
 
+// ══════════════════════════════════════════════════════
+// 3. NAVEGAÇÃO E VIEWS
+// ══════════════════════════════════════════════════════
 function hideAllViews(){
   ['landing','formview','resultview','fiscalview','mapaview','osview'].forEach(function(id){ hide(id); });
 }
-
 function refreshAll(){
   setText('hdr-events',T('hdr-events')); setText('sidebar-title',T('nav'));
   renderMenu(); renderLanding();
@@ -784,25 +897,21 @@ function refreshAll(){
   if(curSection==='fiscal') renderFiscalLabels();
   if(curType&&!emailResult) renderFields();
 }
-
 function goHome(){
   curType=null;curSubtype='geral';fields={};clientTxt='';emailResult=null;curSection='email';
   hideAllViews(); show('landing');
   renderMenu();renderLanding();
 }
-
 function selectType(t){
   curType=t;curSubtype='geral';fields={};clientTxt='';emailResult=null;curSection='email';
   hideAllViews(); show('formview');
   setText('back-lbl',T('back'));renderMenu();renderFields();
 }
-
 function openFiscal(tab){
   curType=null;curSection='fiscal';curFiscalTab=tab||'calc';
   hideAllViews(); show('fiscalview');
   setText('fiscal-back-lbl',T('back'));renderMenu();fiscalTab(curFiscalTab);renderFiscalLabels();
 }
-
 function openMapa(){
   curType=null;curSection='mapa';
   hideAllViews(); show('mapaview');
@@ -815,20 +924,16 @@ function openMapa(){
     show('mapa-empty'); hide('mapa-data');
   }
 }
-
 function openPF(){
   window.location.href='proforma.html';
 }
-
 function openOS(){
   curType=null;curSection='os';
   hideAllViews(); show('osview');
   renderMenu();
   if(!document.querySelectorAll('.day-blk').length) addDay();
 }
-
 function backToForm(){ emailResult=null;hide('resultview');show('formview');renderFields(); }
-
 function fiscalTab(tab){
   curFiscalTab=tab;
   ['calc','diag','info'].forEach(function(t){
@@ -837,10 +942,6 @@ function fiscalTab(tab){
   });
   renderMenu();
 }
-
-// ══════════════════════════════════════════════════════
-// SECÇÃO 5 — MENU LATERAL E LANDING
-// ══════════════════════════════════════════════════════
 function renderMenu(){
   var is=p(),menu=$('menu'); menu.innerHTML='';
   var phases=[{id:'pre',pt:'Pré-evento',en:'Pre-event'},{id:'durante',pt:'Durante',en:'During'},{id:'pos',pt:'Pós-evento',en:'Post-event'}];
@@ -865,7 +966,6 @@ function renderMenu(){
   menu.appendChild(makeMenuBtn(T('os-sub'),T('os-desc'),curSection==='os',openOS));
   menu.appendChild(makeMenuBtn(T('pf-sub'),T('pf-desc'),false,openPF));
 }
-
 function addMenuLabel(menu,text,size){
   var d=document.createElement('div');
   if(size==='small'){
@@ -877,14 +977,12 @@ function addMenuLabel(menu,text,size){
   }
   d.textContent=text; menu.appendChild(d);
 }
-
 function makeMenuBtn(main,sub,active,fn){
   var btn=document.createElement('button');
   btn.style.cssText='display:block;width:100%;text-align:left;padding:9px 16px;background:'+(active?'#fff':'transparent')+';border:none;border-left:'+(active?'3px solid '+BRONZE:'3px solid transparent')+';cursor:pointer;';
   btn.innerHTML='<div style="font-size:12px;color:'+(active?BLACK:MID)+';font-weight:'+(active?600:400)+';">'+main+'</div><div style="font-size:10px;color:'+SUBTLE+';margin-top:1px;">'+sub+'</div>';
   btn.onclick=fn; return btn;
 }
-
 function renderLanding(){
   setText('land-title',T('land-title'));setText('land-subtitle',T('land-subtitle'));setText('land-desc',T('land-desc'));setText('land-cta',T('land-cta'));setText('land-dev',T('land-dev'));
   var grid=$('cards-grid'); grid.innerHTML='';
@@ -917,7 +1015,6 @@ function renderLanding(){
   ger.appendChild(makeCard(T('pf-sub'),T('pf-desc'),openPF));
   grid.appendChild(ger);
 }
-
 function makeCard(main,sub,fn){
   var c=document.createElement('div');
   c.style.cssText='background:#fff;border:1px solid '+BORDER+';border-radius:4px;padding:16px;cursor:pointer;text-align:center;width:190px;flex-shrink:0;';
@@ -928,12 +1025,106 @@ function makeCard(main,sub,fn){
 }
 
 // ══════════════════════════════════════════════════════
-// SECÇÃO 6 — FERRAMENTAS FISCAIS (calculadora, diagnóstico, conceitos)
+// 4. COMUNICAÇÕES / TEMPLATES DE E-MAIL
+// ══════════════════════════════════════════════════════
+function fld(label,html){ return '<div class="field"><label>'+label+'</label>'+html+'</div>'; }
+function chkFld(id,label,exclusiveWith){ var checked=fields[id]?'checked':''; var extra=exclusiveWith?'if(fields[\''+id+'\'])fields[\''+exclusiveWith+'\']=false;':''; return '<div class="chk-row" onclick="fields[\''+id+'\']=!fields[\''+id+'\'];'+extra+'renderFields()"><input type="checkbox" '+checked+' onclick="event.stopPropagation();fields[\''+id+'\']=!fields[\''+id+'\'];'+extra+'renderFields()"><span>'+label+'</span></div>'; }
+function inp(id,ph,val){ return '<input type="text" id="'+id+'" placeholder="'+(ph||'')+'" value="'+(val||'')+'" oninput="fields[\''+id+'\']=this.value;validateForm()">'; }
+function sel(id,opts,val){ var o=opts.map(function(x){ return '<option value="'+x.v+'"'+((val||opts[0].v)===x.v?' selected':'')+'>'+x.l+'</option>'; }).join(''); return '<select id="'+id+'" onchange="fields[\''+id+'\']=this.value;renderFields()">'+o+'</select>'; }
+function req(){ return '<span style="color:#C0392B;margin-left:3px;">*</span>'; }
+function renderFields(){
+  if(!curType) return;
+  var f=fields,is=p(),t=TYPES.find(function(x){ return x.id===curType; });
+  setText('form-subtitle',is?t.dpt:t.den);setText('form-title',is?t.pt:t.en);
+  setText('generate-btn',T('generate'));setText('req-note',T('req-note'));setText('back-lbl',T('back'));
+  var nameFld=fld((is?'Nome do destinatário':'Recipient name')+req(),inp('nome',is?'Ex: Dra. Ana Silva':'e.g. Ms. Ana Silva',f.nome));
+  var dataFld=fld((is?'Data do evento':'Event date')+req(),inp('dataEvento',is?'Ex: 14 de Julho de 2026':'e.g. 14 July 2026',f.dataEvento));
+  var html='';
+  if(curType==='pedido_cotacao'){
+    html+=fld(is?'Tipo de pedido':'Request type',sel('subtypeSel',[{v:'geral',l:is?'Pedido geral: cliente sem detalhes':'General: client with no details'},{v:'incompleto',l:is?'Pedido incompleto: falta informação':'Incomplete: missing information'}],curSubtype));
+    html+=nameFld;
+    if(curSubtype==='incompleto'){ html+=fld(is?'Email do cliente':'Client email','<textarea id="clientTA" rows="5" placeholder="'+(is?'Cola o email original do cliente aqui...':'Paste the client\'s email here...')+'" oninput="clientTxt=this.value">'+(clientTxt||'')+'</textarea>'); html+='<button onclick="extractData()" id="extract-btn" style="margin-bottom:16px;background:transparent;border:1px solid '+BRONZE+';color:'+BRONZE+';border-radius:3px;padding:7px 16px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">'+(is?'Extrair dados automaticamente':'Extract data automatically')+'</button><div id="extract-result"></div>'; }
+  } else if(curType==='envio_proposta'){
+    html+=fld(is?'Espaço e regime':'Venue and regime',sel('espacoTipo',[{v:'hcta',l:'Hotel de Convenções de Talatona (HCTA)'},{v:'ccta_excl',l:is?'CCTA (com exclusividade)':'CCTA (exclusive)'},{v:'ccta_sem',l:is?'CCTA (sem exclusividade)':'CCTA (non-exclusive)'}],f.espacoTipo||'hcta'));
+    html+=nameFld;
+    html+=fld((is?'Nº e nome do evento':'Event number and name')+req(),inp('numEvento',is?'Ex: 922/26, Conferência Anual BAI':'e.g. 922/26, Annual BAI Conference',f.numEvento));
+    html+=fld((is?'Datas':'Dates')+req(),inp('datas',is?'Ex: 12 e 13 de Junho de 2026':'e.g. 12 and 13 June 2026',f.datas));
+    html+=fld(is?'Situação da proposta':'Proposal status',sel('segundaOpcao',[{v:'nao',l:is?'1ª opção':'First option'},{v:'sim',l:is?'2ª opção (existe pré-reserva anterior)':'2nd option (prior pre-booking exists)'}],f.segundaOpcao||'nao'));
+    html+=fld((is?'Data limite de confirmação':'Confirmation deadline')+req(),inp('deadlineProposta',is?'Ex: 20 de Junho de 2026 às 12h00':'e.g. 20 June 2026 at 12:00',f.deadlineProposta));
+    html+=chkFld('notaCativador',is?'Cliente é Agente Cativador (Estado/Organismo Público)':'Client is a Withholding Agent (State/Public Body)','notaPrivRet');
+    html+=chkFld('notaPrivRet',is?'Entidade privada que possa vir a fazer retenção na fonte':'Private entity that may apply withholding tax','notaCativador');
+  } else if(curType==='follow_up'){
+    html+=nameFld;html+=dataFld;
+    html+=fld(is?'Motivo':'Reason',sel('followUpModo',[{v:'proximo',l:is?'Data a aproximar-se (urgência de confirmação)':'Date approaching (confirmation urgency)'},{v:'conflito',l:is?'Novo pedido para as mesmas datas':'New request for same dates'}],f.followUpModo||'proximo'));
+    if((f.followUpModo||'proximo')!=='conflito') html+=fld((is?'Data limite de confirmação':'Confirmation deadline')+req(),inp('dataLimite',is?'Ex: 13 de Maio às 12h00':'e.g. 13 May at 12:00',f.dataLimite));
+  } else if(curType==='confirmacao'){
+    html+=nameFld;html+=dataFld;
+    html+=fld(is?'Dados fiscais':'Fiscal details',sel('dadosFiscaisOpcao',[{v:'conhecidos',l:is?'Dados conhecidos (reconfirmar)':'Known (reconfirm details)'},{v:'falta',l:is?'Dados em falta (solicitar ao cliente)':'Missing (request from client)'}],f.dadosFiscaisOpcao||'conhecidos'));
+    if((f.dadosFiscaisOpcao||'conhecidos')==='conhecidos'){ html+=fld('Entidade'+req(),inp('entidade',is?'Ex: Sonangol E.P.':'e.g. Sonangol E.P.',f.entidade)); html+=fld('NIF'+req(),inp('nif','Ex: 5000012345',f.nif)); html+=fld((is?'Morada Fiscal':'Fiscal Address')+req(),inp('morada',is?'Ex: Av. 4 de Fevereiro, Luanda':'e.g. Av. 4 de Fevereiro, Luanda',f.morada)); }
+  } else if(curType==='cancelamento'){
+    html+=nameFld;html+=dataFld;
+  } else if(curType==='cobranca'){
+    html+=nameFld;html+=dataFld;
+    html+=fld(is?'Documento em cobrança':'Document being collected',sel('cobrancaDoc',[{v:'proforma',l:'Proforma'},{v:'factura',l:is?'Factura':'Invoice'}],f.cobrancaDoc||'proforma'));
+    if((f.cobrancaDoc||'proforma')==='factura') html+=fld((is?'Nº da factura':'Invoice number')+req(),inp('numDoc',is?'Ex: FT 2026/0034':'e.g. FT 2026/0034',f.numDoc));
+    html+=fld((is?'Valor':'Amount')+req(),inp('valor',is?'Ex: 1.400.000,00 Kzs':'e.g. 1,400,000.00 Kzs',f.valor));
+  } else if(curType==='envio_factura'){
+    html+=nameFld;html+=dataFld;
+    html+=fld((is?'Nº da factura':'Invoice number')+req(),inp('numFatura',is?'Ex: FT 2026/0034':'e.g. FT 2026/0034',f.numFatura));
+    html+=fld((is?'Valor':'Amount')+req(),inp('valorFatura',is?'Ex: 1.400.000,00 Kzs':'e.g. 1,400,000.00 Kzs',f.valorFatura));
+  } else if(curType==='satisfacao'){ html+=nameFld; }
+  $('form-fields').innerHTML=html;
+  var ss=$('subtypeSel'); if(ss){ ss.onchange=function(){ curSubtype=this.value; renderFields(); }; }
+  validateForm();
+}
+function buildEmail(){
+  var f=fields,is=p(),nome=f.nome||(is?'[Nome do Cliente]':'[Client Name]'),numEvento=f.numEvento||'[Nº Evento]',datas=f.datas||'[Data(s)]';
+  var catNote='<span style="color:#9A918C;font-style:italic;">'+(is?'(escolher da brochura de banquetes o serviço pretendido)':'(please select the desired service from the Banqueting Brochure)')+'</span>';
+  var TBL='<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:600px;font-family:Aptos,Montserrat,Arial,sans-serif;font-size:12px;"><tr><td colspan="2" style="background:#231F20;color:#887157;font-weight:bold;padding:7px 8px;">'+(is?'PEDIDO DE COTAÇÃO':'QUOTATION REQUEST')+'</td></tr><tr><td colspan="2" style="background:#887157;color:#fff;font-weight:bold;padding:5px 8px;font-size:11px;text-transform:uppercase;">'+(is?'Informações Gerais':'General Information')+'</td></tr><tr><td style="width:60%;background:#FAF8F6;padding:5px 8px;">'+(is?'Nome da Entidade':'Entity Name')+'</td><td style="width:40%;padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'NIF':'Tax ID')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Morada Fiscal':'Fiscal Address')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Nome do Evento':'Event Name')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Data do Evento':'Event Date')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Horário do Evento':'Event Schedule')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Nº Previsto de Participantes':'Expected Number of Attendees')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Pessoa de Contacto':'Contact Person')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Telefone / Email':'Phone / Email')+'</td><td style="padding:5px 8px;"></td></tr><tr><td colspan="2" style="background:#887157;color:#fff;font-weight:bold;padding:5px 8px;font-size:11px;text-transform:uppercase;">'+(is?'Logística e Montagem':'Logistics and Setup')+'</td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Data e hora de montagem':'Setup date and time')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Data e hora de desmontagem':'Breakdown date and time')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Empresas envolvidas':'Companies involved')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Disposição da sala':'Room layout')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Necessidades audiovisuais':'Audiovisual requirements')+'</td><td style="padding:5px 8px;"></td></tr><tr><td colspan="2" style="background:#887157;color:#fff;font-weight:bold;padding:5px 8px;font-size:11px;text-transform:uppercase;">'+(is?'Serviços de Catering':'Catering Services')+'</td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">Coffee Break</td><td style="padding:5px 8px;">'+catNote+'</td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Almoço':'Lunch')+'</td><td style="padding:5px 8px;">'+catNote+'</td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Jantar':'Dinner')+'</td><td style="padding:5px 8px;">'+catNote+'</td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">Cocktail</td><td style="padding:5px 8px;">'+catNote+'</td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Outros serviços':'Other services')+'</td><td style="padding:5px 8px;">'+catNote+'</td></tr></table>';
+
+  if(curType==='pedido_cotacao'){ var geral=curSubtype==='geral'; return {text:is?(geral?'Exmos. Srs.,\n\nAgradecemos o vosso contacto e a preferência pelo Hotel de Convenções de Talatona | Centro de Convenções de Talatona | TD Hotels para a realização do vosso evento. Será com todo o gosto que daremos seguimento ao vosso pedido.\n\nPara que possamos elaborar uma proposta personalizada e detalhada, agradecemos que nos façam chegar as seguintes informações, que poderão preencher directamente na tabela abaixo:\n\n[TABELA]\n\nEm anexo, enviamos também a nossa Brochura de Banquetes, que contém diversas opções de serviços de alimentos e bebidas que poderão ser combinados conforme a vossa preferência.\n\nFicamos ao dispor para qualquer esclarecimento adicional.':'Exmos. Srs.,\n\nAgradecemos o vosso contacto e a preferência pelo Hotel de Convenções de Talatona | Centro de Convenções de Talatona | TD Hotels para a realização do vosso evento. Será com todo o gosto que daremos seguimento ao vosso pedido.\n\nPara que possamos elaborar uma proposta personalizada e detalhada, agradecemos que nos façam chegar as informações em falta, que poderão preencher directamente na tabela abaixo:\n\n[TABELA]\n\nEm anexo, enviamos também a nossa Brochura de Banquetes, que contém diversas opções de serviços de alimentos e bebidas que poderão ser combinados conforme a vossa preferência.\n\nFicamos ao dispor para qualquer esclarecimento adicional.'):(geral?'Dear '+nome+',\n\nThank you for your contact and for choosing Hotel de Convenções de Talatona | Centro de Convenções de Talatona | TD Hotels for your event. It is with great pleasure that we will follow up on your request.\n\nIn order to prepare a personalised and detailed proposal, we kindly ask you to provide the following information in the table below:\n\n[TABELA]\n\nPlease find attached our Banqueting Brochure, which contains a variety of food and beverage service options that may be combined according to your preference.\n\nWe remain at your disposal for any further clarification.':'Dear '+nome+',\n\nThank you for your contact and for choosing Hotel de Convenções de Talatona | Centro de Convenções de Talatona | TD Hotels for your event. It is with great pleasure that we will follow up on your request.\n\nIn order to prepare a personalised and detailed proposal, we kindly ask you to complete the missing information in the table below:\n\n[TABELA]\n\nPlease find attached our Banqueting Brochure, which contains a variety of food and beverage service options that may be combined according to your preference.\n\nWe remain at your disposal for any further clarification.'),table:TBL}; }
+
+  if(curType==='envio_proposta'){
+    var et=f.espacoTipo||'hcta',en2=et==='hcta'?'Hotel de Convenções de Talatona':'Centro de Convenções de Talatona (CCTA)';
+    var cctaNote=et==='ccta_sem'?(is?'\n• No âmbito do regime de aluguer do CCTA sem exclusividade, os espaços comuns não são de uso exclusivo do evento, podendo ser partilhados com outros clientes. O hotel reserva-se ao direito de utilizar os restantes espaços do CCTA não incluídos no aluguer.':'\n• Under the non-exclusive CCTA rental scheme, common areas are not for the exclusive use of the event and may be shared with other clients. The hotel reserves the right to use the remaining CCTA areas not included in the rental.'):''  ;
+    var seg=f.segundaOpcao==='sim'?(is?'\n\nInformamos que existe uma consulta/pré-reserva anterior para as datas solicitadas, pelo que a vossa proposta será considerada em segunda opção, sujeita à disponibilidade. A confirmação definitiva será formalizada mediante o envio do comprovativo de pagamento de 50% do valor total da proposta.':'\n\nPlease note that there is a prior enquiry/pre-booking for the requested dates. Your proposal will therefore be considered as a second option, subject to availability. Final confirmation will be formalised upon receipt of proof of payment (PoP) of 50% of the total proposal value.'):''  ;
+    var deadline=f.deadlineProposta?(is?'Informamos que a presente proposta é válida até '+f.deadlineProposta+'. Caso não seja recebida confirmação até essa data, a consulta será considerada sem efeito.':'Please note that this proposal is valid until '+f.deadlineProposta+'. Should no confirmation be received by that date, the enquiry will be considered void.'):''  ;
+    var notaCativPT='\n• Caso a vossa entidade configure um agente cativador nos termos da Lei 7/19 e Lei 17/19, a cativação de IVA deverá ser efectuada à taxa correspondente a cada tipo de serviço (14% para Serviços fora do âmbito da hotelaria e 7% para Serviços do âmbito da hotelaria), incidindo sobre a respectiva base de incidência (valor sem IVA).';
+    var notaRetPT='\n• Adicionalmente, no que respeita à retenção na fonte de Imposto Industrial à taxa de 6,5%, aplicável exclusivamente aos serviços legalmente sujeitos a retenção e não aos Serviços do âmbito da hotelaria, o montante retido deverá ser entregue à Administração Geral Tributária (AGT) através do respectivo DAR – Documento de Arrecadação de Receitas, nos termos e prazos legalmente estabelecidos.';
+    var notaDocPT='\n• Sempre que sejam efectuadas retenções e/ou cativações, deverá ser remetida ao Hotel a documentação comprovativa das mesmas (DAR, Recibo de Pagamento, DLI, Ordem de Saque ou documento equivalente).';
+    var notaCativEN='\n• Should your entity qualify as a withholding agent under Law 7/19 and Law 17/19, VAT withholding should be applied at the rate corresponding to each type of service (14% for Non-hotel services and 7% for Hotel services), based on the respective tax base (value excluding VAT).';
+    var notaRetEN='\n• Additionally, regarding the industrial tax retention at the rate of 6.5%, applicable exclusively to services legally subject to retention and not to Hotel services, the retained amount must be delivered to the General Tax Administration (AGT) via the corresponding DAR – Tax Collection Document.';
+    var notaDocEN='\n• Whenever retentions and/or withholdings are applied, the corresponding supporting documentation must be sent to the Hotel (DAR, Payment Receipt, DLI, Payment Order or equivalent document).';
+    var fiscalNotesPT=f.notaCativador?(notaCativPT+notaRetPT+notaDocPT):f.notaPrivRet?(notaRetPT+notaDocPT):''  ;
+    var fiscalNotesEN=f.notaCativador?(notaCativEN+notaRetEN+notaDocEN):f.notaPrivRet?(notaRetEN+notaDocEN):''  ;
+    var notasPT='[NOTAS]'+'• A presente proposta é apresentada a título de consulta e não constitui uma reserva dos espaços ou quartos solicitados.\n'+'• Até à recepção da confirmação formal e respectivo pagamento, as datas solicitadas permanecerão disponíveis para consulta e comercialização junto de outras entidades.\n'+'• Os valores apresentados poderão ser revistos caso se verifique uma variação cambial superior a 5%.\n'+'• Após confirmação da reserva, quaisquer alterações ao programa, número de participantes, layouts, horários, recursos ou serviços poderão implicar ajustamentos de valores.\n'+'• Caso venham a envolver fornecedores externos, pedimos que nos informem com a devida antecedência.\n'+'• Quaisquer danos causados às instalações durante o evento serão imputados à entidade organizadora.'+cctaNote+fiscalNotesPT;
+    var notasEN='[NOTAS]'+'• This proposal is presented as an enquiry only and does not constitute a booking of the requested spaces or rooms.\n'+'• Until formal confirmation and payment are received, the requested dates will remain available for enquiry with other entities.\n'+'• The values presented may be revised should an exchange rate variation of more than 5% occur.\n'+'• Following confirmation, any changes to the programme, attendees, layouts, schedules, or services may result in price adjustments.\n'+'• Should external suppliers be involved, we kindly ask that you inform us in advance.\n'+'• Any damage caused to the hotel\'s facilities during the event will be charged to the organising entity.'+cctaNote+fiscalNotesEN;
+    return {text:is?'Exmos. Srs.,\n\nAgradecemos mais uma vez o vosso contacto e a preferência pelo Grupo TD Hotels.\n\nNo seguimento da vossa solicitação, é com gosto que partilhamos em anexo a nossa proposta para o evento '+numEvento+', previsto para os dias '+datas+', no '+en2+'.\n\nEm anexo enviamos também o nosso Kit de Banquetes, com a descrição detalhada de todas as opções de alimentos e bebidas, para vossa análise.\n\n'+deadline+'\n\n'+notasPT+'\n\nRelembramos que a confirmação da reserva implica a aceitação integral das condições constantes da proposta e respectivos anexos.'+seg+'\n\nMantemo-nos ao dispor para qualquer esclarecimento adicional ou ajuste que considerem necessário.':'Dear '+nome+',\n\nThank you once again for your contact and for choosing TD Hotels Group.\n\nFollowing your request, we are pleased to share in attachment our proposal for the event '+numEvento+', scheduled for '+datas+', at '+en2+'.\n\nPlease also find attached our Banqueting Kit, with the detailed description of all food and beverage options, for your review.\n\n'+deadline+'\n\n'+notasEN+'\n\nPlease be reminded that confirmation of the booking implies full acceptance of the terms set out in the proposal and its annexes.'+seg+'\n\nWe remain at your disposal for any further clarification or adjustments you may require.',table:null}; }
+
+  if(curType==='follow_up'){ var de=f.dataEvento||'[data do evento]',dl=f.dataLimite||'[data limite]'; if((f.followUpModo||'proximo')==='conflito') return {text:is?'Exmos. Srs.,\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento da proposta anteriormente enviada, gostaríamos de informar que recebemos um novo pedido de reserva para as mesmas datas ('+de+'), pelo que a vossa proposta passa a estar em risco de indisponibilidade.\n\nNeste sentido, solicitamos com carácter de urgência a vossa confirmação oficial. A confirmação definitiva será formalizada mediante o envio do comprovativo de pagamento de 50% do valor total da proposta.\n\nAgradecemos antecipadamente pela vossa atenção e pronta resposta.':'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing the proposal previously sent, we wish to inform you that we have received a new booking request for the same dates ('+de+'), and your proposal is now at risk of unavailability.\n\nWe urgently request your official confirmation. Final confirmation will be formalised upon receipt of Proof of Payment (PoP) of 50% of the total proposal value.\n\nWe thank you in advance for your attention and prompt response.',table:null}; return {text:is?'Exmos. Srs.,\n\nEsperamos que este e-mail o(a) encontre bem.\n\nNo seguimento da proposta anteriormente enviada, referente ao evento previsto para os dias '+de+', gostaríamos de saber se já existe alguma decisão relativamente à sua realização.\n\nCaso pretendam avançar com a reserva, agradecemos o envio da respectiva confirmação e do comprovativo de pagamento.\n\nGostaríamos de reiterar a importância de receber o vosso feedback até '+dl+'. Na ausência de resposta até essa data, a presente consulta será removida do nosso sistema.\n\nAgradecemos desde já a vossa atenção e ficamos a aguardar o vosso feedback.':'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing the proposal previously sent, regarding the event scheduled for '+de+', we would like to know whether a decision has been made regarding its confirmation.\n\nShould you wish to proceed with the booking, we kindly ask that you send the corresponding confirmation and proof of payment (PoP).\n\nWe would like to reiterate the importance of receiving your feedback by '+dl+'. Should we not receive a response by that date, the present enquiry will be removed from our system.\n\nWe thank you in advance for your attention.',table:null}; }
+
+  if(curType==='confirmacao'){ var de2=f.dataEvento||'[data do evento]',df=(f.dadosFiscaisOpcao||'conhecidos')==='falta'?(is?'\n\nFicamos a aguardar, com a maior brevidade possível, o envio dos vossos dados fiscais (Entidade, NIF e Morada Fiscal). Caso não nos seja facultada esta informação dentro do prazo legal, a factura será emitida sob designação genérica de "Consumidor Final".':'\n\nWe kindly ask that you provide your fiscal details (Entity, Tax ID and Fiscal Address) at your earliest convenience. Should this information not be provided within the legal timeframe, the invoice will be issued under the generic designation of "Final Consumer".'):(is?'\n\nAproveitamos para reconfirmar que o evento será facturado com os seguintes dados fiscais:\n\nEntidade: '+(f.entidade||'[Entidade]')+'\nNIF: '+(f.nif||'[NIF]')+'\nMorada Fiscal: '+(f.morada||'[Morada]'):'\n\nWe would also like to reconfirm that the event will be invoiced under the following fiscal details:\n\nEntity: '+(f.entidade||'[Entity]')+'\nTax ID: '+(f.nif||'[Tax ID]')+'\nFiscal Address: '+(f.morada||'[Address]')); return {text:is?'Exmos. Srs.,\n\nAgradecemos a vossa preferência pelo Grupo TD Hotels e o envio do comprovativo de pagamento. Temos o prazer de confirmar a vossa reserva para a realização do vosso evento, previsto para '+de2+'.\n\nAssim que o nosso departamento financeiro confirmar a entrada dos valores, iremos partilhar a factura final.'+df+'\n\nFicamos ao dispor para qualquer esclarecimento adicional.':'Dear '+nome+',\n\nWe thank you for your preference for TD Hotels Group and for submitting the Proof of Payment (PoP). We are pleased to confirm your booking for your event, scheduled for '+de2+'.\n\nOnce our Finance Department confirms receipt of the funds, we will issue the final invoice.'+df+'\n\nWe remain at your disposal for any further clarification.',table:null}; }
+
+  if(curType==='cancelamento'){ var dc=f.dataEvento||'[data do evento]'; return {text:is?'Exmos. Srs.,\n\nEsperamos que este e-mail o encontre bem.\n\nVimos por este meio informar que, não tendo sido recebida confirmação oficial até à data limite estabelecida, e existindo um outro pedido de reserva para as mesmas datas que entretanto foi confirmado, procedemos ao cancelamento da pré-reserva referente ao evento previsto para '+dc+'.\n\nCaso pretenda reagendar o evento ou necessite de qualquer outra assistência, estamos inteiramente à disposição para ajudar.\n\nAgradecemos a compreensão.':'Dear '+nome+',\n\nWe hope this email finds you well.\n\nWe wish to inform you that, as no official confirmation was received by the established deadline, and given that another booking request for the same dates has since been confirmed, we have proceeded with the cancellation of the pre-booking for the event scheduled for '+dc+'.\n\nShould you wish to reschedule the event or require any further assistance, we remain entirely at your disposal.\n\nThank you for your understanding.',table:null}; }
+
+  if(curType==='cobranca'){ var de3=f.dataEvento||'[data do evento]'; var doc=f.cobrancaDoc||'proforma'; var valStr=f.valor?(is?' no valor de '+f.valor+' Kzs':' in the amount of '+f.valor+' Kzs'):''; var docRefPT=doc==='factura'?'Factura n.º '+(f.numDoc||'[nº]'):'Proforma referente a serviços adicionais prestados'; var docRefEN=doc==='factura'?'Invoice no. '+(f.numDoc||'[no.]'):'Proforma for additional services rendered'; return {text:is?'Exmos. Srs.,\n\nNo seguimento do evento realizado em '+de3+', encontra-se pendente de liquidação o valor referente à '+docRefPT+valStr+'.\n\nAgradecemos que procedam à regularização e ao envio do respectivo comprovativo de pagamento com a maior brevidade possível.\n\nFicamos ao dispor para qualquer esclarecimento adicional.':'Dear '+nome+',\n\nFollowing the event held on '+de3+', the amount related to the '+docRefEN+valStr+' remains pending settlement.\n\nWe kindly ask that you proceed with payment and share the corresponding proof of payment at the earliest convenience.\n\nWe remain at your disposal for any further clarification.',table:null}; }
+
+  if(curType==='envio_factura'){ var de4=f.dataEvento||'[data do evento]'; return {text:is?'Exmos. Srs.,\n\nNo seguimento do evento realizado em '+de4+', vimos por este meio partilhar a Factura n.º '+(f.numFatura||'[nº]')+', no valor de '+(f.valorFatura||'[valor]')+' Kzs, que segue em anexo para vossa referência e arquivo.\n\nFicamos ao dispor para qualquer esclarecimento adicional.':'Dear '+nome+',\n\nFollowing the event held on '+de4+', we are pleased to share herewith Invoice no. '+(f.numFatura||'[no.]')+', in the amount of '+(f.valorFatura||'[amount]')+' Kzs, enclosed for your reference and records.\n\nWe remain at your disposal for any further clarification.',table:null}; }
+
+  if(curType==='satisfacao'){ var ih='<a href="https://bit.ly/QuestionarioHCTAEventos" target="_blank"><img src="https://i.imgur.com/L0EkdiH.jpeg" alt="Questionario Satisfacao HCTA" style="width:100%;max-width:600px;display:block;border:none;"></a><div style="background:#F0EAE3;border:1px dashed #887157;padding:14px;font-size:12px;color:#5A5250;margin-top:8px;border-radius:3px;"><strong style="color:#887157;">'+(is?'Nota para a equipa:':'Team note:')+'</strong> '+(is?'Se a imagem não aparecer no Outlook após colar, inserir manualmente: Inserir → Imagens → Este dispositivo.':'If the image does not appear in Outlook after pasting, insert manually: Insert → Images → This device.')+' <a href="https://i.imgur.com/L0EkdiH.jpeg" download style="color:#887157;font-weight:600;">Download</a> | <a href="https://bit.ly/QuestionarioHCTAEventos" style="color:#887157;">https://bit.ly/QuestionarioHCTAEventos</a></div>'; return {text:is?'Exmos. Srs.,\n\nFoi um gosto receber o seu evento no nosso hotel! Esperamos que tenha sido produtivo e tudo tenha correspondido às suas expectativas.\n\nPara nós, cada detalhe conta, e a sua opinião faz toda a diferença. Preparámos um questionário rápido, que não levará mais do que 2 minutos.\n\n[IMAGEM]\n\nMuito obrigados pela sua colaboração e confiança.\n\nEstamos ao dispor para qualquer questão adicional.':'Dear '+nome+',\n\nIt was a pleasure to host your event at our hotel! We hope it was productive and that everything met your expectations.\n\nEvery detail matters to us, and your opinion makes all the difference. We have prepared a quick questionnaire, which will take no more than 2 minutes.\n\n[IMAGEM]\n\nThank you very much for your collaboration and trust.\n\nWe remain at your disposal for any further questions.',table:null,imgHtml:ih}; }
+  return {text:'',table:null};
+}
+function renderParagraphs(text,result,forOutlook){ var html='',fs=forOutlook?'14px':'13px'; text.split('\n\n').forEach(function(pp){ if(pp==='[TABELA]'&&result.table){ html+='<div style="margin:16px 0;">'+result.table+'</div>'; } else if(pp==='[IMAGEM]'&&result.imgHtml){ html+='<div style="margin:16px 0;">'+result.imgHtml+'</div>'; } else if(pp.indexOf('[NOTAS]')===0){ var lines=pp.replace('[NOTAS]','').split('\n').filter(function(l){ return l.length>0; }); html+='<p style="margin:0 0 4px;font-size:'+fs+';line-height:1.8;color:#231F20;"><strong>Notas:</strong></p>'; lines.forEach(function(ln){ html+='<p style="margin:0;font-size:11px;line-height:1.6;color:#231F20;">'+ln+'</p>'; }); html+='<p style="margin:0 0 14px;"></p>'; } else { html+='<p style="margin:0 0 14px;font-size:'+fs+';line-height:1.8;color:#231F20;">'+pp.replace(/\n/g,'<br>')+'</p>'; } }); return html; }
+function generateEmail(){ var result=buildEmail(); if(!result||!result.text) return; emailResult=result; hide('formview');show('resultview'); setText('result-label',T('ready'));setText('result-title',T('email-generated'));setText('copy-btn',T('copy'));setText('edit-btn',T('edit')); $('email-preview').innerHTML=renderParagraphs(result.text,result,false); }
+function copyEmail(){ if(!emailResult) return; var html=renderParagraphs(emailResult.text,emailResult,true),plain=emailResult.text.replace('[TABELA]','(tabela incluida)').replace('[IMAGEM]','(imagem incluida)').replace('[NOTAS]','Notas:\n'),btn=$('copy-btn'); copyToClipboard(html,plain,btn); }
+function extractData(){ var btn=$('extract-btn'); if(!btn||!clientTxt.trim()) return; var is=p(); btn.textContent=is?'A extrair...':'Extracting...'; btn.disabled=true; fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:'Extrai do seguinte email os campos. Responde APENAS em JSON puro sem backticks. Se nao mencionado usa null.\nCampos: nome,entidade,nif,morada,nomeEvento,dataEvento,horario,participantes,contacto,telEmail,montagem,desmontagem,fornecedores,disposicao,av,cb,almoco,jantar,cocktail,outros\nEmail:\n'+clientTxt}]})}).then(function(r){ return r.json(); }).then(function(d){ var txt=d.content?d.content.map(function(i){ return i.text||''; }).join(''):''; var parsed=JSON.parse(txt.replace(new RegExp(String.fromCharCode(96,96,96)+'json|'+String.fromCharCode(96,96,96),'g'),'').trim()); Object.keys(parsed).forEach(function(k){ if(parsed[k]) fields[k]=parsed[k]; }); var keys=[['nome','Nome'],['entidade','Entidade'],['nif','NIF'],['nomeEvento','Evento'],['dataEvento','Data'],['horario','Horário'],['participantes','Participantes']]; var found=keys.filter(function(kv){ return fields[kv[0]]; }).map(function(kv){ return '<div style="margin-bottom:3px;"><strong>'+kv[1]+':</strong> '+fields[kv[0]]+'</div>'; }).join(''); var er=$('extract-result'); if(er) er.innerHTML=found?'<div style="background:#F0EAE3;border:1px solid #DDD4C8;border-radius:3px;padding:10px 14px;margin-bottom:16px;font-size:12px;">'+found+'<div style="margin-top:8px;color:#9A918C;font-size:10px;">'+(is?'Verifica os dados antes de gerar.':'Review before generating.')+'</div></div>':''; btn.textContent=is?'Extrair dados automaticamente':'Extract data automatically'; btn.disabled=false; }).catch(function(e){ var er=$('extract-result'); if(er) er.innerHTML='<div style="background:#fdecea;border:1px solid #e74c3c;border-radius:3px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#c0392b;">Erro ao extrair: '+e.message+'</div>'; btn.textContent=is?'Extrair dados automaticamente':'Extract data automatically'; btn.disabled=false; }); }
+
+// ══════════════════════════════════════════════════════
+// 5. FERRAMENTAS FISCAIS
 // ══════════════════════════════════════════════════════
 function setEntity(type){ entityType=type; $('ent-pub').classList.toggle('active',type==='pub'); $('ent-priv').classList.toggle('active',type==='priv'); updateEntityNote();renderCheckboxes();renderCalc(); }
 function setDiagEntity(type){ diagEntityType=type; $('dent-pub').classList.toggle('active',type==='pub'); $('dent-priv').classList.toggle('active',type==='priv'); setText('dent-pub',T('ent-pub'));setText('dent-priv',T('ent-priv')); diagCalc(); }
 function updateEntityNote(){ var el=$('entity-note'); if(el) el.innerHTML=entityType==='pub'?T('note-pub'):T('note-priv'); }
-
 function renderCheckboxes(){
   var box=$('calc-checkboxes'); if(!box) return;
   if(entityType==='priv'){ doCativacao=false;doCativacaoHot=false;doRetencao=true;box.innerHTML='';return; }
@@ -942,7 +1133,6 @@ function renderCheckboxes(){
    +'<div class="chk-row" onclick="toggleChk(\'catHot\')"><input type="checkbox" id="chk-catHot" '+(doCativacaoHot?'checked':'')+' onclick="event.stopPropagation();toggleChk(\'catHot\')"><span>'+T('chk-catHot')+'</span><small>'+T('chk-catHot-sub')+'</small></div>'
    +'<div class="chk-row" onclick="toggleChk(\'ret\')"><input type="checkbox" id="chk-ret" '+(doRetencao?'checked':'')+' onclick="event.stopPropagation();toggleChk(\'ret\')"><span>'+T('chk-ret')+'</span><small>'+T('chk-ret-sub')+'</small></div>';
 }
-
 function toggleChk(w){
   if(w==='cat') doCativacao=!doCativacao;
   else if(w==='catHot') doCativacaoHot=!doCativacaoHot;
@@ -951,7 +1141,6 @@ function toggleChk(w){
   if(el) el.checked=(w==='cat'?doCativacao:w==='catHot'?doCativacaoHot:doRetencao);
   renderCalc();
 }
-
 function renderCalc(){
   var showRet=entityType==='priv'?true:doRetencao;
   var showCatFora=entityType==='pub'&&doCativacao;
@@ -960,7 +1149,6 @@ function renderCalc(){
   renderFiscalTable('tbody-hot',hotRows,7,false,showCatHot);
   updateTotals(showRet,showCatFora,showCatHot);
 }
-
 function renderFiscalTable(tbodyId,rows,ivaPct,showRet,showCat){
   var tbody=$(tbodyId); if(!tbody) return;
   var ph=T('ph-conceito'); tbody.innerHTML='';
@@ -976,9 +1164,7 @@ function renderFiscalTable(tbodyId,rows,ivaPct,showRet,showCat){
     tbody.appendChild(tr);
   });
 }
-
 function rowUpdate(tbodyId,idx,key,val){ var rows=(tbodyId==='tbody-hot')?hotRows:foraRows; if(key==='valor') rows[idx].valor=parseNum(val); else rows[idx][key]=val; renderCalc(); }
-
 function updateTotals(showRet,showCatFora,showCatHot){
   var foraPF=0,foraIVA=0,foraRet=0;
   foraRows.forEach(function(r){ if(r.valor>0){ var b=r.valor/1.14; foraPF+=r.valor;foraIVA+=b*0.14;foraRet+=b*0.065; } });
@@ -998,7 +1184,6 @@ function updateTotals(showRet,showCatFora,showCatHot){
   $('grand-breakdown').innerHTML=bd;
   setText('grand-receber',fmt(totalPF-dCatFora-dCatHot-dRet)+' Kzs');
 }
-
 function resetCalc(){ initRows();doCativacao=true;doCativacaoHot=false;doRetencao=true;renderCheckboxes();renderCalc(); }
 
 // Diagnóstico — código completo mantido do index.html original
@@ -1117,7 +1302,6 @@ function diagCalc(){
     wrapBtn.appendChild(gerarBtn); area.appendChild(wrapBtn);
   } else { if(emailArea) emailArea.innerHTML=''; }
 }
-
 function generateDiagEmail(){
   var d=window._diagState; if(!d) return;
   var is=p();
@@ -1143,7 +1327,6 @@ function generateDiagEmail(){
   }
   renderDiagEmail(subject,body,tableHtml);
 }
-
 function renderDiagEmail(subject,body,tableHtml){
   var is=p(),area=$('diag-email-area'); if(!area) return;
   var parts=body.split('[TABELA]'),html='';
@@ -1154,14 +1337,12 @@ function renderDiagEmail(subject,body,tableHtml){
   area.innerHTML='<div style="border-left:3px solid #887157;padding-left:20px;"><div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px;"><div><div style="font-size:11px;color:#887157;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;margin-bottom:4px;">'+(is?'Email gerado, pronto a copiar':'Generated email, ready to copy')+'</div><div style="font-size:10px;color:#9A918C;line-height:1.6;">'+(is?'Assunto: ':'Subject: ')+'<strong style="color:#231F20;">'+subject+'</strong></div></div><button onclick="copyDiagEmail()" id="copy-diag-btn" style="flex-shrink:0;background:#887157;color:#fff;border:none;border-radius:3px;padding:8px 18px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;cursor:pointer;">'+(is?'Copiar':'Copy')+'</button></div><div id="diag-email-preview" style="background:#fff;border:1px solid #DDD4C8;border-radius:3px;padding:24px 28px;box-shadow:0 1px 8px rgba(35,31,32,0.06);max-height:80vh;overflow-y:auto;">'+html+'</div></div>';
   window._diagEmailData={subject:subject,body:body,tableHtml:tableHtml,html:html};
 }
-
 function copyDiagEmail(){
   var d=window._diagEmailData; if(!d) return;
   var btn=$('copy-diag-btn'); if(!btn) return;
   var plain=d.body.replace('[TABELA]','\n(tabela incluída)\n');
   copyToClipboard(d.html,plain,btn);
 }
-
 function renderFiscalLabels(){
   setText('fc-title',T('fc-title'));setText('fc-entity-lbl',T('fc-entity-lbl'));
   setText('ent-pub',T('ent-pub'));setText('ent-priv',T('ent-priv'));
@@ -1185,7 +1366,6 @@ function renderFiscalLabels(){
   var dh=$('diag-hot');  if(dh) dh.placeholder=p()?'Ex: 1.500.000,00':'e.g. 1,500,000.00';
   renderCalc();renderInfoTab();
 }
-
 function renderInfoTab(){
   var ic=$('info-content'); if(!ic) return;
   var is=p();
@@ -1217,119 +1397,7 @@ function renderInfoTab(){
 }
 
 // ══════════════════════════════════════════════════════
-// SECÇÃO 7 — COMUNICAÇÕES (formulários e geração de emails)
-// ══════════════════════════════════════════════════════
-function fld(label,html){ return '<div class="field"><label>'+label+'</label>'+html+'</div>'; }
-function chkFld(id,label,exclusiveWith){ var checked=fields[id]?'checked':''; var extra=exclusiveWith?'if(fields[\''+id+'\'])fields[\''+exclusiveWith+'\']=false;':''; return '<div class="chk-row" onclick="fields[\''+id+'\']=!fields[\''+id+'\'];'+extra+'renderFields()"><input type="checkbox" '+checked+' onclick="event.stopPropagation();fields[\''+id+'\']=!fields[\''+id+'\'];'+extra+'renderFields()"><span>'+label+'</span></div>'; }
-function inp(id,ph,val){ return '<input type="text" id="'+id+'" placeholder="'+(ph||'')+'" value="'+(val||'')+'" oninput="fields[\''+id+'\']=this.value;validateForm()">'; }
-function sel(id,opts,val){ var o=opts.map(function(x){ return '<option value="'+x.v+'"'+((val||opts[0].v)===x.v?' selected':'')+'>'+x.l+'</option>'; }).join(''); return '<select id="'+id+'" onchange="fields[\''+id+'\']=this.value;renderFields()">'+o+'</select>'; }
-function req(){ return '<span style="color:#C0392B;margin-left:3px;">*</span>'; }
-
-function getRequired(){
-  if(curType==='pedido_cotacao') return ['nome'];
-  if(curType==='envio_proposta') return ['nome','numEvento','datas','deadlineProposta'];
-  if(curType==='follow_up'){ var b=['nome','dataEvento']; return (fields.followUpModo||'proximo')==='proximo'?b.concat(['dataLimite']):b; }
-  if(curType==='confirmacao'){ var b=['nome','dataEvento']; return (fields.dadosFiscaisOpcao||'conhecidos')==='conhecidos'?b.concat(['entidade','nif','morada']):b; }
-  if(curType==='cancelamento') return ['nome','dataEvento'];
-  if(curType==='cobranca') return ['nome','dataEvento','valor'].concat((fields.cobrancaDoc||'proforma')==='factura'?['numDoc']:[]);
-  if(curType==='envio_factura') return ['nome','dataEvento','numFatura','valorFatura'];
-  if(curType==='satisfacao') return ['nome'];
-  return [];
-}
-
-function validateForm(){ var btn=$('generate-btn'); if(!btn) return; var missing=getRequired().filter(function(k){ return !fields[k]||!fields[k].trim(); }); btn.disabled=missing.length>0; btn.style.opacity=missing.length>0?'0.4':'1'; btn.style.cursor=missing.length>0?'not-allowed':'pointer'; }
-
-function renderFields(){
-  if(!curType) return;
-  var f=fields,is=p(),t=TYPES.find(function(x){ return x.id===curType; });
-  setText('form-subtitle',is?t.dpt:t.den);setText('form-title',is?t.pt:t.en);
-  setText('generate-btn',T('generate'));setText('req-note',T('req-note'));setText('back-lbl',T('back'));
-  var nameFld=fld((is?'Nome do destinatário':'Recipient name')+req(),inp('nome',is?'Ex: Dra. Ana Silva':'e.g. Ms. Ana Silva',f.nome));
-  var dataFld=fld((is?'Data do evento':'Event date')+req(),inp('dataEvento',is?'Ex: 14 de Julho de 2026':'e.g. 14 July 2026',f.dataEvento));
-  var html='';
-  if(curType==='pedido_cotacao'){
-    html+=fld(is?'Tipo de pedido':'Request type',sel('subtypeSel',[{v:'geral',l:is?'Pedido geral: cliente sem detalhes':'General: client with no details'},{v:'incompleto',l:is?'Pedido incompleto: falta informação':'Incomplete: missing information'}],curSubtype));
-    html+=nameFld;
-    if(curSubtype==='incompleto'){ html+=fld(is?'Email do cliente':'Client email','<textarea id="clientTA" rows="5" placeholder="'+(is?'Cola o email original do cliente aqui...':'Paste the client\'s email here...')+'" oninput="clientTxt=this.value">'+(clientTxt||'')+'</textarea>'); html+='<button onclick="extractData()" id="extract-btn" style="margin-bottom:16px;background:transparent;border:1px solid '+BRONZE+';color:'+BRONZE+';border-radius:3px;padding:7px 16px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">'+(is?'Extrair dados automaticamente':'Extract data automatically')+'</button><div id="extract-result"></div>'; }
-  } else if(curType==='envio_proposta'){
-    html+=fld(is?'Espaço e regime':'Venue and regime',sel('espacoTipo',[{v:'hcta',l:'Hotel de Convenções de Talatona (HCTA)'},{v:'ccta_excl',l:is?'CCTA (com exclusividade)':'CCTA (exclusive)'},{v:'ccta_sem',l:is?'CCTA (sem exclusividade)':'CCTA (non-exclusive)'}],f.espacoTipo||'hcta'));
-    html+=nameFld;
-    html+=fld((is?'Nº e nome do evento':'Event number and name')+req(),inp('numEvento',is?'Ex: 922/26, Conferência Anual BAI':'e.g. 922/26, Annual BAI Conference',f.numEvento));
-    html+=fld((is?'Datas':'Dates')+req(),inp('datas',is?'Ex: 12 e 13 de Junho de 2026':'e.g. 12 and 13 June 2026',f.datas));
-    html+=fld(is?'Situação da proposta':'Proposal status',sel('segundaOpcao',[{v:'nao',l:is?'1ª opção':'First option'},{v:'sim',l:is?'2ª opção (existe pré-reserva anterior)':'2nd option (prior pre-booking exists)'}],f.segundaOpcao||'nao'));
-    html+=fld((is?'Data limite de confirmação':'Confirmation deadline')+req(),inp('deadlineProposta',is?'Ex: 20 de Junho de 2026 às 12h00':'e.g. 20 June 2026 at 12:00',f.deadlineProposta));
-    html+=chkFld('notaCativador',is?'Cliente é Agente Cativador (Estado/Organismo Público)':'Client is a Withholding Agent (State/Public Body)','notaPrivRet');
-    html+=chkFld('notaPrivRet',is?'Entidade privada que possa vir a fazer retenção na fonte':'Private entity that may apply withholding tax','notaCativador');
-  } else if(curType==='follow_up'){
-    html+=nameFld;html+=dataFld;
-    html+=fld(is?'Motivo':'Reason',sel('followUpModo',[{v:'proximo',l:is?'Data a aproximar-se (urgência de confirmação)':'Date approaching (confirmation urgency)'},{v:'conflito',l:is?'Novo pedido para as mesmas datas':'New request for same dates'}],f.followUpModo||'proximo'));
-    if((f.followUpModo||'proximo')!=='conflito') html+=fld((is?'Data limite de confirmação':'Confirmation deadline')+req(),inp('dataLimite',is?'Ex: 13 de Maio às 12h00':'e.g. 13 May at 12:00',f.dataLimite));
-  } else if(curType==='confirmacao'){
-    html+=nameFld;html+=dataFld;
-    html+=fld(is?'Dados fiscais':'Fiscal details',sel('dadosFiscaisOpcao',[{v:'conhecidos',l:is?'Dados conhecidos (reconfirmar)':'Known (reconfirm details)'},{v:'falta',l:is?'Dados em falta (solicitar ao cliente)':'Missing (request from client)'}],f.dadosFiscaisOpcao||'conhecidos'));
-    if((f.dadosFiscaisOpcao||'conhecidos')==='conhecidos'){ html+=fld('Entidade'+req(),inp('entidade',is?'Ex: Sonangol E.P.':'e.g. Sonangol E.P.',f.entidade)); html+=fld('NIF'+req(),inp('nif','Ex: 5000012345',f.nif)); html+=fld((is?'Morada Fiscal':'Fiscal Address')+req(),inp('morada',is?'Ex: Av. 4 de Fevereiro, Luanda':'e.g. Av. 4 de Fevereiro, Luanda',f.morada)); }
-  } else if(curType==='cancelamento'){
-    html+=nameFld;html+=dataFld;
-  } else if(curType==='cobranca'){
-    html+=nameFld;html+=dataFld;
-    html+=fld(is?'Documento em cobrança':'Document being collected',sel('cobrancaDoc',[{v:'proforma',l:'Proforma'},{v:'factura',l:is?'Factura':'Invoice'}],f.cobrancaDoc||'proforma'));
-    if((f.cobrancaDoc||'proforma')==='factura') html+=fld((is?'Nº da factura':'Invoice number')+req(),inp('numDoc',is?'Ex: FT 2026/0034':'e.g. FT 2026/0034',f.numDoc));
-    html+=fld((is?'Valor':'Amount')+req(),inp('valor',is?'Ex: 1.400.000,00 Kzs':'e.g. 1,400,000.00 Kzs',f.valor));
-  } else if(curType==='envio_factura'){
-    html+=nameFld;html+=dataFld;
-    html+=fld((is?'Nº da factura':'Invoice number')+req(),inp('numFatura',is?'Ex: FT 2026/0034':'e.g. FT 2026/0034',f.numFatura));
-    html+=fld((is?'Valor':'Amount')+req(),inp('valorFatura',is?'Ex: 1.400.000,00 Kzs':'e.g. 1,400,000.00 Kzs',f.valorFatura));
-  } else if(curType==='satisfacao'){ html+=nameFld; }
-  $('form-fields').innerHTML=html;
-  var ss=$('subtypeSel'); if(ss){ ss.onchange=function(){ curSubtype=this.value; renderFields(); }; }
-  validateForm();
-}
-
-function buildEmail(){
-  var f=fields,is=p(),nome=f.nome||(is?'[Nome do Cliente]':'[Client Name]'),numEvento=f.numEvento||'[Nº Evento]',datas=f.datas||'[Data(s)]';
-  var catNote='<span style="color:#9A918C;font-style:italic;">'+(is?'(escolher da brochura de banquetes o serviço pretendido)':'(please select the desired service from the Banqueting Brochure)')+'</span>';
-  var TBL='<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:600px;font-family:Aptos,Montserrat,Arial,sans-serif;font-size:12px;"><tr><td colspan="2" style="background:#231F20;color:#887157;font-weight:bold;padding:7px 8px;">'+(is?'PEDIDO DE COTAÇÃO':'QUOTATION REQUEST')+'</td></tr><tr><td colspan="2" style="background:#887157;color:#fff;font-weight:bold;padding:5px 8px;font-size:11px;text-transform:uppercase;">'+(is?'Informações Gerais':'General Information')+'</td></tr><tr><td style="width:60%;background:#FAF8F6;padding:5px 8px;">'+(is?'Nome da Entidade':'Entity Name')+'</td><td style="width:40%;padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'NIF':'Tax ID')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Morada Fiscal':'Fiscal Address')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Nome do Evento':'Event Name')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Data do Evento':'Event Date')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Horário do Evento':'Event Schedule')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Nº Previsto de Participantes':'Expected Number of Attendees')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Pessoa de Contacto':'Contact Person')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Telefone / Email':'Phone / Email')+'</td><td style="padding:5px 8px;"></td></tr><tr><td colspan="2" style="background:#887157;color:#fff;font-weight:bold;padding:5px 8px;font-size:11px;text-transform:uppercase;">'+(is?'Logística e Montagem':'Logistics and Setup')+'</td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Data e hora de montagem':'Setup date and time')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Data e hora de desmontagem':'Breakdown date and time')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Empresas envolvidas':'Companies involved')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Disposição da sala':'Room layout')+'</td><td style="padding:5px 8px;"></td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Necessidades audiovisuais':'Audiovisual requirements')+'</td><td style="padding:5px 8px;"></td></tr><tr><td colspan="2" style="background:#887157;color:#fff;font-weight:bold;padding:5px 8px;font-size:11px;text-transform:uppercase;">'+(is?'Serviços de Catering':'Catering Services')+'</td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">Coffee Break</td><td style="padding:5px 8px;">'+catNote+'</td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Almoço':'Lunch')+'</td><td style="padding:5px 8px;">'+catNote+'</td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Jantar':'Dinner')+'</td><td style="padding:5px 8px;">'+catNote+'</td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">Cocktail</td><td style="padding:5px 8px;">'+catNote+'</td></tr><tr><td style="background:#FAF8F6;padding:5px 8px;">'+(is?'Outros serviços':'Other services')+'</td><td style="padding:5px 8px;">'+catNote+'</td></tr></table>';
-
-  if(curType==='pedido_cotacao'){ var geral=curSubtype==='geral'; return {text:is?(geral?'Exmos. Srs.,\n\nAgradecemos o vosso contacto e a preferência pelo Hotel de Convenções de Talatona | Centro de Convenções de Talatona | TD Hotels para a realização do vosso evento. Será com todo o gosto que daremos seguimento ao vosso pedido.\n\nPara que possamos elaborar uma proposta personalizada e detalhada, agradecemos que nos façam chegar as seguintes informações, que poderão preencher directamente na tabela abaixo:\n\n[TABELA]\n\nEm anexo, enviamos também a nossa Brochura de Banquetes, que contém diversas opções de serviços de alimentos e bebidas que poderão ser combinados conforme a vossa preferência.\n\nFicamos ao dispor para qualquer esclarecimento adicional.':'Exmos. Srs.,\n\nAgradecemos o vosso contacto e a preferência pelo Hotel de Convenções de Talatona | Centro de Convenções de Talatona | TD Hotels para a realização do vosso evento. Será com todo o gosto que daremos seguimento ao vosso pedido.\n\nPara que possamos elaborar uma proposta personalizada e detalhada, agradecemos que nos façam chegar as informações em falta, que poderão preencher directamente na tabela abaixo:\n\n[TABELA]\n\nEm anexo, enviamos também a nossa Brochura de Banquetes, que contém diversas opções de serviços de alimentos e bebidas que poderão ser combinados conforme a vossa preferência.\n\nFicamos ao dispor para qualquer esclarecimento adicional.'):(geral?'Dear '+nome+',\n\nThank you for your contact and for choosing Hotel de Convenções de Talatona | Centro de Convenções de Talatona | TD Hotels for your event. It is with great pleasure that we will follow up on your request.\n\nIn order to prepare a personalised and detailed proposal, we kindly ask you to provide the following information in the table below:\n\n[TABELA]\n\nPlease find attached our Banqueting Brochure, which contains a variety of food and beverage service options that may be combined according to your preference.\n\nWe remain at your disposal for any further clarification.':'Dear '+nome+',\n\nThank you for your contact and for choosing Hotel de Convenções de Talatona | Centro de Convenções de Talatona | TD Hotels for your event. It is with great pleasure that we will follow up on your request.\n\nIn order to prepare a personalised and detailed proposal, we kindly ask you to complete the missing information in the table below:\n\n[TABELA]\n\nPlease find attached our Banqueting Brochure, which contains a variety of food and beverage service options that may be combined according to your preference.\n\nWe remain at your disposal for any further clarification.'),table:TBL}; }
-
-  if(curType==='envio_proposta'){
-    var et=f.espacoTipo||'hcta',en2=et==='hcta'?'Hotel de Convenções de Talatona':'Centro de Convenções de Talatona (CCTA)';
-    var cctaNote=et==='ccta_sem'?(is?'\n• No âmbito do regime de aluguer do CCTA sem exclusividade, os espaços comuns não são de uso exclusivo do evento, podendo ser partilhados com outros clientes. O hotel reserva-se ao direito de utilizar os restantes espaços do CCTA não incluídos no aluguer.':'\n• Under the non-exclusive CCTA rental scheme, common areas are not for the exclusive use of the event and may be shared with other clients. The hotel reserves the right to use the remaining CCTA areas not included in the rental.'):''  ;
-    var seg=f.segundaOpcao==='sim'?(is?'\n\nInformamos que existe uma consulta/pré-reserva anterior para as datas solicitadas, pelo que a vossa proposta será considerada em segunda opção, sujeita à disponibilidade. A confirmação definitiva será formalizada mediante o envio do comprovativo de pagamento de 50% do valor total da proposta.':'\n\nPlease note that there is a prior enquiry/pre-booking for the requested dates. Your proposal will therefore be considered as a second option, subject to availability. Final confirmation will be formalised upon receipt of proof of payment (PoP) of 50% of the total proposal value.'):''  ;
-    var deadline=f.deadlineProposta?(is?'Informamos que a presente proposta é válida até '+f.deadlineProposta+'. Caso não seja recebida confirmação até essa data, a consulta será considerada sem efeito.':'Please note that this proposal is valid until '+f.deadlineProposta+'. Should no confirmation be received by that date, the enquiry will be considered void.'):''  ;
-    var notaCativPT='\n• Caso a vossa entidade configure um agente cativador nos termos da Lei 7/19 e Lei 17/19, a cativação de IVA deverá ser efectuada à taxa correspondente a cada tipo de serviço (14% para Serviços fora do âmbito da hotelaria e 7% para Serviços do âmbito da hotelaria), incidindo sobre a respectiva base de incidência (valor sem IVA).';
-    var notaRetPT='\n• Adicionalmente, no que respeita à retenção na fonte de Imposto Industrial à taxa de 6,5%, aplicável exclusivamente aos serviços legalmente sujeitos a retenção e não aos Serviços do âmbito da hotelaria, o montante retido deverá ser entregue à Administração Geral Tributária (AGT) através do respectivo DAR – Documento de Arrecadação de Receitas, nos termos e prazos legalmente estabelecidos.';
-    var notaDocPT='\n• Sempre que sejam efectuadas retenções e/ou cativações, deverá ser remetida ao Hotel a documentação comprovativa das mesmas (DAR, Recibo de Pagamento, DLI, Ordem de Saque ou documento equivalente).';
-    var notaCativEN='\n• Should your entity qualify as a withholding agent under Law 7/19 and Law 17/19, VAT withholding should be applied at the rate corresponding to each type of service (14% for Non-hotel services and 7% for Hotel services), based on the respective tax base (value excluding VAT).';
-    var notaRetEN='\n• Additionally, regarding the industrial tax retention at the rate of 6.5%, applicable exclusively to services legally subject to retention and not to Hotel services, the retained amount must be delivered to the General Tax Administration (AGT) via the corresponding DAR – Tax Collection Document.';
-    var notaDocEN='\n• Whenever retentions and/or withholdings are applied, the corresponding supporting documentation must be sent to the Hotel (DAR, Payment Receipt, DLI, Payment Order or equivalent document).';
-    var fiscalNotesPT=f.notaCativador?(notaCativPT+notaRetPT+notaDocPT):f.notaPrivRet?(notaRetPT+notaDocPT):''  ;
-    var fiscalNotesEN=f.notaCativador?(notaCativEN+notaRetEN+notaDocEN):f.notaPrivRet?(notaRetEN+notaDocEN):''  ;
-    var notasPT='[NOTAS]'+'• A presente proposta é apresentada a título de consulta e não constitui uma reserva dos espaços ou quartos solicitados.\n'+'• Até à recepção da confirmação formal e respectivo pagamento, as datas solicitadas permanecerão disponíveis para consulta e comercialização junto de outras entidades.\n'+'• Os valores apresentados poderão ser revistos caso se verifique uma variação cambial superior a 5%.\n'+'• Após confirmação da reserva, quaisquer alterações ao programa, número de participantes, layouts, horários, recursos ou serviços poderão implicar ajustamentos de valores.\n'+'• Caso venham a envolver fornecedores externos, pedimos que nos informem com a devida antecedência.\n'+'• Quaisquer danos causados às instalações durante o evento serão imputados à entidade organizadora.'+cctaNote+fiscalNotesPT;
-    var notasEN='[NOTAS]'+'• This proposal is presented as an enquiry only and does not constitute a booking of the requested spaces or rooms.\n'+'• Until formal confirmation and payment are received, the requested dates will remain available for enquiry with other entities.\n'+'• The values presented may be revised should an exchange rate variation of more than 5% occur.\n'+'• Following confirmation, any changes to the programme, attendees, layouts, schedules, or services may result in price adjustments.\n'+'• Should external suppliers be involved, we kindly ask that you inform us in advance.\n'+'• Any damage caused to the hotel\'s facilities during the event will be charged to the organising entity.'+cctaNote+fiscalNotesEN;
-    return {text:is?'Exmos. Srs.,\n\nAgradecemos mais uma vez o vosso contacto e a preferência pelo Grupo TD Hotels.\n\nNo seguimento da vossa solicitação, é com gosto que partilhamos em anexo a nossa proposta para o evento '+numEvento+', previsto para os dias '+datas+', no '+en2+'.\n\nEm anexo enviamos também o nosso Kit de Banquetes, com a descrição detalhada de todas as opções de alimentos e bebidas, para vossa análise.\n\n'+deadline+'\n\n'+notasPT+'\n\nRelembramos que a confirmação da reserva implica a aceitação integral das condições constantes da proposta e respectivos anexos.'+seg+'\n\nMantemo-nos ao dispor para qualquer esclarecimento adicional ou ajuste que considerem necessário.':'Dear '+nome+',\n\nThank you once again for your contact and for choosing TD Hotels Group.\n\nFollowing your request, we are pleased to share in attachment our proposal for the event '+numEvento+', scheduled for '+datas+', at '+en2+'.\n\nPlease also find attached our Banqueting Kit, with the detailed description of all food and beverage options, for your review.\n\n'+deadline+'\n\n'+notasEN+'\n\nPlease be reminded that confirmation of the booking implies full acceptance of the terms set out in the proposal and its annexes.'+seg+'\n\nWe remain at your disposal for any further clarification or adjustments you may require.',table:null}; }
-
-  if(curType==='follow_up'){ var de=f.dataEvento||'[data do evento]',dl=f.dataLimite||'[data limite]'; if((f.followUpModo||'proximo')==='conflito') return {text:is?'Exmos. Srs.,\n\nEsperamos que este e-mail o encontre bem.\n\nNo seguimento da proposta anteriormente enviada, gostaríamos de informar que recebemos um novo pedido de reserva para as mesmas datas ('+de+'), pelo que a vossa proposta passa a estar em risco de indisponibilidade.\n\nNeste sentido, solicitamos com carácter de urgência a vossa confirmação oficial. A confirmação definitiva será formalizada mediante o envio do comprovativo de pagamento de 50% do valor total da proposta.\n\nAgradecemos antecipadamente pela vossa atenção e pronta resposta.':'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing the proposal previously sent, we wish to inform you that we have received a new booking request for the same dates ('+de+'), and your proposal is now at risk of unavailability.\n\nWe urgently request your official confirmation. Final confirmation will be formalised upon receipt of Proof of Payment (PoP) of 50% of the total proposal value.\n\nWe thank you in advance for your attention and prompt response.',table:null}; return {text:is?'Exmos. Srs.,\n\nEsperamos que este e-mail o(a) encontre bem.\n\nNo seguimento da proposta anteriormente enviada, referente ao evento previsto para os dias '+de+', gostaríamos de saber se já existe alguma decisão relativamente à sua realização.\n\nCaso pretendam avançar com a reserva, agradecemos o envio da respectiva confirmação e do comprovativo de pagamento.\n\nGostaríamos de reiterar a importância de receber o vosso feedback até '+dl+'. Na ausência de resposta até essa data, a presente consulta será removida do nosso sistema.\n\nAgradecemos desde já a vossa atenção e ficamos a aguardar o vosso feedback.':'Dear '+nome+',\n\nWe hope this email finds you well.\n\nFollowing the proposal previously sent, regarding the event scheduled for '+de+', we would like to know whether a decision has been made regarding its confirmation.\n\nShould you wish to proceed with the booking, we kindly ask that you send the corresponding confirmation and proof of payment (PoP).\n\nWe would like to reiterate the importance of receiving your feedback by '+dl+'. Should we not receive a response by that date, the present enquiry will be removed from our system.\n\nWe thank you in advance for your attention.',table:null}; }
-
-  if(curType==='confirmacao'){ var de2=f.dataEvento||'[data do evento]',df=(f.dadosFiscaisOpcao||'conhecidos')==='falta'?(is?'\n\nFicamos a aguardar, com a maior brevidade possível, o envio dos vossos dados fiscais (Entidade, NIF e Morada Fiscal). Caso não nos seja facultada esta informação dentro do prazo legal, a factura será emitida sob designação genérica de "Consumidor Final".':'\n\nWe kindly ask that you provide your fiscal details (Entity, Tax ID and Fiscal Address) at your earliest convenience. Should this information not be provided within the legal timeframe, the invoice will be issued under the generic designation of "Final Consumer".'):(is?'\n\nAproveitamos para reconfirmar que o evento será facturado com os seguintes dados fiscais:\n\nEntidade: '+(f.entidade||'[Entidade]')+'\nNIF: '+(f.nif||'[NIF]')+'\nMorada Fiscal: '+(f.morada||'[Morada]'):'\n\nWe would also like to reconfirm that the event will be invoiced under the following fiscal details:\n\nEntity: '+(f.entidade||'[Entity]')+'\nTax ID: '+(f.nif||'[Tax ID]')+'\nFiscal Address: '+(f.morada||'[Address]')); return {text:is?'Exmos. Srs.,\n\nAgradecemos a vossa preferência pelo Grupo TD Hotels e o envio do comprovativo de pagamento. Temos o prazer de confirmar a vossa reserva para a realização do vosso evento, previsto para '+de2+'.\n\nAssim que o nosso departamento financeiro confirmar a entrada dos valores, iremos partilhar a factura final.'+df+'\n\nFicamos ao dispor para qualquer esclarecimento adicional.':'Dear '+nome+',\n\nWe thank you for your preference for TD Hotels Group and for submitting the Proof of Payment (PoP). We are pleased to confirm your booking for your event, scheduled for '+de2+'.\n\nOnce our Finance Department confirms receipt of the funds, we will issue the final invoice.'+df+'\n\nWe remain at your disposal for any further clarification.',table:null}; }
-
-  if(curType==='cancelamento'){ var dc=f.dataEvento||'[data do evento]'; return {text:is?'Exmos. Srs.,\n\nEsperamos que este e-mail o encontre bem.\n\nVimos por este meio informar que, não tendo sido recebida confirmação oficial até à data limite estabelecida, e existindo um outro pedido de reserva para as mesmas datas que entretanto foi confirmado, procedemos ao cancelamento da pré-reserva referente ao evento previsto para '+dc+'.\n\nCaso pretenda reagendar o evento ou necessite de qualquer outra assistência, estamos inteiramente à disposição para ajudar.\n\nAgradecemos a compreensão.':'Dear '+nome+',\n\nWe hope this email finds you well.\n\nWe wish to inform you that, as no official confirmation was received by the established deadline, and given that another booking request for the same dates has since been confirmed, we have proceeded with the cancellation of the pre-booking for the event scheduled for '+dc+'.\n\nShould you wish to reschedule the event or require any further assistance, we remain entirely at your disposal.\n\nThank you for your understanding.',table:null}; }
-
-  if(curType==='cobranca'){ var de3=f.dataEvento||'[data do evento]'; var doc=f.cobrancaDoc||'proforma'; var valStr=f.valor?(is?' no valor de '+f.valor+' Kzs':' in the amount of '+f.valor+' Kzs'):''; var docRefPT=doc==='factura'?'Factura n.º '+(f.numDoc||'[nº]'):'Proforma referente a serviços adicionais prestados'; var docRefEN=doc==='factura'?'Invoice no. '+(f.numDoc||'[no.]'):'Proforma for additional services rendered'; return {text:is?'Exmos. Srs.,\n\nNo seguimento do evento realizado em '+de3+', encontra-se pendente de liquidação o valor referente à '+docRefPT+valStr+'.\n\nAgradecemos que procedam à regularização e ao envio do respectivo comprovativo de pagamento com a maior brevidade possível.\n\nFicamos ao dispor para qualquer esclarecimento adicional.':'Dear '+nome+',\n\nFollowing the event held on '+de3+', the amount related to the '+docRefEN+valStr+' remains pending settlement.\n\nWe kindly ask that you proceed with payment and share the corresponding proof of payment at the earliest convenience.\n\nWe remain at your disposal for any further clarification.',table:null}; }
-
-  if(curType==='envio_factura'){ var de4=f.dataEvento||'[data do evento]'; return {text:is?'Exmos. Srs.,\n\nNo seguimento do evento realizado em '+de4+', vimos por este meio partilhar a Factura n.º '+(f.numFatura||'[nº]')+', no valor de '+(f.valorFatura||'[valor]')+' Kzs, que segue em anexo para vossa referência e arquivo.\n\nFicamos ao dispor para qualquer esclarecimento adicional.':'Dear '+nome+',\n\nFollowing the event held on '+de4+', we are pleased to share herewith Invoice no. '+(f.numFatura||'[no.]')+', in the amount of '+(f.valorFatura||'[amount]')+' Kzs, enclosed for your reference and records.\n\nWe remain at your disposal for any further clarification.',table:null}; }
-
-  if(curType==='satisfacao'){ var ih='<a href="https://bit.ly/QuestionarioHCTAEventos" target="_blank"><img src="https://i.imgur.com/L0EkdiH.jpeg" alt="Questionario Satisfacao HCTA" style="width:100%;max-width:600px;display:block;border:none;"></a><div style="background:#F0EAE3;border:1px dashed #887157;padding:14px;font-size:12px;color:#5A5250;margin-top:8px;border-radius:3px;"><strong style="color:#887157;">'+(is?'Nota para a equipa:':'Team note:')+'</strong> '+(is?'Se a imagem não aparecer no Outlook após colar, inserir manualmente: Inserir → Imagens → Este dispositivo.':'If the image does not appear in Outlook after pasting, insert manually: Insert → Images → This device.')+' <a href="https://i.imgur.com/L0EkdiH.jpeg" download style="color:#887157;font-weight:600;">Download</a> | <a href="https://bit.ly/QuestionarioHCTAEventos" style="color:#887157;">https://bit.ly/QuestionarioHCTAEventos</a></div>'; return {text:is?'Exmos. Srs.,\n\nFoi um gosto receber o seu evento no nosso hotel! Esperamos que tenha sido produtivo e tudo tenha correspondido às suas expectativas.\n\nPara nós, cada detalhe conta, e a sua opinião faz toda a diferença. Preparámos um questionário rápido, que não levará mais do que 2 minutos.\n\n[IMAGEM]\n\nMuito obrigados pela sua colaboração e confiança.\n\nEstamos ao dispor para qualquer questão adicional.':'Dear '+nome+',\n\nIt was a pleasure to host your event at our hotel! We hope it was productive and that everything met your expectations.\n\nEvery detail matters to us, and your opinion makes all the difference. We have prepared a quick questionnaire, which will take no more than 2 minutes.\n\n[IMAGEM]\n\nThank you very much for your collaboration and trust.\n\nWe remain at your disposal for any further questions.',table:null,imgHtml:ih}; }
-  return {text:'',table:null};
-}
-
-function renderParagraphs(text,result,forOutlook){ var html='',fs=forOutlook?'14px':'13px'; text.split('\n\n').forEach(function(pp){ if(pp==='[TABELA]'&&result.table){ html+='<div style="margin:16px 0;">'+result.table+'</div>'; } else if(pp==='[IMAGEM]'&&result.imgHtml){ html+='<div style="margin:16px 0;">'+result.imgHtml+'</div>'; } else if(pp.indexOf('[NOTAS]')===0){ var lines=pp.replace('[NOTAS]','').split('\n').filter(function(l){ return l.length>0; }); html+='<p style="margin:0 0 4px;font-size:'+fs+';line-height:1.8;color:#231F20;"><strong>Notas:</strong></p>'; lines.forEach(function(ln){ html+='<p style="margin:0;font-size:11px;line-height:1.6;color:#231F20;">'+ln+'</p>'; }); html+='<p style="margin:0 0 14px;"></p>'; } else { html+='<p style="margin:0 0 14px;font-size:'+fs+';line-height:1.8;color:#231F20;">'+pp.replace(/\n/g,'<br>')+'</p>'; } }); return html; }
-function generateEmail(){ var result=buildEmail(); if(!result||!result.text) return; emailResult=result; hide('formview');show('resultview'); setText('result-label',T('ready'));setText('result-title',T('email-generated'));setText('copy-btn',T('copy'));setText('edit-btn',T('edit')); $('email-preview').innerHTML=renderParagraphs(result.text,result,false); }
-function copyEmail(){ if(!emailResult) return; var html=renderParagraphs(emailResult.text,emailResult,true),plain=emailResult.text.replace('[TABELA]','(tabela incluida)').replace('[IMAGEM]','(imagem incluida)').replace('[NOTAS]','Notas:\n'),btn=$('copy-btn'); copyToClipboard(html,plain,btn); }
-function extractData(){ var btn=$('extract-btn'); if(!btn||!clientTxt.trim()) return; var is=p(); btn.textContent=is?'A extrair...':'Extracting...'; btn.disabled=true; fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:'Extrai do seguinte email os campos. Responde APENAS em JSON puro sem backticks. Se nao mencionado usa null.\nCampos: nome,entidade,nif,morada,nomeEvento,dataEvento,horario,participantes,contacto,telEmail,montagem,desmontagem,fornecedores,disposicao,av,cb,almoco,jantar,cocktail,outros\nEmail:\n'+clientTxt}]})}).then(function(r){ return r.json(); }).then(function(d){ var txt=d.content?d.content.map(function(i){ return i.text||''; }).join(''):''; var parsed=JSON.parse(txt.replace(new RegExp(String.fromCharCode(96,96,96)+'json|'+String.fromCharCode(96,96,96),'g'),'').trim()); Object.keys(parsed).forEach(function(k){ if(parsed[k]) fields[k]=parsed[k]; }); var keys=[['nome','Nome'],['entidade','Entidade'],['nif','NIF'],['nomeEvento','Evento'],['dataEvento','Data'],['horario','Horário'],['participantes','Participantes']]; var found=keys.filter(function(kv){ return fields[kv[0]]; }).map(function(kv){ return '<div style="margin-bottom:3px;"><strong>'+kv[1]+':</strong> '+fields[kv[0]]+'</div>'; }).join(''); var er=$('extract-result'); if(er) er.innerHTML=found?'<div style="background:#F0EAE3;border:1px solid #DDD4C8;border-radius:3px;padding:10px 14px;margin-bottom:16px;font-size:12px;">'+found+'<div style="margin-top:8px;color:#9A918C;font-size:10px;">'+(is?'Verifica os dados antes de gerar.':'Review before generating.')+'</div></div>':''; btn.textContent=is?'Extrair dados automaticamente':'Extract data automatically'; btn.disabled=false; }).catch(function(e){ var er=$('extract-result'); if(er) er.innerHTML='<div style="background:#fdecea;border:1px solid #e74c3c;border-radius:3px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#c0392b;">Erro ao extrair: '+e.message+'</div>'; btn.textContent=is?'Extrair dados automaticamente':'Extract data automatically'; btn.disabled=false; }); }
-
-// ══════════════════════════════════════════════════════
-// SECÇÃO 8 — MAPA SEMANAL
+// 6. MAPA SEMANAL
 // ══════════════════════════════════════════════════════
 function loadXLS(ev){
   var file=ev.target.files[0];if(!file)return;
@@ -1351,13 +1419,11 @@ function loadXLS(ev){
   };
   r.readAsArrayBuffer(file);ev.target.value='';
 }
-
 function detectReportType(rows){
   for(var i=0;i<rows.length;i++){var c5=String(rows[i][5]||'').trim();if(c5==='Eventos Diario/Semanal')return'NPR168';if(c5==='Previsão Dias')return'NPR202';}
   for(var i=0;i<rows.length;i++){var c6=parseFloat(String(rows[i][6]||''));if(c6>40000&&c6<50000)return'NPR168';}
   return'NPR202';
 }
-
 function serialToTime(s){
   var f=parseFloat(s);if(!f||f<1)return'';
   var frac=f-Math.floor(f);
@@ -1365,114 +1431,11 @@ function serialToTime(s){
   var h=Math.floor(totalMin/60)%24,m=totalMin%60;
   return(String(h).padStart(2,'0'))+':'+(String(m).padStart(2,'0'));
 }
-
-function parseXLS(rows){
-  var SALA_NORM={'TALATONA I-II-III':'Talatona I-II-III','TALATONA II-III':'Talatona II-III','TALATONA I':'Talatona I','TALATONA II':'Talatona II','TALATONA III':'Talatona III','TALATONA IV':'Talatona IV','CABINDA I':'Cabinda I','CABINDA II':'Cabinda II','CABINDA III':'Cabinda III','CABINDA IV':'Cabinda IV','AUDITORIO':'CCTA Auditório','SALA 2':'CCTA 1º Piso / Sala 2','GIRASSOL I':'Girassol I','GIRASSOL II':'Girassol II','GIRASSOL III':'Girassol III','PATIO INTERIOR':'Pátio Interior','PISCINA':'Piscina','RESTAURANTE HOTEL':'Restaurante HCTA','RESTAURANTE CCTA':'Restaurante CCTA','TENDA':'Tenda'};
-  var DIAS_MAP={'Segunda':'x','Terça':'x','Quarta':'x','Quinta':'x','Sexta':'x','Sábado':'x','Domingo':'x'};
-  var rtype=detectReportType(rows);
-  var events=[],eventMap={},curDate=null,curEv=null,inTotals=false;
-  for(var ri=0;ri<rows.length;ri++){
-    var row=rows[ri];
-    var c0=String(row[0]||'').trim(),c1=String(row[1]||'').trim();
-    if(c0.startsWith('NPR')){inTotals=true;}
-    if(inTotals)continue;
-    if(DIAS_MAP[c0]!==undefined&&parseFloat(c1)){curDate=isoFromSerial(c1);curEv=null;continue;}
-    if(!curDate)continue;
-    if(rtype==='NPR168'){
-      var c3_168=String(row[3]||'').trim(),c5_168=String(row[5]||'').trim(),c8_168=String(row[8]||'').trim(),c6_168=parseFloat(String(row[6]||''));
-      var isEvento168=c0&&c0.includes('/')&&c3_168&&c5_168&&c8_168&&!(c6_168>40000);
-      if(isEvento168){
-        var sala=SALA_NORM[c8_168.toUpperCase()]||c8_168,rsv=c0,key=rsv+'|'+sala+'|'+curDate;
-        var horaFim=String(row[7]||'').trim(),layout=String(row[13]||'').trim(),tipo=c3_168;
-        if(eventMap[key]){curEv=eventMap[key];if(horaFim&&(!curEv.horaFim||horaFim>curEv.horaFim))curEv.horaFim=horaFim;}
-        else{var clienteRaw=String(row[6]||'').trim()||String(row[1]||'').trim();curEv={id:'_'+Math.random().toString(36).slice(2,8),rsv,reserva:String(row[4]||'').trim(),estado:String(row[5]||'').trim(),cliente:clienteRaw,sala,pax:parseInt(row[12])||0,date:curDate,tipo,layout,horaInicio:'08:00',horaFim,servicos:[]};events.push(curEv);eventMap[key]=curEv;}
-        continue;
-      }
-      if(!c0&&curEv&&String(row[8]||'').trim()){
-        var nome=String(row[8]||'').trim();
-        if(/-BEBIDAS$/i.test(nome))continue;
-        nome=nome.replace(/\s*-\s*(COMIDAS|BEBIDAS)$/i,'').trim();
-        nome=nome.replace(/\s*-\s*RESTAURANTE\s+(HOTEL|CCTA|H[OC]\w*)/gi,'').trim();
-        var hiSerial=String(row[6]||''),hfSerial=String(row[7]||'');
-        var hi=serialToTime(hiSerial),hf=serialToTime(hfSerial);
-        var pax=parseInt(row[12])||0;
-        if(hi&&curEv.horaInicio==='08:00')curEv.horaInicio=hi;
-        if(!curEv.servicos.find(function(s){return s.nome===nome;})){curEv.servicos.push({nome,pax,horaInicio:hi,horaFim:hf});}
-        continue;
-      }
-    }
-    if(rtype==='NPR202'){
-      // RSV bullet-proof — c0 tem sempre o nº ('394/26'), c1 pode ser qualquer coisa
-      var rsv2raw=c0;
-      if(c0&&(c0.includes('/')||/^\d+$/.test(c0))){
-        // c0 é o RSV (ex: '394/26' ou '394')
-        var raw_sala=String(row[9]||'').trim(),sala2=SALA_NORM[raw_sala.toUpperCase()]||raw_sala,rsv2=rsv2raw,key2=rsv2+'|'+sala2+'|'+curDate;
-        if(eventMap[key2]){curEv=eventMap[key2];}
-        else{curEv={id:'_'+Math.random().toString(36).slice(2,8),rsv:rsv2,reserva:String(row[4]||'').trim(),estado:String(row[5]||'').trim(),cliente:String(row[6]||'').trim(),sala:sala2,pax:parseInt(row[13])||0,date:curDate,tipo:'',layout:'',horaInicio:'',horaFim:'',servicos:[]};events.push(curEv);eventMap[key2]=curEv;}
-        continue;
-      }
-      if(!c0&&curEv&&String(row[9]||'').trim()){
-        var nome2=String(row[9]||'').trim();
-        // Parar de adicionar serviços quando encontra 'Adicionais'
-        if(nome2==='Adicionais'){curEv=null;continue;}
-        // Ignorar linhas que são contagens (números) ou cabeçalhos
-        if(nome2==='Recurso'||/^\d+\.?\d*$/.test(nome2))continue;
-        var nomeOrig2=nome2;
-        // Guardar sufixo de restaurante antes de remover
-        var restMatch2=nome2.match(/RESTAURANTE\s+(HOTEL|CCTA)/i);
-        var restTipo2=restMatch2?restMatch2[1].toUpperCase():'';
-        nome2=nome2.replace(/\s*-\s*RESTAURANTE\s+(HOTEL|CCTA|H[OC]\w*)/gi,'').trim();
-        // Ignorar AV e logística
-        var ignorar2=['DATA SHOW','FLIPCHART','PAINEL LED','PROJETOR','MICROFONE','TELEVISAO','TELEVISÃO','SUPLEMENTO','FUNDO DIA','ALOJAMENTO','TRANSFER','DECORAÇÃO','DECORACAO','SONORIZACAO','SONORIZAÇÃO','ILUMINACAO','ILUMINAÇÃO'];
-        var skip2=false;for(var ig2=0;ig2<ignorar2.length;ig2++){if(nome2.toUpperCase().includes(ignorar2[ig2])){skip2=true;break;}}
-        if(skip2)continue;
-        var svcPax2=parseInt(String(row[13])||'0')||0;
-        if(nome2&&!nome2.startsWith('Evento')){
-          // Permitir duplicados com pax diferentes (ex: BFE 40p e BFE 16p do mesmo evento)
-          // mas guardar o tipo de restaurante para filtragem posterior
-          curEv.servicos.push({nome:nome2,pax:svcPax2,rest:restTipo2});
-        }
-      }
-    }
-  }
-  return events;
-}
-
-// ── SIGLAS DE SERVIÇOS ──
-var SIGLAS={
-  // Coffee Breaks
-  'welcome coffee':'WC','coffee station':'CS',
-  'coffee break i':'CBI','coffee break ii':'CBII','coffee break iii':'CBIII',
-  // Pequenos-almoços
-  'pequeno-almoço continental':'PAC','pequeno-almoço hcta':'PAH',
-  // Buffets
-  'buffet executivo':'BFE','buffet do executivo':'BFE','buffet selecção':'BFS','buffet angolano':'BFA','buffet hcta':'BFH',
-  // Cocktails e Canapés
-  'cocktail dinatoire':'CDN',
-  'canapés — package 1':'CN1','canapés — package 2':'CN2','canapés — package 3':'CN3',
-  'canapes - package 1':'CN1','canapes - package 2':'CN2','canapes - package 3':'CN3',
-  'canapes package 1':'CN1','canapes package 2':'CN2','canapes package 3':'CN3',
-  // Menus
-  'menu empratado i':'MEI','menu empratado ii':'MEII',
-  // Finger food
-  'buffet volante':'BFV','buffet finger lunch':'BFL',
-  // Bebidas
-  'suplemento de bebidas — essential':'SBE','suplemento de bebidas — hcta':'SBH','suplemento de bebidas — premium':'SBP',
-  'package bebidas — essential':'PBE','package bebidas — talatona':'PBT','package bebidas — hcta':'PBH','package bebidas — premium':'PBP',
-  'package bebidas essential':'PBE','package bebidas talatona':'PBT','package bebidas hcta':'PBH','package bebidas premium':'PBP',
-  // Refeições genéricas
-  'almoço':'ALM','jantar':'JNT','cocktail':'CKT','brunch':'BRN','gala dinner':'GAL',
-  'welcome drink':'WD','coffee break':'CB','ceia':'CEI',
-  // Alojamento e Fundo Dia
-  'alojamento':'A','fundo dia':'FID'
-};
-
 var SIGLAS_IGNORAR=[
   'projetor','data show','flip chart','flipchart','microfone','televisão','televisao','painel led',
   'breakfast box','lunch box','audiovisual','suplemento','fundo dia','alojamento',
   'transfer','decoração','decoracao','sonorizacao','sonorização','iluminacao','iluminação'
 ];
-
 function svcSigla(nome){
   if(!nome)return'';
   var k=nome.toLowerCase().trim();
@@ -1482,7 +1445,6 @@ function svcSigla(nome){
   // Sem fallback — se não reconhece, não mostra
   return null;
 }
-
 function svcTurno(svc){
   // Se tem horário, determinar turno
   if(svc.horaInicio){
@@ -1500,7 +1462,6 @@ function svcTurno(svc){
   if(n.includes('manhã')||n.includes('manha')||n.includes('morn'))return'MANHÃ';
   return'';
 }
-
 function buildSvcLine(svc){
   var sig=svcSigla(svc.nome);
   if(sig===null)return null; // ignorar AV e Boxes
@@ -1510,7 +1471,6 @@ function buildSvcLine(svc){
   if(svc.pax)label+=' ('+svc.pax+'p)';
   return label;
 }
-
 function renderMapa(){
   if(!xlsData.length)return;
   var wEnd=addDaysIso(weekStart,6);
@@ -1628,19 +1588,86 @@ function renderMapa(){
 
   $('mapa-table').innerHTML=html;
 }
-
 function toggleFilter(estado,cls){
   if(activeFilters.has(estado))activeFilters.delete(estado);else activeFilters.add(estado);
   renderMapa();
 }
 function shiftWeek(dir){weekStart=addDaysIso(weekStart,dir*7);renderMapa();}
+function printMapa(){
+  // Construir HTML limpo só com o mapa para nova janela
+  var weekTitle=$('print-week-title')?$('print-week-title').textContent:'';
+  var tableHTML=$('mapa-table')?$('mapa-table').outerHTML:'';
+  var filterInfo='';
+  // Legenda de estados
+  var estadoColors={
+    'Confirmado':{'bg':'#eaf4ef','border':'#1e6e3e','text':'#1e6e3e','badge':'#c3e6cb'},
+    '1ª Opção':{'bg':'#eaf0fb','border':'#1a4e8c','text':'#1a4e8c','badge':'#b8d4f5'},
+    '2ª Opção':{'bg':'#fff8e6','border':'#8a5c00','text':'#8a5c00','badge':'#fde8b0'},
+    'Consulta':{'bg':'#f4f4f4','border':'#bbb','text':'#999','badge':'#e8e8e8'}
+  };
+  var legendaHTML='<div style="display:flex;gap:10px;justify-content:center;margin-bottom:4mm;flex-wrap:wrap;">';
+  for(var e in estadoColors){
+    var c=estadoColors[e];
+    legendaHTML+='<div style="display:flex;align-items:center;gap:3px;font-size:6px;font-weight:700;font-family:Montserrat,Arial,sans-serif;">'
+      +'<div style="width:8px;height:8px;background:'+c.bg+';border-left:3px solid '+c.border+';border-radius:1px;"></div>'
+      +'<span style="color:'+c.text+'">'+e+'</span></div>';
+  }
+  legendaHTML+='</div>';
+
+  var win=window.open('','_blank','width=1200,height=800');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    +'<title>Mapa Semanal</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">'
+    +'<style>'
+    +'@page{size:A4 landscape;margin:6mm 8mm}'
+    +'*{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
+    +'body{font-family:Montserrat,Arial,sans-serif;margin:0;padding:0;background:#fff}'
+    +'h1{font-size:9px;font-weight:700;text-align:center;margin:0 0 3mm;color:#231F20;letter-spacing:.05em}'
+    +'.mt{width:100%;table-layout:fixed;border-collapse:collapse}'
+    +'.mt th{background:#231F20;color:#fff;padding:3px 2px;font-size:5.5px;font-weight:700;letter-spacing:.3px;text-align:center;white-space:nowrap}'
+    +'.mt th.s-th{background:#887157;text-align:left;padding-left:4px;width:72px}'
+    +'.mt td{border:1px solid #ccc;padding:2px;vertical-align:top}'
+    +'.mt td.s-td{background:#f6f4f1;font-size:5.5px;font-weight:700;text-transform:uppercase;color:#555;border-right:2px solid #b09a80;padding:3px 5px;vertical-align:middle;white-space:nowrap}'
+    +'.mt td.today-col{background:#fffcf6}'
+    +'.mt tfoot td{border-top:2px solid #887157;padding:4px 2px;font-size:7px;font-weight:600;text-align:center;background:#fffbf5}'
+    +'.mt tfoot td.s-td{font-weight:700;font-size:7px;letter-spacing:.5px;text-transform:uppercase;color:#887157;text-align:left;padding-left:4px}'
+    +'#mapa-legenda{display:block!important;margin-top:6px;padding:6px 10px;background:#f6f4f1;border:1px solid #e0dbd5;border-radius:3px;font-size:7px;line-height:2;color:#888}'
+    +'#mapa-legenda b{color:#231F20;font-weight:700}'
+    +'.mt tr:nth-child(even) td.s-td{background:#ede9e4}'
+    +'.ev-chip{border-radius:1px;padding:2px 3px;margin-bottom:1px;border-left:2px solid #887157}'
+    +'.ev-chip.conf{background:#eaf4ef;border-left-color:#1e6e3e}'
+    +'.ev-chip.opt1{background:#eaf0fb;border-left-color:#1a4e8c}'
+    +'.ev-chip.opt2{background:#fff8e6;border-left-color:#8a5c00}'
+    +'.ev-chip.cons{background:#f4f4f4;border-left-color:#bbb}'
+    +'.chip-top{display:flex;gap:3px;margin-bottom:1px;align-items:baseline}'
+    +'.chip-rsv{font-size:5.5px;font-weight:700;white-space:nowrap}'
+    +'.chip-rsv.conf{color:#1e6e3e}.chip-rsv.opt1{color:#1a4e8c}.chip-rsv.opt2{color:#8a5c00}.chip-rsv.cons{color:#999}'
+    +'.chip-estado{font-size:5px;padding:0 2px;font-weight:700;border-radius:1px}'
+    +'.chip-estado.conf{background:#c3e6cb;color:#1e6e3e}'
+    +'.chip-estado.opt1{background:#b8d4f5;color:#1a4e8c}'
+    +'.chip-estado.opt2{background:#fde8b0;color:#8a5c00}'
+    +'.chip-estado.cons{background:#e8e8e8;color:#777}'
+    +'.chip-ent{font-size:6px;font-weight:700;color:#231F20;line-height:1.2;margin-bottom:1px}'
+    +'.chip-pax{font-size:5.5px;color:#888;margin-bottom:1px}'
+    +'.chip-divider{border:none;border-top:1px solid rgba(0,0,0,.1);margin:1px 0}'
+    +'.chip-svcs-line{font-size:5.5px;font-weight:700;color:#887157;line-height:1.3}'
+    +'</style></head><body>'
+    +'<h1>'+weekTitle+'</h1>'
+    +legendaHTML
+    +tableHTML
+    +($('mapa-legenda')?$('mapa-legenda').outerHTML:'')
+    +'<'+'script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script>'
+    +'</body></html>');
+  win.document.close();
+}
+
+// ── PRINT OS ──
 
 // ══════════════════════════════════════════════════════
-// SECÇÃO 9 — ORDEM DE SERVIÇO
+// 7. ORDEM DE SERVIÇO
 // ══════════════════════════════════════════════════════
 function salaSelectHTML(selVal){ return'<select class="rm-input">'+SALAS.map(function(s){return'<option value="'+s+'"'+(s===selVal?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';}
 function layoutSelectHTML(selVal){ return'<select class="rm-input">'+LAYOUTS.map(function(l){return'<option value="'+l+'"'+(l===selVal?' selected':'')+'>'+l+'</option>';}).join('')+'</select>';}
-
 function timeSelectHTML(id,val,cls){
   var opts=['','00:00','00:15','00:30','00:45','01:00','01:15','01:30','01:45','02:00','02:15','02:30','02:45','03:00','03:15','03:30','03:45','04:00','04:15','04:30','04:45','05:00','05:15','05:30','05:45','06:00','06:15','06:30','06:45','07:00','07:15','07:30','07:45','08:00','08:15','08:30','08:45','09:00','09:15','09:30','09:45','10:00','10:15','10:30','10:45','11:00','11:15','11:30','11:45','12:00','12:15','12:30','12:45','13:00','13:15','13:30','13:45','14:00','14:15','14:30','14:45','15:00','15:15','15:30','15:45','16:00','16:15','16:30','16:45','17:00','17:15','17:30','17:45','18:00','18:15','18:30','18:45','19:00','19:15','19:30','19:45','20:00','20:15','20:30','20:45','21:00','21:15','21:30','21:45','22:00','22:15','22:30','22:45','23:00','23:15','23:30','23:45'];
   var sel='<select id="'+id+'" class="'+(cls||'rm-input')+'" style="width:100%">';
@@ -1658,7 +1685,6 @@ function addDay(dateVal){
   addRoom(id);
   return id;
 }
-
 function addRoom(dayId,r){
   r=r||{};svcCounter++;
   var rid='room'+svcCounter;
@@ -1676,59 +1702,6 @@ function addRoom(dayId,r){
 }
 
 // ── CATÁLOGO (completo do eventos__2_.html) ──
-var CATALOGO={
-  '— Seleccionar serviço —':null,
-  '── COFFEE BREAKS ──':null,
-  'Welcome Coffee (9.000 AKZ/pax)':{nome:'Welcome Coffee',desc:'Água mineral · Água aromatizada · Café · Descafeinado · Leite · Selecção de chás · Biscoitos caseiros · Napolitana de queijo e fiambre'},
-  'Coffee Station (10.000 AKZ/pax)':{nome:'Coffee Station',desc:'Água mineral · Água aromatizada · Café · Descafeinado · Leite · Selecção de chás · Biscoitos caseiros · Napolitana de queijo e fiambre'},
-  'Coffee Break I (14.000 AKZ/pax)':{nome:'Coffee Break I',desc:'Água mineral · Água aromatizada · Café · Descafeinado · Selecção de chás · Leite · Sumo néctar · Espetadas de fruta · Selecção de muffins · Profiteroles de chocolate com doce de ovos · Pão de leite com queijo e fiambre · Sanduíches veggie (queijo creme, alface, tomate e abacate)'},
-  'Coffee Break II (17.000 AKZ/pax)':{nome:'Coffee Break II',desc:'Água mineral · Água aromatizada · Café · Descafeinado · Selecção de chás · Leite · Sumo néctar · Espetadas de fruta · Pão de leite com queijo e fiambre · Sanduíches de atum · Sanduíches veggie (queijo creme, alface, tomate e abacate) · Pastéis de nata · Mini croissants de chocolate · Bolo mármore'},
-  'Coffee Break III (22.000 AKZ/pax)':{nome:'Coffee Break III',desc:'Água mineral · Água aromatizada · Café · Descafeinado · Leite · Selecção de chás · Sumo natural de fruta · Sumo néctar · Pão de leite com queijo e fiambre · Sanduíches de atum · Sanduíches de frango · Sanduíches veggie (queijo creme, alface, tomate e abacate) · Espetadas de fruta · Mini salgadinhos · Croissants de chocolate · Pastéis de nata · Tarte de maçã · Palmiers recheados'},
-  '── PEQUENOS-ALMOÇOS ──':null,
-  'Pequeno-almoço Continental (27.000 AKZ/pax)':{nome:'Pequeno-almoço Continental',desc:'Variedade de pão · Croissants, brioches e muffins · Bolo mármore · Crepes e panquecas · Corn flakes e muesli · Iogurte natural, aroma e grego · Bacon, cogumelos e ovos mexidos · Variedades de compotas · Manteiga · Queijo e fiambre laminado · Variedades de fruta laminada · Café, chá e leite · Sumo néctar · Água mineral'},
-  'Pequeno-almoço HCTA (32.000 AKZ/pax)':{nome:'Pequeno-almoço HCTA',desc:'Café, chá e leite · Sumo natural de fruta · Sumo néctar · Variedade de pão · Croissants, brioches e muffins · Bolo mármore · Corn flakes e muesli · Iogurtes · Variedades de compotas · Manteiga · Queijo e fiambre laminado · Sortido de charcutaria · Ovos mexidos, fritos e omeletes · Bacon · Salsichas · Tomate grelhado · Cogumelos · Baked beans · Batata rústica · Papas de aveia · Crepes e panquecas · Variedade de fruta laminada'},
-  '── BUFFETS ──':null,
-  'Buffet do Executivo (52.000 AKZ/pax)':{nome:'Buffet do Executivo',desc:'Saladas simples (6) · Saladas compostas (6) · Entradas (6) · Sopa\nPratos quentes: Peixes (2 variedades) · Carnes (2 variedades) · Massa vegetariana · Acompanhamentos\nSobremesas · Fruta laminada · Tábua de queijos · Água ou refrigerante'},
-  'Buffet Selecção (57.000 AKZ/pax)':{nome:'Buffet Selecção',desc:'Saladas simples: alface, cenoura, tomate, pepino, milho, couve roxa\nSaladas compostas: polvo, niçoise, bacalhau com grão, beterraba e maçã, beringela com atum, grega\nEntradas: carpaccio de novilho, ceviche de garoupa, folhado de pato, mini salgadinhos, ovos verdes, quiche lorraine\nPratos quentes: Peixes (2) · Carnes (2) · Vegetariano (1)\nAcompanhamentos: arroz branco, banana pão, mandioca, batata-doce, legumes ao vapor e batata dourada\nSobremesas: ao cuidado do chefe'},
-  'Buffet Angolano (65.000 AKZ/pax)':{nome:'Buffet Angolano',desc:'Saladas simples: alface, cenoura, tomate, pepino, milho, ervilhas\nSaladas compostas: polvo com vinagrete, frutos do mar com molho de coco e ginguba, choco grelhado com batata-doce, frango frito com banana pão e cebola\nEntradas: selecção de salgados, mandioca frita, pastéis de massa tenra, choco frito\nMarisco: camarão cozido, mexilhão\nSalgados: pastéis de bacalhau, rissóis de camarão e croquetes\nSopa: caldo de peixe\nPrato principal de peixe: Calulu de corvina seca · Mufete de peixe\nPrato principal de carne: Muamba de frango · Peito alto\nGuarnições: batata-doce, mandioca, banana pão, feijão com óleo de palma, farinha do musseque, funge, kizaca\nSobremesas: kitutes da terra, tarte de abacaxi, pudim de ovos, mousse de maracujá, semifrio de múcua, pera bêbeda, bolo de banana da terra, fruta da época laminada'},
-  'Buffet HCTA (75.000 AKZ/pax)':{nome:'Buffet HCTA',desc:'Saladas simples: cenoura, pepino, alface, tomate, milho, beterraba, couve roxa, espargos\nSaladas compostas: polvo em vinagrete, niçoise com abacate, bacalhau com grão de bico, beterraba e maçã, beringela com pimentos e atum, grega, frutos do mar com vinagrete de frutos vermelhos, carnes frias com cogumelos\nEntradas: carpaccio de novilho, ceviche de garoupa, bacalhau marinado com alho/gindungo/tapenade, folhado de pato com maçã, melão com presunto, nuggets de bacalhau com mousse de abacate, camarão cozido, tataki de atum com molho teriyaki\nMini salgadinhos: chamuças, rissóis e croquetes\nSopa (escolha 1): vichyssoise de alho francês, creme de aves aveludado, creme de abóbora\nPratos quentes: Peixes (2) · Carnes (2) · Vegetariano (1)\nGuarnições: arroz branco, arroz de legumes, batata torneada, puré de batata-doce e aipo, legumes salteados\nSobremesas: tarte de caju, bolo húmido de chocolate, mousse de maracujá, mousse de chocolate, tiramisu, parfait de praliné, cheesecake de manga, fruta laminada'},
-  '── COCKTAILS & FINGER FOOD ──':null,
-  'Cocktail Dinatoire (41.000 AKZ/pax)':{nome:'Cocktail Dinatoire',desc:'Frios: ceviche de cherne, camarão em guacamole, tataki de atum e pepino, bruschetta de rosbife com tomate seco/azeite/alho, espetada de ananás e presunto, salada Caesar, salada tropical, sanduíche veggie\nQuentes: espetada de frango em tempura, mini pregos do lombo, mini pregos de atum, folhado de pato com maçã, ovos verdes de atum, folhado de enchidos\nMini salgadinhos: chamuças de frango, croquetes de carne, rissóis de camarão, coxinhas de frango, pão de queijo\nSobremesas: pastéis de nata, mousse de chocolate, bolo de banana, quindins, éclair de chocolate, espetadas de fruta'},
-  'Canapés — Package 1 (14.000 AKZ/pax)':{nome:'Canapés — Package 1',desc:'Selecção de 6 canapés (Frios + Quentes + Doces)'},
-  'Canapés — Package 2 (19.500 AKZ/pax)':{nome:'Canapés — Package 2',desc:'Selecção de 9 canapés (Frios + Quentes + Doces)'},
-  'Canapés — Package 3 (24.000 AKZ/pax)':{nome:'Canapés — Package 3',desc:'Selecção de 12 canapés (Frios + Quentes + Doces)'},
-  '── MENUS EMPRATADOS ──':null,
-  'Menu Empratado I (42.000 AKZ/pax)':{nome:'Menu Empratado I',desc:'Entrada · Prato principal · Sobremesa'},
-  'Menu Empratado II (49.000 AKZ/pax)':{nome:'Menu Empratado II',desc:'Entrada · Prato principal (2 opções) · Sobremesa'},
-  '── FINGER FOOD & OUTROS ──':null,
-  'Buffet Volante (43.000 AKZ/pax)':{nome:'Buffet Volante',desc:'Saladas simples: alface, cenoura, tomate, pepino, couve roxa\nSaladas compostas: polvo em vinagrete, niçoise com abacate, bacalhau com grão de bico, beterraba e maçã, grega\nEntradas: folhado de queijo feta, bola de enchidos, tataki de atum, quiche lorraine, rosbife laminado\nMini salgadinhos: chamuças, rissóis de camarão, croquetes\nSopa (escolha 1): vichyssoise de alho francês, creme de legumes, creme de abóbora\nPratos quentes: Peixe (1) · Carne (1) · Vegetariano (1)\nGuarnições: arroz branco, feijão encarnado com bacon, batata dourada\nSobremesas: tarte de amêndoa, bolo de chocolate, pastéis de nata, cheesecake de manga, espetadas de fruta'},
-  'Buffet Finger Lunch (37.000 AKZ/pax)':{nome:'Buffet Finger Lunch',desc:'Entradas: espetada caprese, ceviche de cherne, tataki de atum e pepino, bruschetta de guacamole e camarão, quiche lorraine, vol-au-vent de camarão, tartelete de legumes, gaspacho de meloa e hortelã, espetada de frango com molho picante, espetada de ananás e bacon, chamuças, rissóis de camarão, croquetes de vitela, folhado de pato com maçã, mini pastéis de massa tenra, mini merendas de chouriço, vol-au-vent de cogumelos\nSopa: creme de cenoura com ervilhas e coentros\nSanduíches: bruschetta de rosbife com tomate seco e azeite com alho, peito de frango com bacon e maionese de alho, atum com ovo e azeitona, lombo de porco assado com mostarda, sanduíche veggie\nSobremesas: espetadas de fruta, pastéis de nata, quindins, tarte de maçã, cheesecake, torta de laranja, trufa de chocolate e ginguba'},
-  '── SUPLEMENTOS DE BEBIDAS ──':null,
-  'Suplemento Bebidas Essential (9.500 AKZ/pax)':{nome:'Suplemento de Bebidas — Essential',desc:'Água mineral · Sumo néctar de fruta · Refrigerantes'},
-  'Suplemento Bebidas HCTA (19.500 AKZ/pax)':{nome:'Suplemento de Bebidas — HCTA',desc:'Água com e sem gás · Sumo néctar de fruta · Refrigerantes · Cerveja nacional · Vinho branco selecção do sommelier · Vinho tinto selecção do sommelier'},
-  'Suplemento Bebidas Premium (38.000 AKZ/pax)':{nome:'Suplemento de Bebidas — Premium',desc:'Água com e sem gás · Sumo néctar · Refrigerantes · Cerveja nacional · Vinho branco e tinto selecção do sommelier · Whisky novo · Amarula · Cognac · Vinho do Porto'},
-  '── PACKAGE BEBIDAS COCKTAIL ──':null,
-  'Package Bebidas Essential (17.000 AKZ/pax)':{nome:'Package Bebidas — Essential',desc:'Vinho branco · Vinho tinto · Cerveja · Sumo néctar de fruta · Refrigerantes · Água mineral'},
-  'Package Bebidas Talatona (24.000 AKZ/pax)':{nome:'Package Bebidas — Talatona',desc:'Vinho branco · Vinho tinto · Martini rosso · Martini bianco · Gin · Whisky novo · Cerveja · Sumo néctar · Refrigerantes · Água mineral'},
-  'Package Bebidas HCTA (27.000 AKZ/pax)':{nome:'Package Bebidas — HCTA',desc:'Vinho branco · Vinho tinto · Martini rosso · Martini bianco · Gin · Vodka · Amarula · Whisky novo · Vinho do Porto Tawny · Cerveja · Sumo néctar · Refrigerantes · Água mineral'},
-  'Package Bebidas Premium (38.000 AKZ/pax)':{nome:'Package Bebidas — Premium',desc:'Vinho branco · Vinho tinto · Vinho rosé · Espumante · Martini rosso · Martini bianco · Gin · Amarula · Whisky novo · Whisky velho · Cognac · Cerveja · Sumo néctar · Refrigerantes · Água mineral'},
-  'Suplemento Extra Cocktails (6.000 AKZ/cocktail)':{nome:'Suplemento Extra Cocktails',desc:'Caipirinha · Mojito · Dry Martini · Negroni · Moove HCTA (vodka, ananás, hortelã, gengibre)\nNota: cada cocktail extra além do package base'},
-  '── AUDIOVISUAIS ──':null,
-  'Data Show / Projetor (150.000 AKZ/dia)':{nome:'Projetor de Vídeo / Data Show',desc:''},
-  'Flip Chart + Canetas (35.000 AKZ/dia)':{nome:'Flip Chart + Canetas',desc:''},
-  'Laser Point (25.000 AKZ/dia)':{nome:'Laser Point',desc:''},
-  'Fotocópias (500 AKZ/página)':{nome:'Fotocópias por página',desc:''},
-  'Microfone (50.000 AKZ/dia)':{nome:'Microfone',desc:''},
-  'Televisão (250.000 AKZ/dia)':{nome:'Televisão',desc:''},
-  'Painel LED 4×3 m':{nome:'Painel LED 4×3 m',desc:''},
-  'Painel LED 5×3 m':{nome:'Painel LED 5×3 m',desc:''},
-  '── BOXES TAKE AWAY ──':null,
-  'Breakfast Box (18.000 AKZ/pax)':{nome:'Breakfast Box',desc:'Sanduíche mista · Pastel de nata · Croissant · Iogurte · Manteiga e compota · Peça de fruta · Sumo néctar · Água'},
-  'Lunch Box (22.000 AKZ/pax)':{nome:'Lunch Box',desc:'Sanduíche (frango / Club / atum) · Salada tropical · Salgados · Pastel de nata · Peça de fruta · Sumo néctar · Água'},
-  '── SERVIÇO PERSONALIZADO ──':null,
-  'Serviço Personalizado':{nome:'Serviço Personalizado',desc:''}
-};
-
 function catalogSelectHTML(){
   var keys=Object.keys(CATALOGO);
   return'<select onchange="applyCatalog(this)" style="width:100%;border:1px solid var(--bronze-l);border-radius:2px;padding:7px 10px;font-family:\'Montserrat\',sans-serif;font-size:13px;color:var(--black);outline:none;background:var(--bronze-ll);font-weight:600;cursor:pointer">'
@@ -1737,139 +1710,6 @@ function catalogSelectHTML(){
 }
 
 // ── OPÇÕES DE ESCOLHA POR SERVIÇO ──
-var ESCOLHAS={
-  'Canapés — Package 1 (14.000 AKZ/pax)':{max:6,label:'Escolha 6 canapés no total (das 3 categorias)',cats:{'Frios':['Espetada caprese','Tártaro de atum','Ceviche de cherne','Tataki de atum e pepino','Rosbife em rúcula','Bruschetta de guacamole e camarão','Quiche Lorraine','Vol-au-vent de camarão','Tartelete de legumes','Gaspacho de meloa e hortelã'],'Quentes':['Espetada de frango com molho picante','Espetada de ananás e bacon','Chamuças','Rissóis de camarão','Croquetes de vitela','Folhado de pato com maçã','Mini pastéis de massa tenra','Tempura de legumes','Mini merendas de chouriço','Vol-au-vent de cogumelos'],'Doces':['Espetadas de fruta','Pastéis de Nata','Quindins','Tarte de maçã','Cheesecake','Profiteroles de chocolate com doce de ovos','Palmiers','Torta de laranja','Bola de Berlim','Trufa de chocolate e ginguba']}},
-  'Canapés — Package 2 (19.500 AKZ/pax)':{max:9,label:'Escolha 9 canapés no total (das 3 categorias)',cats:{'Frios':['Espetada caprese','Tártaro de atum','Ceviche de cherne','Tataki de atum e pepino','Rosbife em rúcula','Bruschetta de guacamole e camarão','Quiche Lorraine','Vol-au-vent de camarão','Tartelete de legumes','Gaspacho de meloa e hortelã'],'Quentes':['Espetada de frango com molho picante','Espetada de ananás e bacon','Chamuças','Rissóis de camarão','Croquetes de vitela','Folhado de pato com maçã','Mini pastéis de massa tenra','Tempura de legumes','Mini merendas de chouriço','Vol-au-vent de cogumelos'],'Doces':['Espetadas de fruta','Pastéis de Nata','Quindins','Tarte de maçã','Cheesecake','Profiteroles de chocolate com doce de ovos','Palmiers','Torta de laranja','Bola de Berlim','Trufa de chocolate e ginguba']}},
-  'Canapés — Package 3 (24.000 AKZ/pax)':{max:12,label:'Escolha 12 canapés no total (das 3 categorias)',cats:{'Frios':['Espetada caprese','Tártaro de atum','Ceviche de cherne','Tataki de atum e pepino','Rosbife em rúcula','Bruschetta de guacamole e camarão','Quiche Lorraine','Vol-au-vent de camarão','Tartelete de legumes','Gaspacho de meloa e hortelã'],'Quentes':['Espetada de frango com molho picante','Espetada de ananás e bacon','Chamuças','Rissóis de camarão','Croquetes de vitela','Folhado de pato com maçã','Mini pastéis de massa tenra','Tempura de legumes','Mini merendas de chouriço','Vol-au-vent de cogumelos'],'Doces':['Espetadas de fruta','Pastéis de Nata','Quindins','Tarte de maçã','Cheesecake','Profiteroles de chocolate com doce de ovos','Palmiers','Torta de laranja','Bola de Berlim','Trufa de chocolate e ginguba']}},
-  'Buffet Selecção (57.000 AKZ/pax)':{label:'Seleccione os pratos (2 peixes + 2 carnes + 1 vegetariano)',cats:{'Peixe (escolha 2)':{max:2,items:['Lombinhos de cherne com molho de manteiga','Bacalhau lascado em crosta de broa de milho','Arroz de garoupa malandrinho com camarão','Polvo braseado com batata a murro e migas da Beira Alta','Calulu de peixe']},'Carne (escolha 2)':{max:2,items:['Lombinho de porco com ananás','Medalhões de vitela com cogumelos','Caril de vitela com beringela e gengibre','Grelhada mista (frango, bife da vazia, lombinho de porco)','Moamba de frango']},'Vegetariano (escolha 1)':{max:1,items:['Penne à napolitana','Tagliatelli com pesto e legumes assados','Caril de legumes']}}},
-  'Buffet HCTA (75.000 AKZ/pax)':{label:'Seleccione os pratos (2 peixes + 2 carnes + 1 vegetariano)',cats:{'Peixe (escolha 2)':{max:2,items:['Bacalhau recheado com queijo e migas de grão de bico','Tranches de cherne com gambas e espargos','Medalhões de lagosta com puré de bacalhau','Arroz de garoupa com gambas']},'Carne (escolha 2)':{max:2,items:['Filet mignon braseado, couve roxa e esmagada de batata-doce','Tornedó de porco com batata rústica e grelos salteados','Rolinhos de vitela com camarão e coentros','Cabrito salteado com castanhas e cogumelos frescos']},'Vegetariano (escolha 1)':{max:1,items:['Penne à napolitana','Tagliatelli com pesto e legumes assados','Caril de legumes']}}},
-  'Buffet Volante (43.000 AKZ/pax)':{label:'Seleccione os pratos e a sopa',cats:{'Sopa (escolha 1)':{max:1,items:['Vichyssoise de alho francês','Creme de legumes','Creme de abóbora']},'Peixe (escolha 1)':{max:1,items:['Bacalhau com natas','Arroz de garoupa malandrinho','Moqueca de peixe e camarão com batata-doce']},'Carne (escolha 1)':{max:1,items:['Arroz de pato com passas','Strogonoff de supremo de frango com cogumelos','Ragout de vitela com brunesa de legumes']},'Vegetariano (escolha 1)':{max:1,items:['Penne à napolitana','Tagliatelli com pesto e legumes assados','Caril de legumes']}}},
-  'Menu Empratado I (42.000 AKZ/pax)':{label:'Seleccione (1 entrada + 1 prato principal + 1 sobremesa)',cats:{'Entrada (escolha 1)':{max:1,items:['Salada de camarão com abacate e vinagrete de frutos vermelhos','Creme aveludado de aves']},'Prato Principal (escolha 1)':{max:1,items:['Filete de atum selado com sementes de sésamo, puré de batata-doce e molho agridoce','Canellonis de queijo e espinafres','Mil folhas de vitela com legumes confitados']},'Sobremesa (escolha 1)':{max:1,items:['Cheesecake de manga e menta','Crumble de banana e coco']}}},
-  'Menu Empratado II (49.000 AKZ/pax)':{label:'Seleccione (1 entrada + 2 pratos principais + 1 sobremesa)',cats:{'Entrada (escolha 1)':{max:1,items:['Camarão salteado em leite de coco e coentros','Carpaccio de vitela, rúcula e lascas de parmesão']},'Prato Principal (escolha 2)':{max:2,items:['Bacalhau lascado em crosta de broa, batata grelhada e grelos salteados','Tortellini recheado com espinafres e molho gorgonzola','Tornedó corado com puré de batata-doce e abóbora, bouquet de legumes e molho sherry shallot']},'Sobremesa (escolha 1)':{max:1,items:['Fondant de chocolate com sorbet de tangerina','Duo de doce de ovos e natas com crumble de biscoito']}}}
-};
-
-var svcChoicesState={};
-
-// Estado da modal de escolhas
-var _choicesModalSid=null, _choicesModalKey=null;
-
-function openChoicesModal(sid,key){
-  _choicesModalSid=sid; _choicesModalKey=key;
-  var cfg=ESCOLHAS[key]; if(!cfg)return;
-  var state=svcChoicesState[sid]||{};
-  var nd=!!state.__nd;
-  document.getElementById('choices-modal-title').textContent=cfg.label||'Escolhas do Cliente';
-  renderChoicesModalBody(sid,key,nd);
-  var ndBtn=document.getElementById('choices-nd-btn');
-  ndBtn.textContent=nd?'✓ Cliente ainda não decidiu':'Cliente ainda não decidiu';
-  ndBtn.classList.toggle('active',nd);
-  document.getElementById('choices-overlay').classList.add('open');
-}
-
-function closeChoicesModal(){
-  document.getElementById('choices-overlay').classList.remove('open');
-  _choicesModalSid=null; _choicesModalKey=null;
-}
-
-function confirmChoices(){
-  updateChoicesTriggerBtn(_choicesModalSid,_choicesModalKey);
-  closeChoicesModal();
-}
-
-function updateChoicesTriggerBtn(sid,key){
-  var btn=document.getElementById(sid+'-choices-btn'); if(!btn)return;
-  var summary=getChoicesSummary(sid);
-  var hasAny=summary&&summary!=='';
-  btn.classList.toggle('has-choices',hasAny);
-  var nd=svcChoicesState[sid]&&svcChoicesState[sid].__nd;
-  btn.textContent=nd?'⚠ não decidiu':hasAny?'✓ escolhas':'escolhas';
-}
-
-function renderChoicesModalBody(sid,key,ndActive){
-  var cfg=ESCOLHAS[key]; if(!cfg)return;
-  var isCanape=key.startsWith('Canapés');
-  var state=svcChoicesState[sid]||{};
-  var body=document.getElementById('choices-modal-body');
-  if(ndActive){body.innerHTML='<div style="padding:20px;text-align:center;color:var(--red);font-size:11px;font-weight:600;">O cliente ainda não decidiu as escolhas.</div>';return;}
-  var html='';
-  if(isCanape){
-    var totalSel=Object.values(state).filter(function(v){return Array.isArray(v);}).flat().length;
-    var cls=totalSel===cfg.max?'ok':totalSel>cfg.max?'over':'';
-    html+='<div class="choices-counter '+cls+'" style="margin-bottom:12px">'+totalSel+' de '+cfg.max+' seleccionados'+(totalSel===cfg.max?' ✓':totalSel>cfg.max?' — excesso':'')+'</div>';
-    for(var cat in cfg.cats){
-      var items=cfg.cats[cat];
-      html+='<div class="choices-cat"><div class="choices-cat-title">'+cat+'</div><div class="choices-grid">';
-      items.forEach(function(item,idx){
-        var sel=(state[cat]||[]).includes(item);
-        html+='<span class="choice-chip'+(sel?' sel':'')+'" data-sid="'+sid+'" data-key="'+escHtml(key)+'" data-cat="'+escHtml(cat)+'" data-idx="'+idx+'" data-max="'+cfg.max+'" onclick="handleChipClickModal(this)">'+item+'</span>';
-      });
-      html+='</div></div>';
-    }
-  } else {
-    for(var cat2 in cfg.cats){
-      var catCfg=cfg.cats[cat2];
-      var catItems=Array.isArray(catCfg)?catCfg:catCfg.items;
-      var catMax=Array.isArray(catCfg)?1:catCfg.max;
-      var selItems=state[cat2]||[];
-      var cls2=selItems.length===catMax?'ok':selItems.length>catMax?'over':'';
-      html+='<div class="choices-cat"><div class="choices-cat-title">'+cat2+'</div><div class="choices-grid">';
-      catItems.forEach(function(item,idx){
-        var sel=selItems.includes(item);
-        html+='<span class="choice-chip'+(sel?' sel':'')+'" data-sid="'+sid+'" data-key="'+escHtml(cat2)+'" data-cat="'+escHtml(cat2)+'" data-idx="'+idx+'" data-max="'+catMax+'" onclick="handleChipClickModal(this)">'+item+'</span>';
-      });
-      html+='</div><div class="choices-counter '+cls2+'">'+selItems.length+' de '+catMax+'</div></div>';
-    }
-  }
-  body.innerHTML=html;
-}
-
-function handleChipClickModal(el){
-  var sid=_choicesModalSid,key=_choicesModalKey;
-  var cfg=ESCOLHAS[key]; if(!cfg)return;
-  var isCanape=key.startsWith('Canapés');
-  var cat=el.dataset.cat,idx=parseInt(el.dataset.idx),max=parseInt(el.dataset.max);
-  var catCfg=cfg.cats[cat];
-  var items=isCanape?catCfg:(Array.isArray(catCfg)?catCfg:catCfg.items);
-  var item=items[idx]; if(!item)return;
-  if(!svcChoicesState[sid])svcChoicesState[sid]={};
-  if(!svcChoicesState[sid][cat])svcChoicesState[sid][cat]=[];
-  var arr=svcChoicesState[sid][cat];
-  var existIdx=arr.indexOf(item);
-  if(existIdx>=0){arr.splice(existIdx,1);}
-  else{
-    if(isCanape){var total=Object.values(svcChoicesState[sid]).filter(function(v){return Array.isArray(v);}).flat().length;if(total>=max)return;}
-    else{if(arr.length>=max)arr.splice(0,1);}
-    arr.push(item);
-  }
-  renderChoicesModalBody(sid,key,false);
-}
-
-function toggleNDModal(){
-  var sid=_choicesModalSid,key=_choicesModalKey; if(!sid)return;
-  if(!svcChoicesState[sid])svcChoicesState[sid]={};
-  svcChoicesState[sid].__nd=!svcChoicesState[sid].__nd;
-  var nd=svcChoicesState[sid].__nd;
-  var btn=document.getElementById('choices-nd-btn');
-  btn.textContent=nd?'✓ Cliente ainda não decidiu':'Cliente ainda não decidiu';
-  btn.classList.toggle('active',nd);
-  renderChoicesModalBody(sid,key,nd);
-}
-
-// Mantido para compatibilidade com refreshChoices antigo — já não usado
-function buildChoicesHTML(sid,key,ndActive){return'';}
-function handleChipClick(el){}
-function toggleND(sid,key){}
-function refreshChoices(sid,key){}
-
-
-function getChoicesSummary(sid){
-  var state=svcChoicesState[sid];if(!state)return'';
-  if(state.__nd)return'Cliente ainda não decidiu';
-  var lines=[];
-  for(var cat in state){if(cat==='__nd'||!Array.isArray(state[cat])||!state[cat].length)continue;lines.push(cat+': '+state[cat].join(', '));}
-  return lines.join('\n');
-}
-
 function applyCatalog(sel){
   var key=sel.value;
   var item=CATALOGO[key];
@@ -1890,7 +1730,6 @@ function applyCatalog(sel){
   if(tSelCat) tSelCat.outerHTML=timeSelectHTML(sid+'-t','','svc-input');
   sel.value='— Seleccionar serviço —';
 }
-
 function addSvcManual(roomId,s){
   s=s||{};svcCounter++;
   var sid='svc'+svcCounter;
@@ -1902,7 +1741,6 @@ function addSvcManual(roomId,s){
   var tSelSvc=document.getElementById(sid+'-t-sel');
   if(tSelSvc) tSelSvc.outerHTML=timeSelectHTML(sid+'-t',s.horario||'','svc-input');
 }
-
 function copyDay(srcId){
   var srcDiv=document.getElementById(srcId);
   if(!srcDiv)return;
@@ -1960,7 +1798,6 @@ function copyDay(srcId){
   if(newDiv)setTimeout(function(){newDiv.scrollIntoView({behavior:'smooth',block:'start'});},100);
   geToast('Dia copiado para '+( newDate||'novo dia')+'. Ajusta a data se necessário.');
 }
-
 function clearForm(){
   ['f-rsv','f-ev-start','f-ev-end','f-ent','f-con','f-notas'].forEach(function(id){var el=$(id);if(el)el.value='';});
   $('f-sign').value='|';
@@ -1969,7 +1806,6 @@ function clearForm(){
   $('os-output').innerHTML='<div class="os-doc-empty"><div class="dei">📋</div><p>Preenche os dados à esquerda e clica <strong>Gerar OS</strong> para criar o documento.</p></div>';
   addDay();
 }
-
 function collectForm(){
   var days=[];
   document.querySelectorAll('.day-blk').forEach(function(dayEl){
@@ -2009,7 +1845,6 @@ function collectForm(){
   });
   return{rsv:$('f-rsv').value,ev:$('f-ev-start')?$('f-ev-start').value:'',evEnd:$('f-ev-end')?$('f-ev-end').value:'',ent:$('f-ent').value,con:$('f-con').value,nif:'',sign:$('f-sign').value,notas:$('f-notas').value,days};
 }
-
 function loadProformaJSON(ev){
   var file=ev.target.files[0];if(!file)return;
   var r=new FileReader();
@@ -2159,7 +1994,6 @@ function loadProformaJSON(ev){
   };
   r.readAsText(file);ev.target.value='';
 }
-
 function toggleDesc(sid){
   var el=document.getElementById(sid+'-desc');
   if(!el)return;
@@ -2172,96 +2006,18 @@ function toggleDesc(sid){
     if(btn&&btn.tagName==='BUTTON')btn.textContent='detalhes';
   }
 }
-
 function timeToMin(t){
   // Converte "HH:MM" para minutos. Vazio/inválido = 9999 (vai para o fim)
   if(!t||!t.includes(':'))return 9999;
   var p=t.split(':');
   return parseInt(p[0])*60+parseInt(p[1]);
 }
-
 function sortByTime(arr,keyFn){
   return arr.slice().sort(function(a,b){return timeToMin(keyFn(a))-timeToMin(keyFn(b));});
 }
 
 
 // ── VALIDAÇÃO OS ──────────────────────────────────────────────────────────────
-var _osvmCallback=null;
-
-function osvmClose(){
-  document.getElementById('os-validation-modal').classList.remove('active');
-}
-
-function osvmProceed(){
-  osvmClose();
-  if(_osvmCallback) _osvmCallback();
-}
-
-function validateOS(d, onProceed){
-  var blockers=[];
-  var warnings=[];
-
-  // Bloqueadores
-  if(!d.ent && !d.rsv) blockers.push('Entidade / nº de evento não preenchido.');
-  var hasDate=d.ev||false;
-  if(!hasDate) blockers.push('Data do evento não preenchida.');
-  var allDays=d.days.filter(function(day){return day.rooms.length;});
-  var hasAnyRoom=allDays.some(function(day){return day.rooms.some(function(r){return r.sala;});});
-  if(!hasAnyRoom) blockers.push('Nenhuma sala definida.');
-  var hasAnySvc=allDays.some(function(day){return day.rooms.some(function(r){return r.servicos&&r.servicos.length>0;});});
-  if(!hasAnySvc) blockers.push('Nenhum serviço adicionado à OS.');
-
-  if(blockers.length){
-    var html='<div class="osvm-section"><div class="osvm-section-title">🚫 Não é possível gerar a OS</div>';
-    blockers.forEach(function(b){html+='<div class="osvm-item"><span class="osvm-item-icon">✖</span>'+b+'</div>';});
-    html+='</div>';
-    document.getElementById('osvm-body').innerHTML=html;
-    _osvmCallback=null;
-    // esconder botão avançar
-    document.querySelector('.osvm-btn-proceed').style.display='none';
-    document.getElementById('os-validation-modal').classList.add('active');
-    return false;
-  }
-
-  // Avisos
-  allDays.forEach(function(day,di){
-    day.rooms.forEach(function(room){
-      var salaLabel=room.sala||'sala sem nome';
-      // Sala sem horário
-      if(!room.horarioInicio||!room.horarioFim)
-        warnings.push('Sala <strong>'+salaLabel+'</strong>: horário de início ou fim em falta.');
-      // PAX em falta ou zero
-      if(!room.pax||parseInt(room.pax)===0)
-        warnings.push('Sala <strong>'+salaLabel+'</strong>: número de participantes (PAX) não definido.');
-      // Serviços
-      (room.servicos||[]).forEach(function(svc){
-        // Hora do serviço em falta
-        if(!svc.horario)
-          warnings.push('Serviço <strong>'+svc.nome+'</strong> ('+salaLabel+'): hora de serviço não definida.');
-        // PAX do serviço em falta
-        if(!svc.pax||parseInt(svc.pax)===0)
-          warnings.push('Serviço <strong>'+svc.nome+'</strong> ('+salaLabel+'): PAX do serviço não definido.');
-        // Escolhas obrigatórias em falta
-        if(!svc.escolhas||svc.escolhas==='')
-          warnings.push('Serviço <strong>'+svc.nome+'</strong> ('+salaLabel+'): escolhas/opções não preenchidas.');
-      });
-    });
-  });
-
-  if(warnings.length){
-    var html='<div class="osvm-section"><div class="osvm-section-title">⚠ Campos incompletos</div>';
-    warnings.forEach(function(w){html+='<div class="osvm-item"><span class="osvm-item-icon">⚠</span><span>'+w+'</span></div>';});
-    html+='</div><p style="font-size:11px;color:#888;margin:4px 0 8px;">Pode avançar mesmo assim ou corrigir antes de gerar a OS.</p>';
-    document.getElementById('osvm-body').innerHTML=html;
-    _osvmCallback=onProceed;
-    document.querySelector('.osvm-btn-proceed').style.display='';
-    document.getElementById('os-validation-modal').classList.add('active');
-    return false;
-  }
-
-  return true;
-}
-
 function generateOS(){
   var d=collectForm();
   var valid=validateOS(d,function(){_doGenerateOS(d);});
@@ -2415,7 +2171,6 @@ function _doGenerateOS(d){
   $('os-output').innerHTML=html;
   $('os-output').scrollIntoView({behavior:'smooth',block:'start'});
 }
-
 function loadOSJson(ev){
   var file=ev.target.files[0];if(!file)return;
   var r=new FileReader();
@@ -2428,7 +2183,6 @@ function loadOSJson(ev){
   };
   r.readAsText(file);ev.target.value='';
 }
-
 function saveOSJson(){
   var d=collectForm();
   var suggested='OS_'+((d.rsv||'SRSV').replace(/\//g,'-'))+'_'+((d.ent||'').slice(0,20).replace(/\s+/g,'_').toUpperCase()).replace(/[^a-zA-Z0-9_\-]/g,'');
@@ -2440,7 +2194,6 @@ function saveOSJson(){
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
   geToast('OS guardada: '+name);
 }
-
 function fillFormFromData(d){
   if(d.rsv)$('f-rsv').value=d.rsv;
   if(d.ev)$('f-ev-start').value=d.ev;
@@ -2459,104 +2212,6 @@ function fillFormFromData(d){
     for(var j=0;j<(day.rooms||[]).length;j++){addRoom(dayId,day.rooms[j]);}
   }
 }
-
-// ══════════════════════════════════════════════════════
-// SECÇÃO 10 — SESSÃO (guardar/carregar estado global)
-// ══════════════════════════════════════════════════════
-function saveSession(){
-  var blob=new Blob([JSON.stringify({v:2,xlsData,weekStart,os:collectForm()},null,2)],{type:'application/json'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sessao_'+todayIso()+'.json';a.click();
-  geToast('Sessão guardada.');
-}
-
-function loadSession(ev){
-  var file=ev.target.files[0];if(!file)return;
-  var r=new FileReader();
-  r.onload=function(e){
-    try{
-      var d=JSON.parse(e.target.result);
-      if(d.xlsData){
-        xlsData=d.xlsData;weekStart=d.weekStart||mondayOf(todayIso());
-        hide('mapa-empty');show('mapa-data');
-        renderMapa();
-      }
-      if(d.os)fillFormFromData(d.os);
-      geToast('Sessão carregada.');
-    }catch(err){geToast('Erro ao ler sessão.');}
-  };
-  r.readAsText(file);ev.target.value='';
-}
-
-// ── PRINT MAPA ──
-function printMapa(){
-  // Construir HTML limpo só com o mapa para nova janela
-  var weekTitle=$('print-week-title')?$('print-week-title').textContent:'';
-  var tableHTML=$('mapa-table')?$('mapa-table').outerHTML:'';
-  var filterInfo='';
-  // Legenda de estados
-  var estadoColors={
-    'Confirmado':{'bg':'#eaf4ef','border':'#1e6e3e','text':'#1e6e3e','badge':'#c3e6cb'},
-    '1ª Opção':{'bg':'#eaf0fb','border':'#1a4e8c','text':'#1a4e8c','badge':'#b8d4f5'},
-    '2ª Opção':{'bg':'#fff8e6','border':'#8a5c00','text':'#8a5c00','badge':'#fde8b0'},
-    'Consulta':{'bg':'#f4f4f4','border':'#bbb','text':'#999','badge':'#e8e8e8'}
-  };
-  var legendaHTML='<div style="display:flex;gap:10px;justify-content:center;margin-bottom:4mm;flex-wrap:wrap;">';
-  for(var e in estadoColors){
-    var c=estadoColors[e];
-    legendaHTML+='<div style="display:flex;align-items:center;gap:3px;font-size:6px;font-weight:700;font-family:Montserrat,Arial,sans-serif;">'
-      +'<div style="width:8px;height:8px;background:'+c.bg+';border-left:3px solid '+c.border+';border-radius:1px;"></div>'
-      +'<span style="color:'+c.text+'">'+e+'</span></div>';
-  }
-  legendaHTML+='</div>';
-
-  var win=window.open('','_blank','width=1200,height=800');
-  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">'
-    +'<title>Mapa Semanal</title>'
-    +'<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">'
-    +'<style>'
-    +'@page{size:A4 landscape;margin:6mm 8mm}'
-    +'*{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
-    +'body{font-family:Montserrat,Arial,sans-serif;margin:0;padding:0;background:#fff}'
-    +'h1{font-size:9px;font-weight:700;text-align:center;margin:0 0 3mm;color:#231F20;letter-spacing:.05em}'
-    +'.mt{width:100%;table-layout:fixed;border-collapse:collapse}'
-    +'.mt th{background:#231F20;color:#fff;padding:3px 2px;font-size:5.5px;font-weight:700;letter-spacing:.3px;text-align:center;white-space:nowrap}'
-    +'.mt th.s-th{background:#887157;text-align:left;padding-left:4px;width:72px}'
-    +'.mt td{border:1px solid #ccc;padding:2px;vertical-align:top}'
-    +'.mt td.s-td{background:#f6f4f1;font-size:5.5px;font-weight:700;text-transform:uppercase;color:#555;border-right:2px solid #b09a80;padding:3px 5px;vertical-align:middle;white-space:nowrap}'
-    +'.mt td.today-col{background:#fffcf6}'
-    +'.mt tfoot td{border-top:2px solid #887157;padding:4px 2px;font-size:7px;font-weight:600;text-align:center;background:#fffbf5}'
-    +'.mt tfoot td.s-td{font-weight:700;font-size:7px;letter-spacing:.5px;text-transform:uppercase;color:#887157;text-align:left;padding-left:4px}'
-    +'#mapa-legenda{display:block!important;margin-top:6px;padding:6px 10px;background:#f6f4f1;border:1px solid #e0dbd5;border-radius:3px;font-size:7px;line-height:2;color:#888}'
-    +'#mapa-legenda b{color:#231F20;font-weight:700}'
-    +'.mt tr:nth-child(even) td.s-td{background:#ede9e4}'
-    +'.ev-chip{border-radius:1px;padding:2px 3px;margin-bottom:1px;border-left:2px solid #887157}'
-    +'.ev-chip.conf{background:#eaf4ef;border-left-color:#1e6e3e}'
-    +'.ev-chip.opt1{background:#eaf0fb;border-left-color:#1a4e8c}'
-    +'.ev-chip.opt2{background:#fff8e6;border-left-color:#8a5c00}'
-    +'.ev-chip.cons{background:#f4f4f4;border-left-color:#bbb}'
-    +'.chip-top{display:flex;gap:3px;margin-bottom:1px;align-items:baseline}'
-    +'.chip-rsv{font-size:5.5px;font-weight:700;white-space:nowrap}'
-    +'.chip-rsv.conf{color:#1e6e3e}.chip-rsv.opt1{color:#1a4e8c}.chip-rsv.opt2{color:#8a5c00}.chip-rsv.cons{color:#999}'
-    +'.chip-estado{font-size:5px;padding:0 2px;font-weight:700;border-radius:1px}'
-    +'.chip-estado.conf{background:#c3e6cb;color:#1e6e3e}'
-    +'.chip-estado.opt1{background:#b8d4f5;color:#1a4e8c}'
-    +'.chip-estado.opt2{background:#fde8b0;color:#8a5c00}'
-    +'.chip-estado.cons{background:#e8e8e8;color:#777}'
-    +'.chip-ent{font-size:6px;font-weight:700;color:#231F20;line-height:1.2;margin-bottom:1px}'
-    +'.chip-pax{font-size:5.5px;color:#888;margin-bottom:1px}'
-    +'.chip-divider{border:none;border-top:1px solid rgba(0,0,0,.1);margin:1px 0}'
-    +'.chip-svcs-line{font-size:5.5px;font-weight:700;color:#887157;line-height:1.3}'
-    +'</style></head><body>'
-    +'<h1>'+weekTitle+'</h1>'
-    +legendaHTML
-    +tableHTML
-    +($('mapa-legenda')?$('mapa-legenda').outerHTML:'')
-    +'<'+'script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script>'
-    +'</body></html>');
-  win.document.close();
-}
-
-// ── PRINT OS ──
 function printOS(){
   var osEl=$('os-output');
   if(!osEl||osEl.querySelector('.os-doc-empty')){geToast('Gera primeiro a OS antes de imprimir.');return;}
@@ -2619,9 +2274,275 @@ function printOS(){
 }
 
 // ══════════════════════════════════════════════════════
-// INIT
+// 8. MODAL DE ESCOLHAS F&B
 // ══════════════════════════════════════════════════════
+var svcChoicesState={};
+
+// Estado da modal de escolhas
+var _choicesModalSid=null, _choicesModalKey=null;
+function openChoicesModal(sid,key){
+  _choicesModalSid=sid; _choicesModalKey=key;
+  var cfg=ESCOLHAS[key]; if(!cfg)return;
+  var state=svcChoicesState[sid]||{};
+  var nd=!!state.__nd;
+  document.getElementById('choices-modal-title').textContent=cfg.label||'Escolhas do Cliente';
+  renderChoicesModalBody(sid,key,nd);
+  var ndBtn=document.getElementById('choices-nd-btn');
+  ndBtn.textContent=nd?'✓ Cliente ainda não decidiu':'Cliente ainda não decidiu';
+  ndBtn.classList.toggle('active',nd);
+  document.getElementById('choices-overlay').classList.add('open');
+}
+function closeChoicesModal(){
+  document.getElementById('choices-overlay').classList.remove('open');
+  _choicesModalSid=null; _choicesModalKey=null;
+}
+function confirmChoices(){
+  updateChoicesTriggerBtn(_choicesModalSid,_choicesModalKey);
+  closeChoicesModal();
+}
+function updateChoicesTriggerBtn(sid,key){
+  var btn=document.getElementById(sid+'-choices-btn'); if(!btn)return;
+  var summary=getChoicesSummary(sid);
+  var hasAny=summary&&summary!=='';
+  btn.classList.toggle('has-choices',hasAny);
+  var nd=svcChoicesState[sid]&&svcChoicesState[sid].__nd;
+  btn.textContent=nd?'⚠ não decidiu':hasAny?'✓ escolhas':'escolhas';
+}
+function renderChoicesModalBody(sid,key,ndActive){
+  var cfg=ESCOLHAS[key]; if(!cfg)return;
+  var isCanape=key.startsWith('Canapés');
+  var state=svcChoicesState[sid]||{};
+  var body=document.getElementById('choices-modal-body');
+  if(ndActive){body.innerHTML='<div style="padding:20px;text-align:center;color:var(--red);font-size:11px;font-weight:600;">O cliente ainda não decidiu as escolhas.</div>';return;}
+  var html='';
+  if(isCanape){
+    var totalSel=Object.values(state).filter(function(v){return Array.isArray(v);}).flat().length;
+    var cls=totalSel===cfg.max?'ok':totalSel>cfg.max?'over':'';
+    html+='<div class="choices-counter '+cls+'" style="margin-bottom:12px">'+totalSel+' de '+cfg.max+' seleccionados'+(totalSel===cfg.max?' ✓':totalSel>cfg.max?' — excesso':'')+'</div>';
+    for(var cat in cfg.cats){
+      var items=cfg.cats[cat];
+      html+='<div class="choices-cat"><div class="choices-cat-title">'+cat+'</div><div class="choices-grid">';
+      items.forEach(function(item,idx){
+        var sel=(state[cat]||[]).includes(item);
+        html+='<span class="choice-chip'+(sel?' sel':'')+'" data-sid="'+sid+'" data-key="'+escHtml(key)+'" data-cat="'+escHtml(cat)+'" data-idx="'+idx+'" data-max="'+cfg.max+'" onclick="handleChipClickModal(this)">'+item+'</span>';
+      });
+      html+='</div></div>';
+    }
+  } else {
+    for(var cat2 in cfg.cats){
+      var catCfg=cfg.cats[cat2];
+      var catItems=Array.isArray(catCfg)?catCfg:catCfg.items;
+      var catMax=Array.isArray(catCfg)?1:catCfg.max;
+      var selItems=state[cat2]||[];
+      var cls2=selItems.length===catMax?'ok':selItems.length>catMax?'over':'';
+      html+='<div class="choices-cat"><div class="choices-cat-title">'+cat2+'</div><div class="choices-grid">';
+      catItems.forEach(function(item,idx){
+        var sel=selItems.includes(item);
+        html+='<span class="choice-chip'+(sel?' sel':'')+'" data-sid="'+sid+'" data-key="'+escHtml(cat2)+'" data-cat="'+escHtml(cat2)+'" data-idx="'+idx+'" data-max="'+catMax+'" onclick="handleChipClickModal(this)">'+item+'</span>';
+      });
+      html+='</div><div class="choices-counter '+cls2+'">'+selItems.length+' de '+catMax+'</div></div>';
+    }
+  }
+  body.innerHTML=html;
+}
+function handleChipClickModal(el){
+  var sid=_choicesModalSid,key=_choicesModalKey;
+  var cfg=ESCOLHAS[key]; if(!cfg)return;
+  var isCanape=key.startsWith('Canapés');
+  var cat=el.dataset.cat,idx=parseInt(el.dataset.idx),max=parseInt(el.dataset.max);
+  var catCfg=cfg.cats[cat];
+  var items=isCanape?catCfg:(Array.isArray(catCfg)?catCfg:catCfg.items);
+  var item=items[idx]; if(!item)return;
+  if(!svcChoicesState[sid])svcChoicesState[sid]={};
+  if(!svcChoicesState[sid][cat])svcChoicesState[sid][cat]=[];
+  var arr=svcChoicesState[sid][cat];
+  var existIdx=arr.indexOf(item);
+  if(existIdx>=0){arr.splice(existIdx,1);}
+  else{
+    if(isCanape){var total=Object.values(svcChoicesState[sid]).filter(function(v){return Array.isArray(v);}).flat().length;if(total>=max)return;}
+    else{if(arr.length>=max)arr.splice(0,1);}
+    arr.push(item);
+  }
+  renderChoicesModalBody(sid,key,false);
+}
+function toggleNDModal(){
+  var sid=_choicesModalSid,key=_choicesModalKey; if(!sid)return;
+  if(!svcChoicesState[sid])svcChoicesState[sid]={};
+  svcChoicesState[sid].__nd=!svcChoicesState[sid].__nd;
+  var nd=svcChoicesState[sid].__nd;
+  var btn=document.getElementById('choices-nd-btn');
+  btn.textContent=nd?'✓ Cliente ainda não decidiu':'Cliente ainda não decidiu';
+  btn.classList.toggle('active',nd);
+  renderChoicesModalBody(sid,key,nd);
+}
+
+function getChoicesSummary(sid){
+  var state=svcChoicesState[sid];if(!state)return'';
+  if(state.__nd)return'Cliente ainda não decidiu';
+  var lines=[];
+  for(var cat in state){if(cat==='__nd'||!Array.isArray(state[cat])||!state[cat].length)continue;lines.push(cat+': '+state[cat].join(', '));}
+  return lines.join('\n');
+}
+
+// ══════════════════════════════════════════════════════
+// 9. VALIDAÇÕES
+// ══════════════════════════════════════════════════════
+function getRequired(){
+  if(curType==='pedido_cotacao') return ['nome'];
+  if(curType==='envio_proposta') return ['nome','numEvento','datas','deadlineProposta'];
+  if(curType==='follow_up'){ var b=['nome','dataEvento']; return (fields.followUpModo||'proximo')==='proximo'?b.concat(['dataLimite']):b; }
+  if(curType==='confirmacao'){ var b=['nome','dataEvento']; return (fields.dadosFiscaisOpcao||'conhecidos')==='conhecidos'?b.concat(['entidade','nif','morada']):b; }
+  if(curType==='cancelamento') return ['nome','dataEvento'];
+  if(curType==='cobranca') return ['nome','dataEvento','valor'].concat((fields.cobrancaDoc||'proforma')==='factura'?['numDoc']:[]);
+  if(curType==='envio_factura') return ['nome','dataEvento','numFatura','valorFatura'];
+  if(curType==='satisfacao') return ['nome'];
+  return [];
+}
+function validateForm(){ var btn=$('generate-btn'); if(!btn) return; var missing=getRequired().filter(function(k){ return !fields[k]||!fields[k].trim(); }); btn.disabled=missing.length>0; btn.style.opacity=missing.length>0?'0.4':'1'; btn.style.cursor=missing.length>0?'not-allowed':'pointer'; }
+var _osvmCallback=null;
+function osvmClose(){
+  document.getElementById('os-validation-modal').classList.remove('active');
+}
+function osvmProceed(){
+  osvmClose();
+  if(_osvmCallback) _osvmCallback();
+}
+function validateOS(d, onProceed){
+  var blockers=[];
+  var warnings=[];
+
+  // Bloqueadores
+  if(!d.ent && !d.rsv) blockers.push('Entidade / nº de evento não preenchido.');
+  var hasDate=d.ev||false;
+  if(!hasDate) blockers.push('Data do evento não preenchida.');
+  var allDays=d.days.filter(function(day){return day.rooms.length;});
+  var hasAnyRoom=allDays.some(function(day){return day.rooms.some(function(r){return r.sala;});});
+  if(!hasAnyRoom) blockers.push('Nenhuma sala definida.');
+  var hasAnySvc=allDays.some(function(day){return day.rooms.some(function(r){return r.servicos&&r.servicos.length>0;});});
+  if(!hasAnySvc) blockers.push('Nenhum serviço adicionado à OS.');
+
+  if(blockers.length){
+    var html='<div class="osvm-section"><div class="osvm-section-title">🚫 Não é possível gerar a OS</div>';
+    blockers.forEach(function(b){html+='<div class="osvm-item"><span class="osvm-item-icon">✖</span>'+b+'</div>';});
+    html+='</div>';
+    document.getElementById('osvm-body').innerHTML=html;
+    _osvmCallback=null;
+    // esconder botão avançar
+    document.querySelector('.osvm-btn-proceed').style.display='none';
+    document.getElementById('os-validation-modal').classList.add('active');
+    return false;
+  }
+
+  // Avisos
+  allDays.forEach(function(day,di){
+    day.rooms.forEach(function(room){
+      var salaLabel=room.sala||'sala sem nome';
+      // Sala sem horário
+      if(!room.horarioInicio||!room.horarioFim)
+        warnings.push('Sala <strong>'+salaLabel+'</strong>: horário de início ou fim em falta.');
+      // PAX em falta ou zero
+      if(!room.pax||parseInt(room.pax)===0)
+        warnings.push('Sala <strong>'+salaLabel+'</strong>: número de participantes (PAX) não definido.');
+      // Serviços
+      (room.servicos||[]).forEach(function(svc){
+        // Hora do serviço em falta
+        if(!svc.horario)
+          warnings.push('Serviço <strong>'+svc.nome+'</strong> ('+salaLabel+'): hora de serviço não definida.');
+        // PAX do serviço em falta
+        if(!svc.pax||parseInt(svc.pax)===0)
+          warnings.push('Serviço <strong>'+svc.nome+'</strong> ('+salaLabel+'): PAX do serviço não definido.');
+        // Escolhas obrigatórias em falta
+        if(!svc.escolhas||svc.escolhas==='')
+          warnings.push('Serviço <strong>'+svc.nome+'</strong> ('+salaLabel+'): escolhas/opções não preenchidas.');
+      });
+    });
+  });
+
+  if(warnings.length){
+    var html='<div class="osvm-section"><div class="osvm-section-title">⚠ Campos incompletos</div>';
+    warnings.forEach(function(w){html+='<div class="osvm-item"><span class="osvm-item-icon">⚠</span><span>'+w+'</span></div>';});
+    html+='</div><p style="font-size:11px;color:#888;margin:4px 0 8px;">Pode avançar mesmo assim ou corrigir antes de gerar a OS.</p>';
+    document.getElementById('osvm-body').innerHTML=html;
+    _osvmCallback=onProceed;
+    document.querySelector('.osvm-btn-proceed').style.display='';
+    document.getElementById('os-validation-modal').classList.add('active');
+    return false;
+  }
+
+  return true;
+}
+
+// ══════════════════════════════════════════════════════
+// 10. FUNÇÕES UTILITÁRIAS
+// ══════════════════════════════════════════════════════
+function $(id){ return document.getElementById(id); }
+function show(id){ var e=$(id); if(e) e.style.display='block'; }
+function hide(id){ var e=$(id); if(e) e.style.display='none'; }
+function setText(id,v){ var e=$(id); if(e) e.textContent=v; }
+function fmt(n){ if(isNaN(n)||n===null) return '0,00'; return n.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+function parseNum(s){
+  if(!s&&s!==0) return 0;
+  var str=s.toString().trim().replace(/\s/g,'');
+  var lc=str.lastIndexOf(','),ld=str.lastIndexOf('.');
+  if(lc>ld) str=str.replace(/\./g,'').replace(',','.');
+  else if(ld>lc) str=str.replace(/,/g,'');
+  var n=parseFloat(str); return isNaN(n)?0:n;
+}
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function geToast(msg){var t=$('ge-toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
+function fmtDate(iso){if(!iso)return'—';var p=iso.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function fmtDateLong(iso){if(!iso)return'—';var dt=new Date(iso+'T12:00:00');return DIAS_PT[dt.getDay()]+', '+dt.getDate()+' de '+MESES[dt.getMonth()]+' de '+dt.getFullYear();}
+function isoFromSerial(s){var d=new Date(Math.round((parseFloat(s)-25569)*86400*1000));return d.toISOString().split('T')[0];}
+function mondayOf(iso){var d=new Date(iso+'T12:00:00');var day=d.getDay();var diff=day===0?-6:1-day;d.setDate(d.getDate()+diff);return d.toISOString().split('T')[0];}
+function addDaysIso(iso,n){var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];}
+function todayIso(){return new Date().toISOString().split('T')[0];}
+function copyToClipboard(html,plain,btn){
+  var fullHtml='<meta charset="utf-8"><html><body style="font-family:Aptos,Montserrat,Arial,sans-serif;margin:0;">'+html+'</body></html>';
+  function done(){ btn.textContent=T('copied'); setTimeout(function(){ btn.textContent=T('copy'); },2500); }
+  function execFallback(){
+    var ok=false,container=document.createElement('div');
+    container.innerHTML=html;
+    container.style.cssText='position:fixed;left:-9999px;top:0;';
+    document.body.appendChild(container);
+    try{ var range=document.createRange(); range.selectNodeContents(container); var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range); ok=document.execCommand('copy'); sel.removeAllRanges(); }catch(e){ ok=false; }
+    document.body.removeChild(container);
+    if(ok) done(); else navigator.clipboard.writeText(plain).then(done).catch(function(){});
+  }
+  if(navigator.clipboard&&window.ClipboardItem){
+    try{ navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([fullHtml],{type:'text/html'}),'text/plain':new Blob([plain],{type:'text/plain'})})]).then(done).catch(execFallback); }catch(e){ execFallback(); }
+  } else { execFallback(); }
+}
+function saveSession(){
+  var blob=new Blob([JSON.stringify({v:2,xlsData,weekStart,os:collectForm()},null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sessao_'+todayIso()+'.json';a.click();
+  geToast('Sessão guardada.');
+}
+function loadSession(ev){
+  var file=ev.target.files[0];if(!file)return;
+  var r=new FileReader();
+  r.onload=function(e){
+    try{
+      var d=JSON.parse(e.target.result);
+      if(d.xlsData){
+        xlsData=d.xlsData;weekStart=d.weekStart||mondayOf(todayIso());
+        hide('mapa-empty');show('mapa-data');
+        renderMapa();
+      }
+      if(d.os)fillFormFromData(d.os);
+      geToast('Sessão carregada.');
+    }catch(err){geToast('Erro ao ler sessão.');}
+  };
+  r.readAsText(file);ev.target.value='';
+}
+
+// ── PRINT MAPA ──
+
+// ══════════════════════════════════════════════════════
+// 11. INICIALIZAÇÃO DA APLICAÇÃO
+// ══════════════════════════════════════════════════════
+initRows();
 refreshAll();
+
 </script>
 </body>
 </html>
