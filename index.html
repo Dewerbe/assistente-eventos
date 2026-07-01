@@ -213,6 +213,24 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
 .os-footer{height:3px;background:var(--bronze)}
 
 /* ── TOAST ── */
+/* ─── MODAL VALIDAÇÃO OS ────────────────────────────────────────────────────── */
+#os-validation-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;}
+#os-validation-modal.active{display:flex;}
+.osvm-box{background:#fff;border-radius:8px;max-width:520px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.22);overflow:hidden;}
+.osvm-header{background:#231F20;padding:14px 20px;display:flex;align-items:center;gap:10px;}
+.osvm-header-icon{font-size:18px;}
+.osvm-header-title{color:#fff;font-size:14px;font-weight:700;letter-spacing:.5px;}
+.osvm-body{padding:18px 20px 10px;}
+.osvm-section{margin-bottom:14px;}
+.osvm-section-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#887157;margin-bottom:6px;}
+.osvm-item{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid #f0ede9;font-size:12px;color:#231F20;line-height:1.4;}
+.osvm-item:last-child{border-bottom:none;}
+.osvm-item-icon{font-size:13px;flex-shrink:0;margin-top:1px;}
+.osvm-footer{display:flex;gap:10px;padding:14px 20px;background:#f6f4f1;justify-content:flex-end;}
+.osvm-btn-back{padding:8px 18px;border:1px solid #887157;background:#fff;color:#887157;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.osvm-btn-back:hover{background:#ede7df;}
+.osvm-btn-proceed{padding:8px 18px;background:#887157;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.osvm-btn-proceed:hover{background:#6e5c45;}
 #ge-toast{position:fixed;bottom:20px;right:20px;background:var(--black);color:#fff;padding:8px 16px;border-radius:3px;font-size:11px;font-weight:600;opacity:0;transform:translateY(6px);transition:all .22s;pointer-events:none;z-index:9999;border-left:3px solid var(--bronze)}
 #ge-toast.show{opacity:1;transform:translateY(0)}
 
@@ -580,6 +598,20 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
   </div>
 </div>
 
+
+<div id="os-validation-modal">
+  <div class="osvm-box">
+    <div class="osvm-header">
+      <span class="osvm-header-icon">⚠️</span>
+      <span class="osvm-header-title">Ordem de Serviço incompleta</span>
+    </div>
+    <div class="osvm-body" id="osvm-body"></div>
+    <div class="osvm-footer">
+      <button class="osvm-btn-back" onclick="osvmClose()">← Corrigir</button>
+      <button class="osvm-btn-proceed" onclick="osvmProceed()">Avançar mesmo assim</button>
+    </div>
+  </div>
+</div>
 <script>
 // ══════════════════════════════════════════════════════
 // SECÇÃO 1 — VARIÁVEIS GLOBAIS E CONSTANTES
@@ -2152,8 +2184,91 @@ function sortByTime(arr,keyFn){
   return arr.slice().sort(function(a,b){return timeToMin(keyFn(a))-timeToMin(keyFn(b));});
 }
 
+
+// ── VALIDAÇÃO OS ──────────────────────────────────────────────────────────────
+var _osvmCallback=null;
+
+function osvmClose(){
+  document.getElementById('os-validation-modal').classList.remove('active');
+}
+
+function osvmProceed(){
+  osvmClose();
+  if(_osvmCallback) _osvmCallback();
+}
+
+function validateOS(d, onProceed){
+  var blockers=[];
+  var warnings=[];
+
+  // Bloqueadores
+  if(!d.ent && !d.rsv) blockers.push('Entidade / nº de evento não preenchido.');
+  var hasDate=d.ev||false;
+  if(!hasDate) blockers.push('Data do evento não preenchida.');
+  var allDays=d.days.filter(function(day){return day.rooms.length;});
+  var hasAnyRoom=allDays.some(function(day){return day.rooms.some(function(r){return r.sala;});});
+  if(!hasAnyRoom) blockers.push('Nenhuma sala definida.');
+  var hasAnySvc=allDays.some(function(day){return day.rooms.some(function(r){return r.servicos&&r.servicos.length>0;});});
+  if(!hasAnySvc) blockers.push('Nenhum serviço adicionado à OS.');
+
+  if(blockers.length){
+    var html='<div class="osvm-section"><div class="osvm-section-title">🚫 Não é possível gerar a OS</div>';
+    blockers.forEach(function(b){html+='<div class="osvm-item"><span class="osvm-item-icon">✖</span>'+b+'</div>';});
+    html+='</div>';
+    document.getElementById('osvm-body').innerHTML=html;
+    _osvmCallback=null;
+    // esconder botão avançar
+    document.querySelector('.osvm-btn-proceed').style.display='none';
+    document.getElementById('os-validation-modal').classList.add('active');
+    return false;
+  }
+
+  // Avisos
+  allDays.forEach(function(day,di){
+    day.rooms.forEach(function(room){
+      var salaLabel=room.sala||'sala sem nome';
+      // Sala sem horário
+      if(!room.horarioInicio||!room.horarioFim)
+        warnings.push('Sala <strong>'+salaLabel+'</strong>: horário de início ou fim em falta.');
+      // PAX em falta ou zero
+      if(!room.pax||parseInt(room.pax)===0)
+        warnings.push('Sala <strong>'+salaLabel+'</strong>: número de participantes (PAX) não definido.');
+      // Serviços
+      (room.servicos||[]).forEach(function(svc){
+        // Hora do serviço em falta
+        if(!svc.horario)
+          warnings.push('Serviço <strong>'+svc.nome+'</strong> ('+salaLabel+'): hora de serviço não definida.');
+        // PAX do serviço em falta
+        if(!svc.pax||parseInt(svc.pax)===0)
+          warnings.push('Serviço <strong>'+svc.nome+'</strong> ('+salaLabel+'): PAX do serviço não definido.');
+        // Escolhas obrigatórias em falta
+        if(!svc.escolhas||svc.escolhas==='')
+          warnings.push('Serviço <strong>'+svc.nome+'</strong> ('+salaLabel+'): escolhas/opções não preenchidas.');
+      });
+    });
+  });
+
+  if(warnings.length){
+    var html='<div class="osvm-section"><div class="osvm-section-title">⚠ Campos incompletos</div>';
+    warnings.forEach(function(w){html+='<div class="osvm-item"><span class="osvm-item-icon">⚠</span><span>'+w+'</span></div>';});
+    html+='</div><p style="font-size:11px;color:#888;margin:4px 0 8px;">Pode avançar mesmo assim ou corrigir antes de gerar a OS.</p>';
+    document.getElementById('osvm-body').innerHTML=html;
+    _osvmCallback=onProceed;
+    document.querySelector('.osvm-btn-proceed').style.display='';
+    document.getElementById('os-validation-modal').classList.add('active');
+    return false;
+  }
+
+  return true;
+}
+
 function generateOS(){
   var d=collectForm();
+  var valid=validateOS(d,function(){_doGenerateOS(d);});
+  if(!valid)return;
+  _doGenerateOS(d);
+}
+function _doGenerateOS(d){
   if(!d.ent&&!d.rsv){geToast('Preenche pelo menos a entidade ou o nº de evento.');return;}
   var sp=d.sign.split('|'),signName=sp[0]||'',signRole=sp[1]||'';
   var allDays=d.days.filter(function(day){return day.rooms.length;});
