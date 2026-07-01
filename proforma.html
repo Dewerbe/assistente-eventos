@@ -345,17 +345,20 @@ tr.dragging{opacity:0.4}
 <body>
 
 <div id="toolbar">
-  <button class="tb-btn new" onclick="window.location.href='index.html'">← Assistente</button>
+  <button class="tb-btn new" onclick="window.location.href='index.html'" data-i18n="tb_assistente">← Assistente</button>
   <div class="brand">TD Hotels · HCTA</div>
-  <button class="tb-btn new" onclick="newProforma()">＋ Nova</button>
+  <button class="tb-btn new" onclick="newProforma()" data-i18n="tb_nova">＋ Nova</button>
   <div class="sep"></div>
   <label class="tb-btn open" style="cursor:pointer">
-    📂 Abrir
+    <span data-i18n="tb_abrir">📂 Abrir</span>
     <input type="file" id="fopen" accept=".json" style="display:none" onchange="loadJSON(event)">
   </label>
-  <button class="tb-btn save" onclick="confirmSave()">💾 Guardar</button>
-  <button class="tb-btn new" onclick="openLodgingModal()" style="border-color:var(--bronze);color:var(--bronze-l)">🛏 Gerir Alojamento</button>
-  <button class="tb-btn pdf" onclick="validateAndPrint()">🖨 PDF</button>
+  <button class="tb-btn save" onclick="confirmSave()" data-i18n="tb_guardar">💾 Guardar</button>
+  <button class="tb-btn new" onclick="openLodgingModal()" style="border-color:var(--bronze);color:var(--bronze-l)" data-i18n="tb_alojamento">🛏 Gerir Alojamento</button>
+  <button class="tb-btn pdf" onclick="validateAndPrint()" data-i18n="tb_pdf">🖨 PDF</button>
+  <div class="sep"></div>
+  <button id="lang-pt" class="tb-btn" onclick="setLang('pt')" style="min-width:36px;font-weight:700">PT</button>
+  <button id="lang-en" class="tb-btn" onclick="setLang('en')" style="min-width:36px;font-weight:700">EN</button>
 </div>
 
 <div id="app">
@@ -367,11 +370,11 @@ tr.dragging{opacity:0.4}
     <div class="dh-top">
       <img src="./FOTOS/Imagem1.png" alt="HCTA" style="height:80px;object-fit:contain;display:block" onerror="this.style.display='none'">
       <div class="title-area">
-        <div class="doc-title">FACTURA<br>PROFORMA</div>
+        <div class="doc-title" id="doc-title" data-i18n-html="doc_title">FACTURA<br>PROFORMA</div>
         <div class="meta-box">
-          <div class="ml">Data</div><div class="mv"><input type="date" id="f-data"></div>
-          <div class="ml">RSV Nº</div><div class="mv"><input type="text" id="f-rsv" placeholder=""></div>
-          <div class="ml">Data do Evento</div><div class="mv"><input type="date" id="f-ev"></div>
+          <div class="ml" data-i18n="lbl_data">Data</div><div class="mv"><input type="date" id="f-data"></div>
+          <div class="ml" data-i18n="lbl_rsv">RSV Nº</div><div class="mv"><input type="text" id="f-rsv" placeholder=""></div>
+          <div class="ml" data-i18n="lbl_data_evento">Data do Evento</div><div class="mv"><input type="date" id="f-ev"></div>
         </div>
       </div>
     </div>
@@ -379,16 +382,16 @@ tr.dragging{opacity:0.4}
     <div class="dh-bottom">
       <div class="emit">
         <strong>HENDA HOTELARIA, LDA</strong>
-        Sede: Av. Pedro de Castro Van-Dunen Loy, Bairro Morro Bento<br>
-        Edifício Teixeira Duarte, nº 387 — Luanda<br>
-        Contribuinte: <b>5001094645</b>
+        <span data-i18n="emit_sede">Sede: Av. Pedro de Castro Van-Dunen Loy, Bairro Morro Bento</span><br>
+        <span data-i18n="emit_edificio">Edifício Teixeira Duarte, nº 387 — Luanda</span><br>
+        <span data-i18n="emit_contribuinte">Contribuinte:</span> <b>5001094645</b>
       </div>
       <div class="cli">
         <div class="cli-grid">
-          <div class="cll">Entidade</div><div class="clv"><input id="f-ent" type="text" placeholder="Nome da empresa / entidade"></div>
-          <div class="cll">Contacto</div><div class="clv"><input id="f-con" type="text" placeholder="Nome e telefone"></div>
-          <div class="cll">NIF</div><div class="clv"><input id="f-nif" type="text" placeholder="NIF do cliente"></div>
-          <div class="cll">Morada</div><div class="clv"><textarea id="f-mor" class="ta-cli" placeholder="Morada do cliente" rows="1" oninput="autoResize(this)"></textarea></div>
+          <div class="cll" data-i18n="lbl_entidade">Entidade</div><div class="clv"><input id="f-ent" type="text" placeholder="Nome da empresa / entidade" data-i18n-placeholder="ph_entidade"></div>
+          <div class="cll" data-i18n="lbl_contacto">Contacto</div><div class="clv"><input id="f-con" type="text" placeholder="Nome e telefone" data-i18n-placeholder="ph_contacto"></div>
+          <div class="cll" data-i18n="lbl_nif">NIF</div><div class="clv"><input id="f-nif" type="text" placeholder="NIF do cliente" data-i18n-placeholder="ph_nif"></div>
+          <div class="cll" data-i18n="lbl_morada">Morada</div><div class="clv"><textarea id="f-mor" class="ta-cli" placeholder="Morada do cliente" data-i18n-placeholder="ph_morada" rows="1" oninput="autoResize(this)"></textarea></div>
         </div>
       </div>
     </div>
@@ -400,18 +403,18 @@ tr.dragging{opacity:0.4}
         <tr>
           <th class="n" style="width:18px"></th>
           <th class="n">#</th>
-          <th class="tl ds">Descrição</th>
-          <th class="qt">Quant.</th>
-          <th class="dy">Nº Dias</th>
-          <th class="vu">V. Unit (AOA)</th>
-          <th class="tx">Tx Imp</th>
-          <th class="dc">Desconto</th>
-          <th class="to">Total c/ IVA</th>
+          <th class="tl ds" data-i18n="th_desc">Descrição</th>
+          <th class="qt" data-i18n="th_qtd">Quant.</th>
+          <th class="dy" data-i18n="th_dias">Nº Dias</th>
+          <th class="vu" data-i18n="th_vunit">V. Unit (AOA)</th>
+          <th class="tx" data-i18n="th_txi">Tx Imp</th>
+          <th class="dc" data-i18n="th_desconto">Desconto</th>
+          <th class="to" data-i18n="th_total_iva">Total c/ IVA</th>
           <th class="dl"></th>
         </tr>
       </thead>
       <tbody id="lbody"></tbody>
-      <tfoot><tr class="add-row"><td colspan="10"><button class="add-btn" onclick="addLine()">+ Adicionar linha</button> <button class="add-btn sec-btn" onclick="addSection()">+ Secção / Data</button></td></tr></tfoot>
+      <tfoot><tr class="add-row"><td colspan="10"><button class="add-btn" onclick="addLine()" data-i18n="btn_add_linha">+ Adicionar linha</button> <button class="add-btn sec-btn" onclick="addSection()" data-i18n="btn_add_seccao">+ Secção / Data</button></td></tr></tfoot>
     </table>
     <div id="cat-dropdown" style="display:none;position:fixed;z-index:9999;background:#fff;
       border:1px solid var(--gl);border-radius:3px;box-shadow:0 3px 12px rgba(0,0,0,0.12);
@@ -424,9 +427,9 @@ tr.dragging{opacity:0.4}
       <table>
         <thead>
           <tr>
-            <th style="text-align:right">Incidência</th>
-            <th class="imp">Imp</th>
-            <th>Valor</th>
+            <th style="text-align:right" data-i18n="th_incidencia">Incidência</th>
+            <th class="imp" data-i18n="th_imp">Imp</th>
+            <th data-i18n="th_valor">Valor</th>
           </tr>
         </thead>
         <tbody>
@@ -455,15 +458,15 @@ tr.dragging{opacity:0.4}
     </div>
     <div class="gt-block">
       <div class="gt-row gt-sub">
-        <span>Total s/ Desconto</span>
+        <span data-i18n="lbl_total_sem_desc">Total s/ Desconto</span>
         <span id="gt-subdesc">0,00</span>
       </div>
       <div class="gt-row gt-disc" id="gt-disc-row" style="display:none">
-        <span>Desconto Total</span>
+        <span data-i18n="lbl_desconto_total">Desconto Total</span>
         <span id="gt-disc">— 0,00</span>
       </div>
       <div class="gt-row gt-main">
-        <span class="gt-lbl">Total AOA</span>
+        <span class="gt-lbl" data-i18n="lbl_total_aoa">Total AOA</span>
         <span class="gt-val" id="gt">0,00</span>
       </div>
       <div class="gt-cur">AOA</div>
@@ -471,57 +474,57 @@ tr.dragging{opacity:0.4}
   </div>
 
   <div class="cambio">
-    O câmbio de referência do Hotel HCTA utilizado à data do envio da cotação é de (para 1 dólar americano):
+    <span data-i18n="cambio_texto">O câmbio de referência do Hotel HCTA utilizado à data do envio da cotação é de (para 1 dólar americano):</span>
     <input type="text" id="f-cambio" placeholder="—">
   </div>
 
-  <div class="fn"><em>Este documento é uma consulta e não garante a reserva do serviço. Proposta válida por 7 dias após a data de emissão.</em></div>
+  <div class="fn"><em data-i18n="nota_final">Este documento é uma consulta e não garante a reserva do serviço. Proposta válida por 7 dias após a data de emissão.</em></div>
   <div class="fline"></div>
 </div>
 
 <!-- PAGE 2 -->
 <div class="card2">
   <div class="p2h"></div>
-  <div class="sec-title">Condições Gerais</div>
+  <div class="sec-title" data-i18n="sec_condicoes">Condições Gerais</div>
   <div class="cond-grid">
     <div class="cond-col">
-      <div class="cs"><h4>Validade da Proposta</h4><p>A presente proposta tem uma validade de sete (7) dias e é apresentada a título de consulta, não existindo, nesta fase, qualquer pré-reserva de espaços ou alojamento na nossa unidade. A confirmação da reserva estará sempre sujeita à disponibilidade do hotel nas datas solicitadas.</p></div>
-      <div class="cs"><h4>Confirmação da Reserva e Pagamentos</h4><p>A intenção de adjudicação deve ser formalizada por escrito. Para garantir a reserva dos espaços e serviços, é obrigatório um pagamento antecipado de 50% do valor total do evento. O valor remanescente deverá ser liquidado até 72h antes da realização do evento. O horário e o programa detalhado deverão ser enviados no mesmo prazo.</p></div>
-      <div class="cs"><h4>Política de Cancelamento (inclui alojamento)</h4><p>Cancelamentos efectuados até 15 dias antes da data do evento não terão penalização. Cancelamentos entre 14 dias e 48 horas antes implicam uma taxa de 50% do valor total. Cancelamentos com menos de 48 horas conferem ao Hotel o direito de cobrar 100% do valor total. Estas condições aplicam-se igualmente a eventos solicitados com prazos inferiores a 15 dias.</p></div>
-      <div class="cs"><h4>Alterações de Última Hora</h4><p>Alterações solicitadas no próprio dia do evento ou com menos de 24 horas de antecedência estão sujeitas a condições específicas a acordar com o Departamento de Eventos.</p></div>
+      <div class="cs"><h4 data-i18n="cg_validade_t">Validade da Proposta</h4><p data-i18n="cg_validade_p">A presente proposta tem uma validade de sete (7) dias e é apresentada a título de consulta, não existindo, nesta fase, qualquer pré-reserva de espaços ou alojamento na nossa unidade. A confirmação da reserva estará sempre sujeita à disponibilidade do hotel nas datas solicitadas.</p></div>
+      <div class="cs"><h4 data-i18n="cg_confirmacao_t">Confirmação da Reserva e Pagamentos</h4><p data-i18n="cg_confirmacao_p">A intenção de adjudicação deve ser formalizada por escrito. Para garantir a reserva dos espaços e serviços, é obrigatório um pagamento antecipado de 50% do valor total do evento. O valor remanescente deverá ser liquidado até 72h antes da realização do evento. O horário e o programa detalhado deverão ser enviados no mesmo prazo.</p></div>
+      <div class="cs"><h4 data-i18n="cg_cancelamento_t">Política de Cancelamento (inclui alojamento)</h4><p data-i18n="cg_cancelamento_p">Cancelamentos efectuados até 15 dias antes da data do evento não terão penalização. Cancelamentos entre 14 dias e 48 horas antes implicam uma taxa de 50% do valor total. Cancelamentos com menos de 48 horas conferem ao Hotel o direito de cobrar 100% do valor total. Estas condições aplicam-se igualmente a eventos solicitados com prazos inferiores a 15 dias.</p></div>
+      <div class="cs"><h4 data-i18n="cg_alteracoes_t">Alterações de Última Hora</h4><p data-i18n="cg_alteracoes_p">Alterações solicitadas no próprio dia do evento ou com menos de 24 horas de antecedência estão sujeitas a condições específicas a acordar com o Departamento de Eventos.</p></div>
     </div>
     <div class="cond-col">
-      <div class="cs"><h4>Fornecimentos Externos</h4><p>A contratação de serviços externos ao Hotel requer autorização prévia e estará sujeita a uma taxa de serviço de 25%. Não é permitida a contratação de serviços de catering externos, sendo obrigatório que todos os serviços de alimentação e bebidas sejam providenciados exclusivamente pelo Hotel.</p></div>
-      <div class="cs"><h4>Requisitos Especiais</h4><p>Caso existam participantes com deficiência motora ou necessidades especiais, solicitamos que esta informação nos seja comunicada atempadamente.</p></div>
-      <div class="cs"><h4>Danos e Responsabilidades</h4><p>O cliente será responsável por quaisquer danos ou prejuízos causados nas instalações, equipamentos e espaços utilizados durante o evento.</p></div>
-      <div class="cs"><h4>Material e Equipamentos de Fornecedores Externos</h4><p>Todos os materiais e equipamentos fornecidos por terceiros devem ser desmontados e retirados imediatamente após o evento. O Hotel reserva-se o direito de descartar qualquer material não retirado, podendo aplicar uma taxa adicional pela remoção.</p></div>
-      <div class="cs"><h4>Gestão de Resíduos</h4><p>Qualquer lixo de grande volume gerado pelo evento deve ser removido pela organização. Caso contrário, o Hotel poderá aplicar uma taxa adicional pela sua remoção.</p></div>
-      <div class="cs"><h4>Exclusão de Responsabilidade</h4><p>O Hotel não se responsabiliza por perdas, furtos ou danos a bens e materiais pertencentes a convidados ou terceiros nas instalações durante o evento.</p></div>
+      <div class="cs"><h4 data-i18n="cg_fornecimentos_t">Fornecimentos Externos</h4><p data-i18n="cg_fornecimentos_p">A contratação de serviços externos ao Hotel requer autorização prévia e estará sujeita a uma taxa de serviço de 25%. Não é permitida a contratação de serviços de catering externos, sendo obrigatório que todos os serviços de alimentação e bebidas sejam providenciados exclusivamente pelo Hotel.</p></div>
+      <div class="cs"><h4 data-i18n="cg_requisitos_t">Requisitos Especiais</h4><p data-i18n="cg_requisitos_p">Caso existam participantes com deficiência motora ou necessidades especiais, solicitamos que esta informação nos seja comunicada atempadamente.</p></div>
+      <div class="cs"><h4 data-i18n="cg_danos_t">Danos e Responsabilidades</h4><p data-i18n="cg_danos_p">O cliente será responsável por quaisquer danos ou prejuízos causados nas instalações, equipamentos e espaços utilizados durante o evento.</p></div>
+      <div class="cs"><h4 data-i18n="cg_material_t">Material e Equipamentos de Fornecedores Externos</h4><p data-i18n="cg_material_p">Todos os materiais e equipamentos fornecidos por terceiros devem ser desmontados e retirados imediatamente após o evento. O Hotel reserva-se o direito de descartar qualquer material não retirado, podendo aplicar uma taxa adicional pela remoção.</p></div>
+      <div class="cs"><h4 data-i18n="cg_residuos_t">Gestão de Resíduos</h4><p data-i18n="cg_residuos_p">Qualquer lixo de grande volume gerado pelo evento deve ser removido pela organização. Caso contrário, o Hotel poderá aplicar uma taxa adicional pela sua remoção.</p></div>
+      <div class="cs"><h4 data-i18n="cg_exclusao_t">Exclusão de Responsabilidade</h4><p data-i18n="cg_exclusao_p">O Hotel não se responsabiliza por perdas, furtos ou danos a bens e materiais pertencentes a convidados ou terceiros nas instalações durante o evento.</p></div>
     </div>
   </div>
 
   <div class="ib">
-    <div class="it">ℹ Informação para Retenções e Cativações</div>
+    <div class="it" data-i18n="ib_retencoes_t">ℹ Informação para Retenções e Cativações</div>
     <ul>
-      <li>Nos termos do Art.º 67.º da Lei n.º 26/20 (Código do Imposto Industrial), os Serviços de Hotelaria e Similares não estão sujeitos a retenção na fonte.</li>
-      <li>As incidências sujeitas a retenção na fonte (6,5%) e/ou cativação de IVA (7% e/ou 14%) encontram-se devidamente identificadas na presente proforma, devendo quaisquer retenções e cativações ser calculadas exclusivamente sobre os respectivos valores de incidência.</li>
-      <li>Sempre que seja efectuada retenção na fonte, deverá ser remetido ao Hotel o respectivo DAR (Documento de Arrecadação de Receitas).</li>
-      <li>Sempre que o pagamento seja efectuado através do SIGFE ou outro sistema equivalente, deverá igualmente ser remetido o DLI, Ordem de Saque ou documento equivalente que evidencie os valores pagos, retidos e cativados.</li>
+      <li data-i18n="ib_retencoes_1">Nos termos do Art.º 67.º da Lei n.º 26/20 (Código do Imposto Industrial), os Serviços de Hotelaria e Similares não estão sujeitos a retenção na fonte.</li>
+      <li data-i18n="ib_retencoes_2">As incidências sujeitas a retenção na fonte (6,5%) e/ou cativação de IVA (7% e/ou 14%) encontram-se devidamente identificadas na presente proforma, devendo quaisquer retenções e cativações ser calculadas exclusivamente sobre os respectivos valores de incidência.</li>
+      <li data-i18n="ib_retencoes_3">Sempre que seja efectuada retenção na fonte, deverá ser remetido ao Hotel o respectivo DAR (Documento de Arrecadação de Receitas).</li>
+      <li data-i18n="ib_retencoes_4">Sempre que o pagamento seja efectuado através do SIGFE ou outro sistema equivalente, deverá igualmente ser remetido o DLI, Ordem de Saque ou documento equivalente que evidencie os valores pagos, retidos e cativados.</li>
     </ul>
   </div>
 
   <div class="ib warn">
-    <div class="it">⚠ Nota Importante para Entidades Públicas</div>
+    <div class="it" data-i18n="ib_publicas_t">⚠ Nota Importante para Entidades Públicas</div>
     <ul>
-      <li>As retenções, cativações, liquidações e Ordens de Saque deverão ser processadas exclusivamente com base na versão mais recente da presente proforma.</li>
-      <li>Sempre que seja emitida uma nova proforma, por alteração de serviços, quantidades, datas, valores ou quaisquer outras condições, a mesma substitui integralmente todas as versões anteriormente emitidas.</li>
-      <li>Cada proforma dará origem à respectiva factura, pelo que os pagamentos, retenções e cativações deverão corresponder exactamente aos valores constantes da proforma que lhes deu origem.</li>
-      <li>A utilização de proformas desactualizadas poderá originar divergências contabilísticas e fiscais que impossibilitem o correcto reconhecimento dos valores pagos, retidos e/ou cativados.</li>
-      <li>Em caso de dúvida relativamente à versão válida, solicitar esclarecimento prévio junto do Departamento de Eventos.</li>
+      <li data-i18n="ib_publicas_1">As retenções, cativações, liquidações e Ordens de Saque deverão ser processadas exclusivamente com base na versão mais recente da presente proforma.</li>
+      <li data-i18n="ib_publicas_2">Sempre que seja emitida uma nova proforma, por alteração de serviços, quantidades, datas, valores ou quaisquer outras condições, a mesma substitui integralmente todas as versões anteriormente emitidas.</li>
+      <li data-i18n="ib_publicas_3">Cada proforma dará origem à respectiva factura, pelo que os pagamentos, retenções e cativações deverão corresponder exactamente aos valores constantes da proforma que lhes deu origem.</li>
+      <li data-i18n="ib_publicas_4">A utilização de proformas desactualizadas poderá originar divergências contabilísticas e fiscais que impossibilitem o correcto reconhecimento dos valores pagos, retidos e/ou cativados.</li>
+      <li data-i18n="ib_publicas_5">Em caso de dúvida relativamente à versão válida, solicitar esclarecimento prévio junto do Departamento de Eventos.</li>
     </ul>
   </div>
 
-  <div class="sec-title" style="margin-top:4px">Dados Bancários</div>
+  <div class="sec-title" style="margin-top:4px" data-i18n="sec_bancarios">Dados Bancários</div>
   <div class="bank-grid" id="bank-grid"></div>
 
   <div class="sign">
@@ -529,7 +532,7 @@ tr.dragging{opacity:0.4}
       <div style="height:18px"></div>
       <div class="sl"></div>
       <select id="sign-sel" onchange="updateSign()" style="border:none;outline:none;font-family:'Montserrat',sans-serif;font-size:8px;color:var(--gm);background:transparent;cursor:pointer;margin-bottom:4px;max-width:220px;display:block">
-        <option value="|">Seleccionar responsável...</option>
+        <option value="|" data-i18n="sign_placeholder">Seleccionar responsável...</option>
         <option value="José M. Dewerbe|Events Director">José M. Dewerbe — Events Director</option>
         <option value="Albertina Cassessa|Events Manager">Albertina Cassessa — Events Manager</option>
         <option value="Milton Santos|Events Coordinator">Milton Santos — Events Coordinator</option>
@@ -541,7 +544,7 @@ tr.dragging{opacity:0.4}
     </div>
   </div>
 
-  <div class="bna">Em conformidade com o Instrutivo N.º 01/2023, de 9 de Janeiro, do Banco Nacional de Angola (BNA), os pagamentos por transferência bancária, provenientes do exterior de Angola, obrigam ao preenchimento do campo 77B no formulário de transferência, o qual inclui o código referente à finalidade da operação. Para garantir que a transferência é bem-sucedida, deve solicitar ao seu banco o preenchimento deste campo com os seguintes códigos: Viagens trabalho: B01.01 — sector público; B01.02 — sector privado. Viagens para Turismo: B03.01. A não inclusão desta informação poderá implicar a não aceitação da operação pelo banco receptor, impossibilitando a validação da reserva.</div>
+  <div class="bna" data-i18n="bna_texto">Em conformidade com o Instrutivo N.º 01/2023, de 9 de Janeiro, do Banco Nacional de Angola (BNA), os pagamentos por transferência bancária, provenientes do exterior de Angola, obrigam ao preenchimento do campo 77B no formulário de transferência, o qual inclui o código referente à finalidade da operação. Para garantir que a transferência é bem-sucedida, deve solicitar ao seu banco o preenchimento deste campo com os seguintes códigos: Viagens trabalho: B01.01 — sector público; B01.02 — sector privado. Viagens para Turismo: B03.01. A não inclusão desta informação poderá implicar a não aceitação da operação pelo banco receptor, impossibilitando a validação da reserva.</div>
   <div class="fline"></div>
 </div>
 
@@ -556,16 +559,16 @@ tr.dragging{opacity:0.4}
     display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25);overflow:hidden">
 
     <div style="padding:16px 22px;border-bottom:1px solid #e0dbd5;display:flex;align-items:center;gap:14px">
-      <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#231F20">
+      <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#231F20" data-i18n="lod_title">
         🛏 Gestão de Alojamento
       </div>
       <div style="flex:1"></div>
-      <button id="lod-tab-summary" onclick="switchLodgingMode('summary')"
+      <button id="lod-tab-summary" onclick="switchLodgingMode('summary')" data-i18n="lod_tab_resumo"
         style="border:1px solid #887157;background:#887157;color:#fff;border-radius:3px 0 0 3px;
         padding:6px 14px;font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;cursor:pointer">
         Resumo
       </button>
-      <button id="lod-tab-rooming" onclick="switchLodgingMode('rooming')"
+      <button id="lod-tab-rooming" onclick="switchLodgingMode('rooming')" data-i18n="lod_tab_rooming"
         style="border:1px solid #887157;background:#fff;color:#887157;border-radius:0 3px 3px 0;
         margin-left:-1px;padding:6px 14px;font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;cursor:pointer">
         Rooming List
@@ -577,82 +580,83 @@ tr.dragging{opacity:0.4}
 
       <!-- RESUMO -->
       <div id="lod-view-summary">
-        <div style="font-size:9px;color:#888;margin-bottom:10px;line-height:1.6">
+        <div style="font-size:9px;color:#888;margin-bottom:10px;line-height:1.6" data-i18n="lod_resumo_desc">
           Registe blocos de quartos por período (ex.: 20 quartos de 20/11 a 23/11). O Resumo é o que alimenta a proforma. Pode gerar uma rooming list detalhada, hóspede a hóspede, a partir de cada bloco — a rooming list é apenas um anexo de suporte e não substitui o Resumo.
+        </div>
+        <div id="lod-summary-readonly-note" style="display:none;font-size:9px;color:#887157;background:#faf7f3;border:1px solid #e0dbd5;border-radius:3px;padding:8px 10px;margin-bottom:10px" data-i18n="lod_resumo_readonly">
+          Resumo calculado automaticamente com base na Rooming List.
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:10px" id="lod-summary-table">
           <thead>
             <tr style="background:#231F20;color:#fff">
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Tipo Quarto</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Regime</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Check-in</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Check-out</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Noites</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Qtd. Quartos</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Preço/Noite</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">IVA</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Observações</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_tipo_quarto">Tipo Quarto</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_regime">Regime</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_checkin">Check-in</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_checkout">Check-out</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_noites">Noites</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_qtd_quartos">Qtd. Quartos</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_preco_noite">Preço/Noite</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_iva">IVA</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_observacoes">Observações</th>
               <th style="padding:5px 6px;width:24px"></th>
               <th style="padding:5px 6px;width:96px"></th>
             </tr>
           </thead>
           <tbody id="lod-summary-body"></tbody>
         </table>
-        <button class="add-btn" onclick="addSummaryRow()" style="margin-top:10px">+ Adicionar bloco</button>
+        <button id="lod-summary-add-btn" class="add-btn" onclick="addSummaryRow()" style="margin-top:10px" data-i18n="btn_add_bloco">+ Adicionar bloco</button>
       </div>
 
       <!-- ROOMING LIST -->
       <div id="lod-view-rooming" style="display:none">
-        <div style="font-size:9px;color:#888;margin-bottom:10px;line-height:1.6">
+        <div style="font-size:9px;color:#888;margin-bottom:10px;line-height:1.6" data-i18n="lod_rooming_desc">
           Lista detalhada por hóspede. O nome do hóspede é opcional — pode deixar por preencher e completar mais tarde.
         </div>
         <div id="lod-room-summary" style="display:flex;gap:18px;margin-bottom:10px;font-size:9px;color:#555"></div>
         <table style="width:100%;border-collapse:collapse;font-size:10px" id="lod-rooming-table">
           <thead>
             <tr style="background:#231F20;color:#fff">
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Ocupação</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Hóspede(s)</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Tipo Quarto</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Regime</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Check-in</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Check-out</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Noites</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Qtd. Quartos</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Preço/Noite</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">IVA</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Early Check-in</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Late Check-out</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px">Observações</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_ocupacao">Ocupação</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_hospedes">Hóspede(s)</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_tipo_quarto">Tipo Quarto</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_regime">Regime</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_checkin">Check-in</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_checkout">Check-out</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_noites">Noites</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_preco_noite">Preço/Noite</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_iva">IVA</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_eci">Early Check-in</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_lco">Late Check-out</th>
               <th style="padding:5px 6px;width:24px"></th>
             </tr>
           </thead>
           <tbody id="lod-rooming-body"></tbody>
         </table>
-        <button class="add-btn" onclick="addRoomingRow()" style="margin-top:10px">+ Adicionar hóspede</button>
+        <button class="add-btn" onclick="addRoomingRow()" style="margin-top:10px" data-i18n="btn_add_hospede">+ Adicionar hóspede</button>
       </div>
 
     </div>
 
     <div style="padding:12px 22px;border-top:1px solid #e0dbd5;display:flex;justify-content:flex-end;gap:10px">
-      <button onclick="printRoomingList()"
+      <button onclick="printRoomingList()" data-i18n="btn_imprimir_rooming"
         style="background:none;border:1px solid var(--bronze);border-radius:3px;padding:7px 16px;
         font-family:'Montserrat',sans-serif;font-size:10px;color:var(--bronze);cursor:pointer;
         font-weight:700;letter-spacing:.5px;text-transform:uppercase">
         🖨 Imprimir Rooming List
       </button>
-      <button onclick="applyLodgingToProforma()"
+      <button onclick="applyLodgingToProforma()" data-i18n="btn_actualizar_proforma"
         style="background:var(--bronze);color:#fff;border:none;border-radius:3px;padding:7px 16px;
         font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;
         letter-spacing:.5px;cursor:pointer;text-transform:uppercase">
         Atualizar Proforma com Alojamento
       </button>
       <div style="flex:1"></div>
-      <button onclick="closeLodgingModal()"
+      <button onclick="closeLodgingModal()" data-i18n="btn_fechar"
         style="background:none;border:1px solid #ddd;border-radius:3px;padding:7px 16px;
         font-family:'Montserrat',sans-serif;font-size:10px;color:#888;cursor:pointer">
         Fechar
       </button>
-      <button onclick="saveLodgingAndClose()"
+      <button onclick="saveLodgingAndClose()" data-i18n="btn_guardar_aloj"
         style="background:#231F20;color:#fff;border:none;border-radius:3px;padding:7px 18px;
         font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;
         letter-spacing:.5px;cursor:pointer;text-transform:uppercase">
@@ -666,13 +670,221 @@ tr.dragging{opacity:0.4}
 
 <script>
 // ============================================================
+// 0. SISTEMA DE TRADUÇÃO (I18N) — PT / EN
+// ============================================================
+let currentLang = 'pt';
+
+const I18N = {
+  pt: {
+    doc_title: 'FACTURA<br>PROFORMA',
+    lbl_data: 'Data',
+    lbl_rsv: 'RSV Nº',
+    lbl_data_evento: 'Data do Evento',
+    lbl_entidade: 'Entidade',
+    lbl_contacto: 'Contacto',
+    lbl_nif: 'NIF',
+    lbl_morada: 'Morada',
+    ph_entidade: 'Nome da empresa / entidade',
+    ph_contacto: 'Nome e telefone',
+    ph_nif: 'NIF do cliente',
+    ph_morada: 'Morada do cliente',
+    emit_sede: 'Sede: Av. Pedro de Castro Van-Dunen Loy, Bairro Morro Bento',
+    emit_edificio: 'Edifício Teixeira Duarte, nº 387 — Luanda',
+    emit_contribuinte: 'Contribuinte:',
+    th_desc: 'Descrição',
+    th_qtd: 'Quant.',
+    th_dias: 'Nº Dias',
+    th_vunit: 'V. Unit (AOA)',
+    th_txi: 'Tx Imp',
+    th_desconto: 'Desconto',
+    th_total_iva: 'Total c/ IVA',
+    btn_add_linha: '+ Adicionar linha',
+    btn_add_seccao: '+ Secção / Data',
+    th_incidencia: 'Incidência',
+    th_imp: 'Imp',
+    th_valor: 'Valor',
+    lbl_total_sem_desc: 'Total s/ Desconto',
+    lbl_desconto_total: 'Desconto Total',
+    lbl_total_aoa: 'Total AOA',
+    cambio_texto: 'O câmbio de referência do Hotel HCTA utilizado à data do envio da cotação é de (para 1 dólar americano):',
+    nota_final: 'Este documento é uma consulta e não garante a reserva do serviço. Proposta válida por 7 dias após a data de emissão.',
+    sec_condicoes: 'Condições Gerais',
+    cg_validade_t: 'Validade da Proposta',
+    cg_validade_p: 'A presente proposta tem uma validade de sete (7) dias e é apresentada a título de consulta, não existindo, nesta fase, qualquer pré-reserva de espaços ou alojamento na nossa unidade. A confirmação da reserva estará sempre sujeita à disponibilidade do hotel nas datas solicitadas.',
+    cg_confirmacao_t: 'Confirmação da Reserva e Pagamentos',
+    cg_confirmacao_p: 'A intenção de adjudicação deve ser formalizada por escrito. Para garantir a reserva dos espaços e serviços, é obrigatório um pagamento antecipado de 50% do valor total do evento. O valor remanescente deverá ser liquidado até 72h antes da realização do evento. O horário e o programa detalhado deverão ser enviados no mesmo prazo.',
+    cg_cancelamento_t: 'Política de Cancelamento (inclui alojamento)',
+    cg_cancelamento_p: 'Cancelamentos efectuados até 15 dias antes da data do evento não terão penalização. Cancelamentos entre 14 dias e 48 horas antes implicam uma taxa de 50% do valor total. Cancelamentos com menos de 48 horas conferem ao Hotel o direito de cobrar 100% do valor total. Estas condições aplicam-se igualmente a eventos solicitados com prazos inferiores a 15 dias.',
+    cg_alteracoes_t: 'Alterações de Última Hora',
+    cg_alteracoes_p: 'Alterações solicitadas no próprio dia do evento ou com menos de 24 horas de antecedência estão sujeitas a condições específicas a acordar com o Departamento de Eventos.',
+    cg_fornecimentos_t: 'Fornecimentos Externos',
+    cg_fornecimentos_p: 'A contratação de serviços externos ao Hotel requer autorização prévia e estará sujeita a uma taxa de serviço de 25%. Não é permitida a contratação de serviços de catering externos, sendo obrigatório que todos os serviços de alimentação e bebidas sejam providenciados exclusivamente pelo Hotel.',
+    cg_requisitos_t: 'Requisitos Especiais',
+    cg_requisitos_p: 'Caso existam participantes com deficiência motora ou necessidades especiais, solicitamos que esta informação nos seja comunicada atempadamente.',
+    cg_danos_t: 'Danos e Responsabilidades',
+    cg_danos_p: 'O cliente será responsável por quaisquer danos ou prejuízos causados nas instalações, equipamentos e espaços utilizados durante o evento.',
+    cg_material_t: 'Material e Equipamentos de Fornecedores Externos',
+    cg_material_p: 'Todos os materiais e equipamentos fornecidos por terceiros devem ser desmontados e retirados imediatamente após o evento. O Hotel reserva-se o direito de descartar qualquer material não retirado, podendo aplicar uma taxa adicional pela remoção.',
+    cg_residuos_t: 'Gestão de Resíduos',
+    cg_residuos_p: 'Qualquer lixo de grande volume gerado pelo evento deve ser removido pela organização. Caso contrário, o Hotel poderá aplicar uma taxa adicional pela sua remoção.',
+    cg_exclusao_t: 'Exclusão de Responsabilidade',
+    cg_exclusao_p: 'O Hotel não se responsabiliza por perdas, furtos ou danos a bens e materiais pertencentes a convidados ou terceiros nas instalações durante o evento.',
+    ib_retencoes_t: 'ℹ Informação para Retenções e Cativações',
+    ib_retencoes_1: 'Nos termos do Art.º 67.º da Lei n.º 26/20 (Código do Imposto Industrial), os Serviços de Hotelaria e Similares não estão sujeitos a retenção na fonte.',
+    ib_retencoes_2: 'As incidências sujeitas a retenção na fonte (6,5%) e/ou cativação de IVA (7% e/ou 14%) encontram-se devidamente identificadas na presente proforma, devendo quaisquer retenções e cativações ser calculadas exclusivamente sobre os respectivos valores de incidência.',
+    ib_retencoes_3: 'Sempre que seja efectuada retenção na fonte, deverá ser remetido ao Hotel o respectivo DAR (Documento de Arrecadação de Receitas).',
+    ib_retencoes_4: 'Sempre que o pagamento seja efectuado através do SIGFE ou outro sistema equivalente, deverá igualmente ser remetido o DLI, Ordem de Saque ou documento equivalente que evidencie os valores pagos, retidos e cativados.',
+    ib_publicas_t: '⚠ Nota Importante para Entidades Públicas',
+    ib_publicas_1: 'As retenções, cativações, liquidações e Ordens de Saque deverão ser processadas exclusivamente com base na versão mais recente da presente proforma.',
+    ib_publicas_2: 'Sempre que seja emitida uma nova proforma, por alteração de serviços, quantidades, datas, valores ou quaisquer outras condições, a mesma substitui integralmente todas as versões anteriormente emitidas.',
+    ib_publicas_3: 'Cada proforma dará origem à respectiva factura, pelo que os pagamentos, retenções e cativações deverão corresponder exactamente aos valores constantes da proforma que lhes deu origem.',
+    ib_publicas_4: 'A utilização de proformas desactualizadas poderá originar divergências contabilísticas e fiscais que impossibilitem o correcto reconhecimento dos valores pagos, retidos e/ou cativados.',
+    ib_publicas_5: 'Em caso de dúvida relativamente à versão válida, solicitar esclarecimento prévio junto do Departamento de Eventos.',
+    sec_bancarios: 'Dados Bancários',
+    sign_placeholder: 'Seleccionar responsável...',
+    bna_texto: 'Em conformidade com o Instrutivo N.º 01/2023, de 9 de Janeiro, do Banco Nacional de Angola (BNA), os pagamentos por transferência bancária, provenientes do exterior de Angola, obrigam ao preenchimento do campo 77B no formulário de transferência, o qual inclui o código referente à finalidade da operação. Para garantir que a transferência é bem-sucedida, deve solicitar ao seu banco o preenchimento deste campo com os seguintes códigos: Viagens trabalho: B01.01 — sector público; B01.02 — sector privado. Viagens para Turismo: B03.01. A não inclusão desta informação poderá implicar a não aceitação da operação pelo banco receptor, impossibilitando a validação da reserva.',
+    bank_beneficiario: 'Beneficiário', bank_banco: 'Banco', bank_iban: 'IBAN', bank_swift: 'Swift/BIC',
+    bank_conta: 'Conta', bank_nif: 'NIF', bank_despesas: 'Despesas', bank_despesas_val: 'A ordem do ordenante',
+    bank_title_aoa: 'Conta em AOA', bank_title_usd: 'Conta em USD', bank_title_eur: 'Conta em EUR',
+    tb_assistente: '← Assistente', tb_nova: '＋ Nova', tb_abrir: '📂 Abrir', tb_guardar: '💾 Guardar',
+    tb_alojamento: '🛏 Gerir Alojamento', tb_pdf: '🖨 PDF',
+    lod_title: '🛏 Gestão de Alojamento', lod_tab_resumo: 'Resumo', lod_tab_rooming: 'Rooming List',
+    lod_resumo_desc: 'Registe blocos de quartos por período (ex.: 20 quartos de 20/11 a 23/11). O Resumo é o que alimenta a proforma. Pode gerar uma rooming list detalhada, hóspede a hóspede, a partir de cada bloco — a rooming list é apenas um anexo de suporte e não substitui o Resumo.',
+    lod_resumo_readonly: 'Resumo calculado automaticamente com base na Rooming List.',
+    lod_rooming_desc: 'Lista detalhada por hóspede. O nome do hóspede é opcional — pode deixar por preencher e completar mais tarde.',
+    th_tipo_quarto: 'Tipo Quarto', th_regime: 'Regime', th_checkin: 'Check-in', th_checkout: 'Check-out',
+    th_noites: 'Noites', th_qtd_quartos: 'Qtd. Quartos', th_preco_noite: 'Preço/Noite', th_iva: 'IVA',
+    th_observacoes: 'Observações', th_ocupacao: 'Ocupação', th_hospedes: 'Hóspede(s)',
+    th_eci: 'Early Check-in', th_lco: 'Late Check-out',
+    btn_add_bloco: '+ Adicionar bloco', btn_add_hospede: '+ Adicionar hóspede', btn_gerar_rooming: 'Gerar Rooming',
+    btn_imprimir_rooming: '🖨 Imprimir Rooming List', btn_actualizar_proforma: 'Atualizar Proforma com Alojamento',
+    btn_fechar: 'Fechar', btn_guardar_aloj: 'Guardar Alojamento',
+    lod_ver_rooming: 'Ver Rooming List',
+    ph_opcional: 'Opcional', ph_opcional_2h: 'Opcional — 2º hóspede', ph_suplemento: 'Suplemento', ph_preco: 'Preço',
+    lbl_activar: 'Activar',
+    rl_title: 'Rooming List', rl_entidade: 'Entidade:', rl_rsv: 'RSV Nº:', rl_evento: 'Data do Evento:',
+    rl_emissao: 'Data de Emissão:', rl_periodo: 'Período da Estadia:',
+    rl_total_quartos: 'Total de Quartos', rl_total_hospedes: 'Total de Hóspedes', rl_total_nights: 'Total de Room Nights',
+    rl_th_ocupacao: 'Ocupação', rl_th_hospedes: 'Hóspede(s)', rl_th_tipo: 'Tipo Quarto', rl_th_regime: 'Regime',
+    rl_th_checkin: 'Check-in', rl_th_checkout: 'Check-out', rl_th_noites: 'Noites',
+    rl_th_eci: 'Early Check-in', rl_th_lco: 'Late Check-out',
+    val_title: 'Campos obrigatórios em falta', val_btn: 'OK, vou preencher'
+  },
+  en: {
+    doc_title: 'PROFORMA<br>INVOICE',
+    lbl_data: 'Date',
+    lbl_rsv: 'Booking Nº',
+    lbl_data_evento: 'Event Date',
+    lbl_entidade: 'Client',
+    lbl_contacto: 'Contact',
+    lbl_nif: 'Tax ID',
+    lbl_morada: 'Address',
+    ph_entidade: 'Company / client name',
+    ph_contacto: 'Name and phone number',
+    ph_nif: 'Client Tax ID',
+    ph_morada: 'Client address',
+    emit_sede: 'Head office: Av. Pedro de Castro Van-Dunen Loy, Bairro Morro Bento',
+    emit_edificio: 'Edifício Teixeira Duarte, nº 387 — Luanda',
+    emit_contribuinte: 'Tax ID:',
+    th_desc: 'Description',
+    th_qtd: 'Qty',
+    th_dias: 'Nº Days',
+    th_vunit: 'Unit Price (AOA)',
+    th_txi: 'Tax Rate',
+    th_desconto: 'Discount',
+    th_total_iva: 'Total incl. VAT',
+    btn_add_linha: '+ Add line',
+    btn_add_seccao: '+ Section / Date',
+    th_incidencia: 'Taxable Base',
+    th_imp: 'Tax',
+    th_valor: 'Amount',
+    lbl_total_sem_desc: 'Total before Discount',
+    lbl_desconto_total: 'Total Discount',
+    lbl_total_aoa: 'Total AOA',
+    cambio_texto: 'The HCTA Hotel reference exchange rate used on the date the quotation was sent is (per 1 US dollar):',
+    nota_final: 'This document is a quotation and does not guarantee the reservation of the service. Proposal valid for 7 days from the date of issue.',
+    sec_condicoes: 'General Terms & Conditions',
+    cg_validade_t: 'Validity of the Proposal',
+    cg_validade_p: 'This proposal is valid for seven (7) days and is provided for consultation purposes only; at this stage there is no pre-booking of spaces or accommodation at our property. Confirmation of the reservation is always subject to hotel availability on the requested dates.',
+    cg_confirmacao_t: 'Booking Confirmation and Payments',
+    cg_confirmacao_p: 'The intention to proceed must be confirmed in writing. To secure the reservation of spaces and services, an advance payment of 50% of the total event value is mandatory. The remaining balance must be settled up to 72 hours before the event. The schedule and detailed programme must be sent within the same timeframe.',
+    cg_cancelamento_t: 'Cancellation Policy (including accommodation)',
+    cg_cancelamento_p: 'Cancellations made up to 15 days before the event date will not incur any penalty. Cancellations made between 14 days and 48 hours before the event will incur a charge of 50% of the total value. Cancellations made less than 48 hours before entitle the Hotel to charge 100% of the total value. These conditions also apply to events booked with less than 15 days\' notice.',
+    cg_alteracoes_t: 'Last-Minute Changes',
+    cg_alteracoes_p: 'Changes requested on the day of the event or with less than 24 hours\' notice are subject to specific conditions to be agreed with the Events Department.',
+    cg_fornecimentos_t: 'External Suppliers',
+    cg_fornecimentos_p: 'The hiring of services external to the Hotel requires prior authorisation and is subject to a 25% service fee. External catering services are not permitted; all food and beverage services must be provided exclusively by the Hotel.',
+    cg_requisitos_t: 'Special Requirements',
+    cg_requisitos_p: 'If any attendees have reduced mobility or special needs, please inform us in advance.',
+    cg_danos_t: 'Damages and Liability',
+    cg_danos_p: 'The client will be liable for any damage or loss caused to the facilities, equipment and spaces used during the event.',
+    cg_material_t: 'Materials and Equipment from External Suppliers',
+    cg_material_p: 'All materials and equipment provided by third parties must be dismantled and removed immediately after the event. The Hotel reserves the right to dispose of any material not removed, and may apply an additional removal fee.',
+    cg_residuos_t: 'Waste Management',
+    cg_residuos_p: 'Any large volume of waste generated by the event must be removed by the organiser. Otherwise, the Hotel may apply an additional removal fee.',
+    cg_exclusao_t: 'Disclaimer of Liability',
+    cg_exclusao_p: 'The Hotel is not liable for loss, theft or damage to goods and materials belonging to guests or third parties on the premises during the event.',
+    ib_retencoes_t: 'ℹ Withholding and Retention Information',
+    ib_retencoes_1: 'Under Article 67 of Law No. 26/20 (Industrial Tax Code), Hotel and Similar Services are not subject to withholding tax at source.',
+    ib_retencoes_2: 'Taxable bases subject to withholding tax at source (6.5%) and/or VAT retention (7% and/or 14%) are duly identified in this proforma; any withholdings and retentions must be calculated exclusively on the respective taxable base amounts.',
+    ib_retencoes_3: 'Whenever a withholding tax is made, the corresponding DAR (Revenue Collection Document) must be sent to the Hotel.',
+    ib_retencoes_4: 'Whenever payment is made via SIGFE or an equivalent system, the DLI, Payment Order or equivalent document evidencing the amounts paid, withheld and retained must also be sent.',
+    ib_publicas_t: '⚠ Important Notice for Public Entities',
+    ib_publicas_1: 'Withholdings, retentions, settlements and Payment Orders must be processed exclusively on the basis of the most recent version of this proforma.',
+    ib_publicas_2: 'Whenever a new proforma is issued, due to a change in services, quantities, dates, amounts or any other conditions, it fully replaces all previously issued versions.',
+    ib_publicas_3: 'Each proforma will give rise to its corresponding invoice, so payments, withholdings and retentions must correspond exactly to the amounts stated in the proforma that gave rise to them.',
+    ib_publicas_4: 'The use of outdated proformas may cause accounting and tax discrepancies that prevent the correct recognition of amounts paid, withheld and/or retained.',
+    ib_publicas_5: 'In case of doubt regarding the valid version, please seek prior clarification from the Events Department.',
+    sec_bancarios: 'Banking Details',
+    sign_placeholder: 'Select person in charge...',
+    bna_texto: 'In accordance with Instructive No. 01/2023, of 9 January, of the National Bank of Angola (BNA), bank transfer payments originating from outside Angola require field 77B to be completed on the transfer form, which includes the code referring to the purpose of the transaction. To ensure the transfer is successful, please ask your bank to complete this field with the following codes: Business travel: B01.01 — public sector; B01.02 — private sector. Tourism travel: B03.01. Failure to include this information may result in the transaction being rejected by the receiving bank, preventing validation of the reservation.',
+    bank_beneficiario: 'Beneficiary', bank_banco: 'Bank', bank_iban: 'IBAN', bank_swift: 'Swift/BIC',
+    bank_conta: 'Account', bank_nif: 'Tax ID', bank_despesas: 'Charges', bank_despesas_val: 'Borne by the sender',
+    bank_title_aoa: 'AOA Account', bank_title_usd: 'USD Account', bank_title_eur: 'EUR Account',
+    tb_assistente: '← Assistant', tb_nova: '＋ New', tb_abrir: '📂 Open', tb_guardar: '💾 Save',
+    tb_alojamento: '🛏 Manage Accommodation', tb_pdf: '🖨 PDF',
+    lod_title: '🛏 Accommodation Management', lod_tab_resumo: 'Summary', lod_tab_rooming: 'Rooming List',
+    lod_resumo_desc: 'Record room blocks by period (e.g.: 20 rooms from 20/11 to 23/11). The Summary is what feeds the proforma. You can generate a detailed guest-by-guest rooming list from each block — the rooming list is only a supporting attachment and does not replace the Summary.',
+    lod_resumo_readonly: 'Summary calculated automatically from the Rooming List.',
+    lod_rooming_desc: 'Detailed list per guest. The guest name is optional — it can be left blank and filled in later.',
+    th_tipo_quarto: 'Room Type', th_regime: 'Board Basis', th_checkin: 'Check-in', th_checkout: 'Check-out',
+    th_noites: 'Nights', th_qtd_quartos: 'Nº Rooms', th_preco_noite: 'Price/Night', th_iva: 'VAT',
+    th_observacoes: 'Notes', th_ocupacao: 'Occupancy', th_hospedes: 'Guest(s)',
+    th_eci: 'Early Check-in', th_lco: 'Late Check-out',
+    btn_add_bloco: '+ Add block', btn_add_hospede: '+ Add guest', btn_gerar_rooming: 'Generate Rooming',
+    btn_imprimir_rooming: '🖨 Print Rooming List', btn_actualizar_proforma: 'Update Proforma with Accommodation',
+    btn_fechar: 'Close', btn_guardar_aloj: 'Save Accommodation',
+    lod_ver_rooming: 'See Rooming List',
+    ph_opcional: 'Optional', ph_opcional_2h: 'Optional — 2nd guest', ph_suplemento: 'Supplement', ph_preco: 'Price',
+    lbl_activar: 'Enable',
+    rl_title: 'Rooming List', rl_entidade: 'Client:', rl_rsv: 'Booking Nº:', rl_evento: 'Event Date:',
+    rl_emissao: 'Issue Date:', rl_periodo: 'Stay Period:',
+    rl_total_quartos: 'Total Rooms', rl_total_hospedes: 'Total Guests', rl_total_nights: 'Total Room Nights',
+    rl_th_ocupacao: 'Occupancy', rl_th_hospedes: 'Guest(s)', rl_th_tipo: 'Room Type', rl_th_regime: 'Board Basis',
+    rl_th_checkin: 'Check-in', rl_th_checkout: 'Check-out', rl_th_noites: 'Nights',
+    rl_th_eci: 'Early Check-in', rl_th_lco: 'Late Check-out',
+    val_title: 'Required fields missing', val_btn: 'OK, I will fill them in'
+  }
+};
+
+// T(key): devolve o texto traduzido para o idioma actual (fallback para PT se a key não existir)
+function T(key){
+  return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.pt[key]) || key;
+}
+
+// ============================================================
 // 1. CONSTANTES E DADOS
 // ============================================================
-const BANKING=[
-  {title:'Conta em AOA',rows:[['Beneficiário','Henda Hotelaria, Lda'],['Banco','Banco Caixa Geral Angola, S.A.'],['IBAN','AO06 0004 0000 1005 7242 1016 5'],['Swift/BIC','BCGAAOLU'],['Conta','10057242/10/001'],['NIF','5001094645'],['Despesas','A ordem do ordenante']]},
-  {title:'Conta em USD',rows:[['Beneficiário','Henda Hotelaria, Lda'],['Banco','Banco Caixa Geral Angola, S.A.'],['IBAN','AO06 0004 0000 1005 7242 1511 2'],['Swift/BIC','BCGAAOLU'],['Conta','10057242/15/001'],['NIF','5001094645'],['Despesas','A ordem do ordenante']]},
-  {title:'Conta em EUR',rows:[['Beneficiário','Henda Hotelaria, Lda'],['Banco','Banco Caixa Geral Angola, S.A.'],['IBAN','AO06 0004 0000 1005 7242 1520 9'],['Swift/BIC','BCGAAOLU'],['Conta','10057242/15/002'],['NIF','5001094645'],['Despesas','A ordem do ordenante']]}
-];
+// Dados bancários: os valores (IBAN, NIF, nomes das contas) são fixos; os títulos e
+// labels de cada linha são traduzidos dinamicamente através de T().
+function getBanking(){
+  return [
+    {title:T('bank_title_aoa'),rows:[[T('bank_beneficiario'),'Henda Hotelaria, Lda'],[T('bank_banco'),'Banco Caixa Geral Angola, S.A.'],[T('bank_iban'),'AO06 0004 0000 1005 7242 1016 5'],[T('bank_swift'),'BCGAAOLU'],[T('bank_conta'),'10057242/10/001'],[T('bank_nif'),'5001094645'],[T('bank_despesas'),T('bank_despesas_val')]]},
+    {title:T('bank_title_usd'),rows:[[T('bank_beneficiario'),'Henda Hotelaria, Lda'],[T('bank_banco'),'Banco Caixa Geral Angola, S.A.'],[T('bank_iban'),'AO06 0004 0000 1005 7242 1511 2'],[T('bank_swift'),'BCGAAOLU'],[T('bank_conta'),'10057242/15/001'],[T('bank_nif'),'5001094645'],[T('bank_despesas'),T('bank_despesas_val')]]},
+    {title:T('bank_title_eur'),rows:[[T('bank_beneficiario'),'Henda Hotelaria, Lda'],[T('bank_banco'),'Banco Caixa Geral Angola, S.A.'],[T('bank_iban'),'AO06 0004 0000 1005 7242 1520 9'],[T('bank_swift'),'BCGAAOLU'],[T('bank_conta'),'10057242/15/002'],[T('bank_nif'),'5001094645'],[T('bank_despesas'),T('bank_despesas_val')]]}
+  ];
+}
+
 let lid=0;
 let _loadedFilename = null; // tracks the filename of the currently loaded JSON
 const TAX_OPTS=[['0','0%'],['7','7%'],['14','14%']];
@@ -793,8 +1005,9 @@ function normalizeLodging(d){
 function normalizeRoomingRow(r){
   return Object.assign({
     occupancy:'Single', guest2:'',
-    eciOn:false, eciTime:'', eciPrice:'',
-    lcoOn:false, lcoTime:'', lcoPrice:''
+    eciOn:false, eciPrice:'',
+    lcoOn:false, lcoPrice:'',
+    occSupplement:''
   }, r);
 }
 
@@ -806,6 +1019,45 @@ function occupancyGuestCount(occupancy){
 // ============================================================
 // 2. FUNCOES UTILITARIAS
 // ============================================================
+
+// setLang(lang): muda o idioma activo e actualiza toda a UI de imediato
+function setLang(lang){
+  currentLang = (lang==='en') ? 'en' : 'pt';
+  refreshLang();
+}
+
+// refreshLang(): aplica o idioma actual a todos os textos fixos marcados com
+// data-i18n / data-i18n-html / data-i18n-placeholder, e re-renderiza os
+// componentes dinâmicos (banking, alojamento) que geram texto fixo via JS.
+// Nunca toca em conteúdo introduzido pelo utilizador (inputs de texto, textareas de descrição, etc.).
+function refreshLang(){
+  document.documentElement.setAttribute('lang', currentLang);
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    el.textContent = T(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{
+    el.innerHTML = T(el.getAttribute('data-i18n-html'));
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    el.setAttribute('placeholder', T(el.getAttribute('data-i18n-placeholder')));
+  });
+
+  // Realce visual do botão de idioma activo
+  const btnPt = document.getElementById('lang-pt');
+  const btnEn = document.getElementById('lang-en');
+  if(btnPt && btnEn){
+    btnPt.style.background = currentLang==='pt' ? 'var(--bronze)' : '';
+    btnPt.style.color = currentLang==='pt' ? '#fff' : '';
+    btnEn.style.background = currentLang==='en' ? 'var(--bronze)' : '';
+    btnEn.style.color = currentLang==='en' ? '#fff' : '';
+  }
+
+  // Componentes que geram HTML com texto fixo directamente em JS
+  if(document.getElementById('bank-grid')) renderBanking();
+  if(document.getElementById('lod-summary-body')) renderSummaryTable();
+  if(document.getElementById('lod-rooming-body')) renderRoomingTable();
+}
+
 function autoResize(el){
   el.style.height='auto';
   el.style.height=el.scrollHeight+'px';
@@ -826,7 +1078,7 @@ function toast(msg){
   setTimeout(()=>t.classList.remove('show'),2800);
 }
 function renderBanking(){
-  document.getElementById('bank-grid').innerHTML=BANKING.map(b=>'<div class="bb"><h4>'+(b.title)+'</h4>'+(b.rows.map(function(r){return '<div class="br"><span class="bkl">'+r[0]+'</span><span class="bkv">'+r[1]+'</span></div>';}).join(''))+'</div>').join('');
+  document.getElementById('bank-grid').innerHTML=getBanking().map(b=>'<div class="bb"><h4>'+(b.title)+'</h4>'+(b.rows.map(function(r){return '<div class="br"><span class="bkl">'+r[0]+'</span><span class="bkv">'+r[1]+'</span></div>';}).join(''))+'</div>').join('');
 }
 
 // ============================================================
@@ -1072,7 +1324,7 @@ function getData(){
     ev:document.getElementById('f-ev').value,ent:document.getElementById('f-ent').value,
     con:document.getElementById('f-con').value,nif:document.getElementById('f-nif').value,
     mor:document.getElementById('f-mor').value,cambio:document.getElementById('f-cambio').value,lines,
-    lodging:LODGING};
+    lodging:LODGING, lang:currentLang};
 }
 function getVersionSuffix(name){
   // Extract version number from filename, e.g. _v3 -> 3
@@ -1169,6 +1421,8 @@ function loadJSON(ev){
       });
       _loadedFilename = file.name.replace(/\.json$/i,'');
       LODGING = normalizeLodging(d.lodging);
+      currentLang = (d.lang==='en') ? 'en' : 'pt';
+      refreshLang();
       updatePageBreaks();toast('Proforma carregada com sucesso.');
     }catch(e){toast('Erro ao abrir ficheiro.');}
   };
@@ -1258,7 +1512,7 @@ function showValidationModal(fields){
   modal.id = 'val-modal';
   modal.style.cssText = '\n    position:fixed;top:0;left:0;right:0;bottom:0;\n    background:rgba(0,0,0,0.5);z-index:9999;\n    display:flex;align-items:center;justify-content:center';
 
-  modal.innerHTML = '\n    <div style="background:#fff;border-radius:4px;padding:28px 32px;max-width:380px;width:90%;\n      box-shadow:0 8px 32px rgba(0,0,0,0.2);font-family:\'Montserrat\',sans-serif">\n      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;\n        color:#c0392b;margin-bottom:12px">Campos obrigatórios em falta</div>\n      <ul style="padding-left:16px;margin-bottom:20px">\n        '+(fields.map(function(f){return '<li style="font-size:11px;color:#444;margin-bottom:5px">'+f+'</li>';}).join(''))+'\n      </ul>\n      <button onclick="document.getElementById(\'val-modal\').remove()"\n        style="background:#231F20;color:#fff;border:none;border-radius:3px;\n        padding:8px 20px;font-family:\'Montserrat\',sans-serif;font-size:10px;\n        font-weight:700;letter-spacing:1px;cursor:pointer;text-transform:uppercase">\n        OK, vou preencher\n      </button>\n    </div>';
+  modal.innerHTML = '\n    <div style="background:#fff;border-radius:4px;padding:28px 32px;max-width:380px;width:90%;\n      box-shadow:0 8px 32px rgba(0,0,0,0.2);font-family:\'Montserrat\',sans-serif">\n      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;\n        color:#c0392b;margin-bottom:12px">'+(T('val_title'))+'</div>\n      <ul style="padding-left:16px;margin-bottom:20px">\n        '+(fields.map(function(f){return '<li style="font-size:11px;color:#444;margin-bottom:5px">'+f+'</li>';}).join(''))+'\n      </ul>\n      <button onclick="document.getElementById(\'val-modal\').remove()"\n        style="background:#231F20;color:#fff;border:none;border-radius:3px;\n        padding:8px 20px;font-family:\'Montserrat\',sans-serif;font-size:10px;\n        font-weight:700;letter-spacing:1px;cursor:pointer;text-transform:uppercase">\n        '+(T('val_btn'))+'\n      </button>\n    </div>';
 
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
@@ -1424,6 +1678,39 @@ function updateSummaryField(id, field, value){
 
 function renderSummaryTable(){
   const body = document.getElementById('lod-summary-body');
+  const note = document.getElementById('lod-summary-readonly-note');
+  const addBtn = document.getElementById('lod-summary-add-btn');
+  const hasRooming = LODGING.roomingRows.length > 0;
+
+  if(hasRooming){
+    // Rooming List é a fonte real: o Resumo passa a ser um espelho agregado, em modo leitura,
+    // usando exactamente o mesmo agrupamento que alimenta a Proforma (groupRoomingForProforma).
+    note.style.display = 'block';
+    addBtn.style.display = 'none';
+
+    const groups = groupRoomingForProforma(LODGING.roomingRows);
+    body.innerHTML = groups.map(g => {
+      return '<tr>'
+        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px">'+(g.roomType)+'</td>'
+        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px">'+(g.regime)+'</td>'
+        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px">'+(fmtDatePT(g.checkin))+'</td>'
+        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px">'+(fmtDatePT(g.checkout))+'</td>'
+        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px;text-align:center;font-weight:600">'+(g.nights)+'</td>'
+        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px;text-align:center;font-weight:600">'+(g.qty)+'</td>'
+        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px;text-align:right">'+(fmtInput(g.unit))+'</td>'
+        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px">'+(g.tax=='6.5'?'6,5':g.tax)+'%</td>'
+        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px;color:#aaa;font-style:italic">'+(T('lod_ver_rooming'))+'</td>'
+        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px"></td>'
+        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px"></td>'
+        + '</tr>';
+    }).join('');
+    return;
+  }
+
+  // Sem Rooming List: Resumo continua totalmente editável, comportamento original.
+  note.style.display = 'none';
+  addBtn.style.display = '';
+
   body.innerHTML = LODGING.summaryRows.map(r => {
     const nights = calcNights(r.checkin, r.checkout);
     return '<tr id="lod-sum-'+(r.id)+'">'
@@ -1444,16 +1731,18 @@ function renderSummaryTable(){
 
 // ---- ROOMING LIST ----
 
-function addRoomingRow(d){
-  d = d || {guest:'',occupancy:'Single',guest2:'',roomType:'Standard',regime:'BB',checkin:'',checkout:'',qty:1,price:'',tax:'7',notes:'',eciOn:false,eciTime:'',eciPrice:'',lcoOn:false,lcoTime:'',lcoPrice:''};
+function addRoomingRow(d, skipSummarySync){
+  d = d || {guest:'',occupancy:'Single',guest2:'',roomType:'Standard',regime:'BB',checkin:'',checkout:'',qty:1,price:'',tax:'7',eciOn:false,eciPrice:'',lcoOn:false,lcoPrice:'',occSupplement:''};
   const id = ++_lodRid;
   LODGING.roomingRows.push(normalizeRoomingRow(Object.assign({id}, d)));
   renderRoomingTable();
+  if(!skipSummarySync) renderSummaryTable();
 }
 
 function delRoomingRow(id){
   LODGING.roomingRows = LODGING.roomingRows.filter(r => r.id !== id);
   renderRoomingTable();
+  renderSummaryTable();
 }
 
 function updateRoomingField(id, field, value){
@@ -1468,6 +1757,11 @@ function updateRoomingField(id, field, value){
   if(field==='occupancy' || field==='eciOn' || field==='lcoOn' || field==='qty'){
     renderRoomingTable();
   }
+  // O Resumo é um espelho agregado da Rooming List: qualquer alteração que afecte
+  // o agrupamento (tipo, regime, datas, preço, IVA) tem de se reflectir de imediato.
+  if(field==='roomType' || field==='regime' || field==='checkin' || field==='checkout' || field==='price' || field==='tax' || field==='qty'){
+    renderSummaryTable();
+  }
 }
 
 function occupancySelFor(id, value){
@@ -1476,26 +1770,32 @@ function occupancySelFor(id, value){
     + '</select>';
 }
 
+// Suplemento manual de ocupação: só se aplica a Duplo/Twin. Single não tem suplemento por defeito.
+function occupancySupplementCellFor(r){
+  if(occupancyGuestCount(r.occupancy)!==2) return '';
+  return '<div style="margin-top:2px">'
+    + '<input type="text" value="'+(r.occSupplement||'')+'" placeholder="'+(T('ph_suplemento'))+' '+(r.occupancy)+'" style="width:100%;border:1px solid #e0dbd5;font-size:8px;padding:1px;text-align:right" onchange="updateRoomingField('+(r.id)+',\'occSupplement\',this.value)">'
+    + '</div>';
+}
+
 function guestFieldsFor(r){
-  const g1 = '<input type="text" value="'+(r.guest||'')+'" placeholder="Opcional" style="width:100%;border:none;font-size:9px;margin-bottom:2px" onchange="updateRoomingField('+(r.id)+',\'guest\',this.value)">';
+  const g1 = '<input type="text" value="'+(r.guest||'')+'" placeholder="'+(T('ph_opcional'))+'" style="width:100%;border:none;font-size:9px;margin-bottom:2px" onchange="updateRoomingField('+(r.id)+',\'guest\',this.value)">';
   if(occupancyGuestCount(r.occupancy)!==2) return g1;
-  const g2 = '<input type="text" value="'+(r.guest2||'')+'" placeholder="Opcional — 2º hóspede" style="width:100%;border:none;font-size:9px" onchange="updateRoomingField('+(r.id)+',\'guest2\',this.value)">';
+  const g2 = '<input type="text" value="'+(r.guest2||'')+'" placeholder="'+(T('ph_opcional_2h'))+'" style="width:100%;border:none;font-size:9px" onchange="updateRoomingField('+(r.id)+',\'guest2\',this.value)">';
   return g1 + g2;
 }
 
 function earlyLateCellFor(r, kind){
   // kind: 'eci' (Early Check-in) ou 'lco' (Late Check-out)
   const onField    = kind+'On';
-  const timeField  = kind+'Time';
   const priceField = kind+'Price';
   const on = !!r[kind+'On'];
   let html = '<label style="display:flex;align-items:center;gap:4px;font-size:8px;color:#555;white-space:nowrap">'
-    + '<input type="checkbox" '+(on?'checked':'')+' onchange="updateRoomingField('+(r.id)+',\''+(onField)+'\',this.checked)"> Activar'
+    + '<input type="checkbox" '+(on?'checked':'')+' onchange="updateRoomingField('+(r.id)+',\''+(onField)+'\',this.checked)"> '+(T('lbl_activar'))
     + '</label>';
   if(on){
     html += '<div style="display:flex;gap:3px;margin-top:2px">'
-      + '<input type="time" value="'+(r[timeField]||'')+'" style="width:62px;border:1px solid #e0dbd5;font-size:8px;padding:1px" onchange="updateRoomingField('+(r.id)+',\''+(timeField)+'\',this.value)">'
-      + '<input type="text" value="'+(r[priceField]||'')+'" placeholder="Preço" style="width:56px;border:1px solid #e0dbd5;font-size:8px;padding:1px;text-align:right" onchange="updateRoomingField('+(r.id)+',\''+(priceField)+'\',this.value)">'
+      + '<input type="text" value="'+(r[priceField]||'')+'" placeholder="'+(T('ph_preco'))+'" style="width:70px;border:1px solid #e0dbd5;font-size:8px;padding:1px;text-align:right" onchange="updateRoomingField('+(r.id)+',\''+(priceField)+'\',this.value)">'
       + '</div>';
   }
   return html;
@@ -1506,19 +1806,17 @@ function renderRoomingTable(){
   body.innerHTML = LODGING.roomingRows.map(r => {
     const nights = calcNights(r.checkin, r.checkout);
     return '<tr id="lod-room-'+(r.id)+'">'
-      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+occupancySelFor(r.id, r.occupancy)+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+occupancySelFor(r.id, r.occupancy)+occupancySupplementCellFor(r)+'</td>'
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+guestFieldsFor(r)+'</td>'
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+roomTypeSelFor('rooming',r.id,r.roomType)+'</td>'
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+regimeSelFor('rooming',r.id,r.regime)+'</td>'
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px"><input type="date" value="'+(r.checkin||'')+'" style="width:100%;border:none;font-size:9px" onchange="updateRoomingField('+(r.id)+',\'checkin\',this.value)"></td>'
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px"><input type="date" value="'+(r.checkout||'')+'" style="width:100%;border:none;font-size:9px" onchange="updateRoomingField('+(r.id)+',\'checkout\',this.value)"></td>'
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px;text-align:center;font-weight:600" id="lod-room-nights-'+(r.id)+'">'+(nights)+'</td>'
-      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px"><input type="text" value="'+(r.qty||'')+'" style="width:100%;border:none;font-size:9px;text-align:center" onchange="updateRoomingField('+(r.id)+',\'qty\',this.value)"></td>'
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px"><input type="text" value="'+(r.price||'')+'" placeholder="0,00" style="width:100%;border:none;font-size:9px;text-align:right" onchange="updateRoomingField('+(r.id)+',\'price\',this.value)"></td>'
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+taxSelForLodging('rooming',r.id,r.tax)+'</td>'
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+earlyLateCellFor(r,'eci')+'</td>'
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+earlyLateCellFor(r,'lco')+'</td>'
-      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px"><input type="text" value="'+(r.notes||'')+'" style="width:100%;border:none;font-size:9px" onchange="updateRoomingField('+(r.id)+',\'notes\',this.value)"></td>'
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px;text-align:center"><button class="del-btn" onclick="delRoomingRow('+(r.id)+')">×</button></td>'
       + '</tr>';
   }).join('');
@@ -1544,9 +1842,9 @@ function renderRoomingSummary(){
   if(!el) return;
   const t = getRoomingTotals(LODGING.roomingRows);
   el.innerHTML =
-    '<div><b style="color:#231F20">Total de Quartos:</b> '+(t.totalRooms)+'</div>'
-    + '<div><b style="color:#231F20">Total de Hóspedes:</b> '+(t.totalGuests)+'</div>'
-    + '<div><b style="color:#231F20">Total de Room Nights:</b> '+(t.totalRoomNights)+'</div>';
+    '<div><b style="color:#231F20">'+(T('rl_total_quartos'))+':</b> '+(t.totalRooms)+'</div>'
+    + '<div><b style="color:#231F20">'+(T('rl_total_hospedes'))+':</b> '+(t.totalGuests)+'</div>'
+    + '<div><b style="color:#231F20">'+(T('rl_total_nights'))+':</b> '+(t.totalRoomNights)+'</div>';
 }
 
 // ---- SELECTS ligados a uma linha específica (resumo ou rooming) ----
@@ -1597,14 +1895,12 @@ function convertSummaryToRooming(id){
       qty:1,
       price:row.price,
       tax:row.tax,
-      notes:row.notes,
       eciOn:false,
-      eciTime:'',
       eciPrice:'',
       lcoOn:false,
-      lcoTime:'',
-      lcoPrice:''
-    });
+      lcoPrice:'',
+      occSupplement:''
+    }, true);
     generated++;
   }
 
@@ -1612,6 +1908,7 @@ function convertSummaryToRooming(id){
     toast('Aviso: geradas '+generated+' de '+qty+' linhas esperadas.');
   }
 
+  renderSummaryTable();
   switchLodgingMode('rooming');
   toast(qty+' quarto(s) adicionados à rooming list, todos com ocupação Single.');
 }
@@ -1632,12 +1929,13 @@ function fmtDatePT(iso){
 }
 
 function applyLodgingToProforma(){
-  const rows = LODGING.summaryRows;
-  if(!rows.length){ toast('Não há blocos no Resumo de Alojamento.'); return; }
+  const hasRooming = LODGING.roomingRows.length > 0;
+  const hasSummary = LODGING.summaryRows.length > 0;
+  if(!hasRooming && !hasSummary){ toast('Não há dados de alojamento (Resumo ou Rooming List).'); return; }
 
   const tbody = document.getElementById('lbody');
 
-  // Remove linhas e secção de alojamento geradas anteriormente, para evitar duplicar
+  // Remove linhas e secções de alojamento geradas anteriormente, para evitar duplicar
   tbody.querySelectorAll('[data-lodging-gen="1"]').forEach(el => el.remove());
 
   // Cria a secção "ALOJAMENTO"
@@ -1645,17 +1943,34 @@ function applyLodgingToProforma(){
   const secTr = tbody.lastElementChild;
   secTr.setAttribute('data-lodging-gen','1');
 
-  // Gera uma linha normal da proforma por cada bloco do Resumo
-  rows.forEach(r => {
-    const nights = calcNights(r.checkin, r.checkout);
-    const qty = parseFloat(r.qty) || 0;
-    const unit = parseFloat((''+(r.price||'')).replace(/\s/g,'').replace(/\./g,'').replace(',','.')) || 0;
-    const desc = 'Alojamento — '+(qty)+' Quartos '+(r.roomType)+' | Regime '+(r.regime)+' | '+(fmtDatePT(r.checkin))+' a '+(fmtDatePT(r.checkout));
+  // Fonte de dados: se existir Rooming List preenchida, é ela que alimenta a Proforma
+  // (reflecte qualquer alteração feita directamente na rooming list). Só na ausência
+  // total de rooming list se recorre aos blocos do Resumo.
+  const groups = hasRooming ? groupRoomingForProforma(LODGING.roomingRows) : groupSummaryForProforma(LODGING.summaryRows);
 
-    addLine({desc:desc, qty:qty, days:nights, unit:unit, tax:r.tax, disc:''});
+  groups.forEach(g => {
+    const roomLabel = g.qty===1 ? 'Quarto' : 'Quartos';
+    const desc = 'Alojamento — '+(g.qty)+' '+(roomLabel)+' '+(g.roomType)+' | Regime '+(g.regime)+' | '+(fmtDatePT(g.checkin))+' a '+(fmtDatePT(g.checkout));
+
+    addLine({desc:desc, qty:g.qty, days:g.nights, unit:g.unit, tax:g.tax, disc:''});
     const lineTr = tbody.lastElementChild;
     lineTr.setAttribute('data-lodging-gen','1');
   });
+
+  // Suplementos manuais definidos na Rooming List (Early Check-in, Late Check-out,
+  // Suplemento Ocupação Duplo/Twin) — agrupados por tipo + valor unitário.
+  const supplementGroups = collectLodgingSupplements(LODGING.roomingRows);
+  if(supplementGroups.length){
+    addSection('SUPLEMENTOS ALOJAMENTO');
+    const supSecTr = tbody.lastElementChild;
+    supSecTr.setAttribute('data-lodging-gen','1');
+
+    supplementGroups.forEach(g => {
+      addLine({desc:g.desc, qty:g.qty, days:1, unit:g.unit, tax:g.tax, disc:''});
+      const lineTr = tbody.lastElementChild;
+      lineTr.setAttribute('data-lodging-gen','1');
+    });
+  }
 
   renum();
   calcTot();
@@ -1663,10 +1978,94 @@ function applyLodgingToProforma(){
   toast('Proforma actualizada com o alojamento.');
 }
 
+// Converte um preço em texto (ex.: "45 000,00" ou "45000") para número.
+function parseLodgingPrice(raw){
+  return parseFloat((''+(raw||'')).replace(/\s/g,'').replace(/\./g,'').replace(',','.')) || 0;
+}
+
+// Agrupa a Rooming List por tipo de quarto, regime, check-in, check-out, preço/noite e IVA.
+// Cada grupo torna-se uma linha na Proforma, com Qtd = número de quartos do grupo.
+function groupRoomingForProforma(roomingRows){
+  const groups = {};
+  const order = [];
+
+  roomingRows.forEach(r => {
+    const unit = parseLodgingPrice(r.price);
+    const nights = calcNights(r.checkin, r.checkout);
+    const qty = parseFloat(r.qty) || 1; // cada linha de rooming representa normalmente 1 quarto
+    const key = [r.roomType, r.regime, r.checkin, r.checkout, unit, r.tax].join('|');
+
+    if(!groups[key]){
+      groups[key] = {
+        roomType: r.roomType, regime: r.regime,
+        checkin: r.checkin, checkout: r.checkout,
+        unit: unit, tax: r.tax, nights: nights,
+        qty: 0
+      };
+      order.push(key);
+    }
+    groups[key].qty += qty;
+  });
+
+  return order.map(k => groups[k]);
+}
+
+// Agrupa o Resumo (usado apenas quando não existe Rooming List preenchida).
+function groupSummaryForProforma(summaryRows){
+  const groups = {};
+  const order = [];
+
+  summaryRows.forEach(r => {
+    const unit = parseLodgingPrice(r.price);
+    const nights = calcNights(r.checkin, r.checkout);
+    const qty = parseFloat(r.qty) || 0;
+    const key = [r.roomType, r.regime, r.checkin, r.checkout, unit, r.tax].join('|');
+
+    if(!groups[key]){
+      groups[key] = {
+        roomType: r.roomType, regime: r.regime,
+        checkin: r.checkin, checkout: r.checkout,
+        unit: unit, tax: r.tax, nights: nights,
+        qty: 0
+      };
+      order.push(key);
+    }
+    groups[key].qty += qty;
+  });
+
+  return order.map(k => groups[k]);
+}
+
+// Percorre a Rooming List e agrupa os suplementos manuais (Early Check-in, Late Check-out,
+// Suplemento Ocupação Duplo, Suplemento Ocupação Twin) por descrição + valor unitário,
+// somando as quantidades. O valor é sempre o introduzido manualmente pelo utilizador.
+function collectLodgingSupplements(roomingRows){
+  const groups = {}; // key: "desc|unit|tax" -> {desc, unit, tax, qty}
+
+  function addToGroup(desc, priceRaw, tax){
+    const unit = parseFloat((''+(priceRaw||'')).replace(/\s/g,'').replace(/\./g,'').replace(',','.')) || 0;
+    if(unit <= 0) return; // suplemento sem valor preenchido não gera linha
+    const key = desc+'|'+unit+'|'+tax;
+    if(!groups[key]) groups[key] = { desc, unit, tax, qty:0 };
+    groups[key].qty += 1;
+  }
+
+  roomingRows.forEach(r => {
+    if(r.eciOn) addToGroup('Early Check-in', r.eciPrice, r.tax);
+    if(r.lcoOn) addToGroup('Late Check-out', r.lcoPrice, r.tax);
+    if(occupancyGuestCount(r.occupancy)===2 && r.occSupplement){
+      const label = 'Suplemento Ocupação '+(r.occupancy);
+      addToGroup(label, r.occSupplement, r.tax);
+    }
+  });
+
+  return Object.keys(groups).map(k => groups[k]);
+}
+
 // ---- Imprimir Rooming List (documento separado, anexo) ----
 
 function printRoomingList(){
-  if(!LODGING.roomingRows.length){ toast('Não há linhas na Rooming List.'); return; }
+  if(!LODGING.roomingRows.length){ toast(currentLang==='en' ? 'There are no rows in the Rooming List.' : 'Não há linhas na Rooming List.'); return; }
 
   const rows = LODGING.roomingRows;
   const ent = document.getElementById('f-ent').value || '—';
@@ -1688,8 +2087,8 @@ function printRoomingList(){
     const guests = occupancyGuestCount(r.occupancy)===2
       ? [r.guest||'—', r.guest2||'—'].join('<br>')
       : (r.guest||'—');
-    const eci = r.eciOn ? ((r.eciTime||'—')+' · '+(r.eciPrice?fmtInput(parseFloat((''+r.eciPrice).replace(',','.'))||0):'—')) : '—';
-    const lco = r.lcoOn ? ((r.lcoTime||'—')+' · '+(r.lcoPrice?fmtInput(parseFloat((''+r.lcoPrice).replace(',','.'))||0):'—')) : '—';
+    const eci = r.eciOn ? '<span class="rl-yes">✓</span>' : '<span class="rl-no">✗</span>';
+    const lco = r.lcoOn ? '<span class="rl-yes">✓</span>' : '<span class="rl-no">✗</span>';
     return '<tr>'
       + '<td>'+(r.occupancy||'Single')+'</td>'
       + '<td>'+(guests)+'</td>'
@@ -1698,14 +2097,13 @@ function printRoomingList(){
       + '<td>'+(fmtDatePT(r.checkin))+'</td>'
       + '<td>'+(fmtDatePT(r.checkout))+'</td>'
       + '<td style="text-align:center">'+(nights)+'</td>'
-      + '<td>'+(eci)+'</td>'
-      + '<td>'+(lco)+'</td>'
-      + '<td>'+(r.notes||'')+'</td>'
+      + '<td style="text-align:center">'+(eci)+'</td>'
+      + '<td style="text-align:center">'+(lco)+'</td>'
       + '</tr>';
   }).join('');
 
-  const html = '<!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8">'
-    + '<title>Rooming List</title>'
+  const html = '<!DOCTYPE html><html lang="'+(currentLang)+'"><head><meta charset="UTF-8">'
+    + '<title>'+(T('rl_title'))+'</title>'
     + '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">'
     + '<style>'
     + '*{box-sizing:border-box;margin:0;padding:0}'
@@ -1724,28 +2122,30 @@ function printRoomingList(){
     + 'th{background:#231F20;color:#fff;padding:6px 6px;text-align:left;font-size:8.5px;text-transform:uppercase;letter-spacing:.4px}'
     + 'td{padding:5px 6px;border-bottom:1px solid #e0dbd5;vertical-align:top}'
     + 'tr:nth-child(even) td{background:#f6f4f1}'
+    + '.rl-yes{color:#2e7d32;font-weight:700;font-size:12px}'
+    + '.rl-no{color:#b0b0b0;font-weight:700;font-size:12px}'
     + '@media print{ body{padding:0} @page{margin:12mm;size:A4 portrait} }'
     + '</style></head><body>'
     + '<div class="rl-header">'
     + '<div>'
     + '<img src="./FOTOS/Imagem1.png" alt="HCTA" onerror="this.style.display=\'none\'">'
-    + '<div class="rl-title">Rooming List</div>'
+    + '<div class="rl-title">'+(T('rl_title'))+'</div>'
     + '<div class="rl-meta">'
-    + '<div><b>Entidade:</b> '+(ent)+'</div>'
-    + '<div><b>RSV Nº:</b> '+(rsv)+'</div>'
-    + '<div><b>Data do Evento:</b> '+(evFmt)+'</div>'
-    + '<div><b>Data de Emissão:</b> '+(issuedFmt)+'</div>'
-    + '<div><b>Período da Estadia:</b> '+(periodoIni)+' a '+(periodoFim)+'</div>'
+    + '<div><b>'+(T('rl_entidade'))+'</b> '+(ent)+'</div>'
+    + '<div><b>'+(T('rl_rsv'))+'</b> '+(rsv)+'</div>'
+    + '<div><b>'+(T('rl_evento'))+'</b> '+(evFmt)+'</div>'
+    + '<div><b>'+(T('rl_emissao'))+'</b> '+(issuedFmt)+'</div>'
+    + '<div><b>'+(T('rl_periodo'))+'</b> '+(periodoIni)+' '+(currentLang==='en'?'to':'a')+' '+(periodoFim)+'</div>'
     + '</div>'
     + '</div>'
     + '<div class="rl-summary">'
-    + '<div class="rl-sum-item">Total de Quartos<span class="rl-sum-val">'+(totals.totalRooms)+'</span></div>'
-    + '<div class="rl-sum-item">Total de Hóspedes<span class="rl-sum-val">'+(totals.totalGuests)+'</span></div>'
-    + '<div class="rl-sum-item">Total de Room Nights<span class="rl-sum-val">'+(totals.totalRoomNights)+'</span></div>'
+    + '<div class="rl-sum-item">'+(T('rl_total_quartos'))+'<span class="rl-sum-val">'+(totals.totalRooms)+'</span></div>'
+    + '<div class="rl-sum-item">'+(T('rl_total_hospedes'))+'<span class="rl-sum-val">'+(totals.totalGuests)+'</span></div>'
+    + '<div class="rl-sum-item">'+(T('rl_total_nights'))+'<span class="rl-sum-val">'+(totals.totalRoomNights)+'</span></div>'
     + '</div>'
     + '</div>'
     + '<table><thead><tr>'
-    + '<th>Ocupação</th><th>Hóspede(s)</th><th>Tipo Quarto</th><th>Regime</th><th>Check-in</th><th>Check-out</th><th>Noites</th><th>Early Check-in</th><th>Late Check-out</th><th>Observações</th>'
+    + '<th>'+(T('rl_th_ocupacao'))+'</th><th>'+(T('rl_th_hospedes'))+'</th><th>'+(T('rl_th_tipo'))+'</th><th>'+(T('rl_th_regime'))+'</th><th>'+(T('rl_th_checkin'))+'</th><th>'+(T('rl_th_checkout'))+'</th><th>'+(T('rl_th_noites'))+'</th><th>'+(T('rl_th_eci'))+'</th><th>'+(T('rl_th_lco'))+'</th>'
     + '</tr></thead><tbody>'+(rowsHtml)+'</tbody></table>'
     + '</body></html>';
 
@@ -1760,7 +2160,7 @@ function printRoomingList(){
 document.addEventListener('DOMContentLoaded', function(){
 
   document.getElementById('f-data').value=new Date().toISOString().split('T')[0];
-  renderBanking();
+  refreshLang();
   addLine();addLine();addLine();
   updatePageBreaks();
 });
