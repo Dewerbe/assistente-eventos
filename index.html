@@ -155,6 +155,29 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
 .btn-xs:hover{color:var(--red)}
 .btn-add-sm{font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:5px 10px;border-radius:2px;cursor:pointer;font-family:'Montserrat',sans-serif;background:var(--bronze-ll);color:var(--bronze);border:1px dashed var(--bronze-l)}
 .btn-add-sm:hover{background:#d9cec3}
+/* Modal "Escolher Sala" — reutiliza .choices-cat / .choices-grid / .choice-chip já existentes */
+.sala-choose-btn{width:100%;display:flex;align-items:center;gap:8px;border:1px solid var(--gl);border-radius:2px;padding:6px 9px;background:#fff;font-family:'Montserrat',sans-serif;font-size:13px;color:var(--black);cursor:pointer;text-align:left}
+.sala-choose-btn:hover{border-color:var(--bronze-l)}
+.sala-choose-icon{font-size:13px;flex-shrink:0}
+.sala-choose-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sala-choose-arrow{font-size:10px;color:var(--gm);flex-shrink:0}
+.sala-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:8100;display:none;align-items:center;justify-content:center}
+.sala-modal-overlay.open{display:flex}
+.sala-modal{background:#fff;border-radius:4px;width:560px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.25);overflow:hidden}
+.sala-modal-hdr{background:var(--black);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sala-modal-title{font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--bronze)}
+.sala-modal-close{background:none;border:none;color:#999;font-size:18px;cursor:pointer;padding:0 4px;line-height:1}
+.sala-modal-close:hover{color:#fff}
+.sala-modal-search{padding:12px 16px;border-bottom:1px solid var(--gl);flex-shrink:0}
+.sala-modal-search input{width:100%;border:1px solid var(--gl);border-radius:2px;padding:7px 10px;font-family:'Montserrat',sans-serif;font-size:12px;color:var(--black);outline:none}
+.sala-modal-search input:focus{border-color:var(--bronze)}
+.sala-modal-body{padding:14px 16px;overflow-y:auto;flex:1}
+.sala-modal-footer{padding:10px 16px;border-top:1px solid var(--gl);display:flex;align-items:center;justify-content:flex-end;flex-shrink:0;background:var(--gbg)}
+.sala-modal-empty{font-size:12px;color:var(--gm);text-align:center;padding:20px 0}
+.sala-manual-row{display:flex;gap:6px;margin-top:4px}
+.sala-manual-row input{flex:1;border:1px solid var(--gl);border-radius:2px;padding:6px 9px;font-family:'Montserrat',sans-serif;font-size:12px;outline:none}
+.sala-manual-row input:focus{border-color:var(--bronze)}
+.sala-manual-row button{white-space:nowrap}
 .btn-primary{background:var(--black);color:#fff;padding:8px 18px;font-size:10px;font-weight:700;font-family:'Montserrat',sans-serif;border:none;border-radius:3px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase}
 .btn-primary:hover{background:#444}
 .btn-sec{background:#fff;color:var(--gd);padding:7px 14px;font-size:10px;font-weight:700;font-family:'Montserrat',sans-serif;border:1px solid var(--gl);border-radius:3px;cursor:pointer;text-transform:uppercase}
@@ -598,6 +621,19 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
   </div>
 </div>
 
+<div class="sala-modal-overlay" id="sala-overlay" onclick="if(event.target===this)closeSalaModal()">
+  <div class="sala-modal">
+    <div class="sala-modal-hdr">
+      <span class="sala-modal-title">Escolher Sala</span>
+      <button class="sala-modal-close" onclick="closeSalaModal()">×</button>
+    </div>
+    <div class="sala-modal-search">
+      <input type="text" id="sala-modal-search-input" placeholder="Pesquisar sala..." oninput="renderSalaModalBody(this.value)">
+    </div>
+    <div class="sala-modal-body" id="sala-modal-body"></div>
+  </div>
+</div>
+
 
 <div id="os-validation-modal">
   <div class="osvm-box">
@@ -635,6 +671,17 @@ const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agos
 const LAYOUTS=['—','Plateia','Escola','Mesa U','Cabaret','Banquete','Cocktail','Sala VIP'];
 const SALAS=['Cabinda I','Cabinda II','Cabinda III','Cabinda IV','Talatona I','Talatona II','Talatona III','Talatona IV','Talatona I-II-III','Talatona II-III','CCTA Auditório','CCTA 1º Piso / Sala 2','CCTA Lobby','Entrada Lobby CCTA','Pátio Interior','Piscina','Restaurante HCTA','Restaurante CCTA','Girassol I','Girassol II','Girassol III','Tenda'];
 const SALA_ORDER=['Cabinda I','Cabinda II','Cabinda III','Cabinda IV','Talatona I','Talatona II','Talatona III','Talatona IV','Talatona I-II-III','Talatona II-III','CCTA Auditório','CCTA 1º Piso / Sala 2','CCTA Lobby','Entrada Lobby CCTA','Pátio Interior','Piscina','Restaurante HCTA','Restaurante CCTA','Girassol I','Girassol II','Girassol III','Tenda'];
+// Salas organizadas por categoria, usadas no modal "Escolher Sala" da Ordem de Serviço.
+// Lista independente de SALAS/SALA_ORDER (que continuam a servir o Mapa Semanal) para não
+// alterar nenhum outro comportamento existente.
+const SALAS_CATEGORIZADAS=[
+  {cat:'Cabinda', salas:['Cabinda I','Cabinda II','Cabinda III','Cabinda IV']},
+  {cat:'Talatona', salas:['Talatona I','Talatona II','Talatona III','Talatona IV','Talatona I-II-III','Talatona II-III','Talatona I-II-III-IV']},
+  {cat:'Girassol', salas:['Girassol I','Girassol II','Girassol III','Girassol I-II-III','Girassol I-II-III-IV']},
+  {cat:'CCTA', salas:['CCTA Auditório','CCTA Piso 0','CCTA 1º Piso','CCTA Lobby 1º Piso','CCTA Lobby 2º Piso','CCTA Piso 0 Entrada','CCTA Piso 0 Área Serviço','CCTA Piso 0 Sala VIP','CCTA Piso 0 Sala Imprensa','CCTA Piso 0 Escritórios','CCTA Piso 1 Sala 1','CCTA Piso 1 Sala 2','CCTA Piso 1 Sala 3','CCTA Piso 1 Sala 4','CCTA Piso 1 Sala 5','CCTA Piso 1 Sala 6','CCTA Piso 1 Sala 7','CCTA Piso 1 Sala 8','CCTA Piso 1 Sala 9','CCTA Piso 1 Restaurante','CCTA Piso 1 Bar']},
+  {cat:'Áreas Exteriores', salas:['Pátio Interior','Piscina','Tenda','Jardim','Praça de Alimentação']},
+  {cat:'Restaurantes', salas:['Restaurante HCTA','Restaurante CCTA']}
+];
 const ESTADO_CLS={'Confirmado':'conf','1ª Opção':'opt1','2ª Opção':'opt2','Consulta':'cons'};
 
 // Tipos de comunicação
@@ -1666,7 +1713,93 @@ function printMapa(){
 // ══════════════════════════════════════════════════════
 // 7. ORDEM DE SERVIÇO
 // ══════════════════════════════════════════════════════
-function salaSelectHTML(selVal){ return'<select class="rm-input">'+SALAS.map(function(s){return'<option value="'+s+'"'+(s===selVal?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';}
+// Gera todas as opções de sala (todas as categorias) para o <select> real que continua
+// a guardar o valor. Inclui também o valor actual mesmo que não conste na lista (ex.: sala
+// escrita manualmente via "Outra / Manual", ou sala antiga vinda de um JSON já gravado).
+function salaAllOptionsFlat(selVal){
+  var flat=[];
+  SALAS_CATEGORIZADAS.forEach(function(c){ c.salas.forEach(function(s){ flat.push(s); }); });
+  if(selVal && flat.indexOf(selVal)===-1) flat.push(selVal);
+  return flat;
+}
+
+// select real (escondido) que continua a ser o campo lido por collectForm()/copyDay() —
+// nada mudou na forma como o valor da sala é armazenado e recolhido — mais o botão visível
+// "Escolher Sala" que abre o modal de escolha por categorias.
+function salaSelectHTML(selVal){
+  var opts=salaAllOptionsFlat(selVal).map(function(s){return'<option value="'+s+'"'+(s===selVal?' selected':'')+'>'+s+'</option>';}).join('');
+  var label=selVal||'Escolher Sala';
+  return '<select class="rm-input" style="display:none">'+opts+'</select>'
+    +'<button type="button" class="sala-choose-btn" onclick="openSalaModal(this)">'
+    +'<span class="sala-choose-icon">🏛️</span><span class="sala-choose-label">'+escHtml(label)+'</span><span class="sala-choose-arrow">▾</span>'
+    +'</button>';
+}
+
+// ---- Modal "Escolher Sala" ----
+var _salaModalWrapId=null; // id do "#{rid}-sala-wrap" alvo da escolha actual
+
+function openSalaModal(btnEl){
+  var wrap=btnEl.closest('div[id$="-sala-wrap"]');
+  _salaModalWrapId=wrap?wrap.id:null;
+  var searchInput=$('sala-modal-search-input');
+  if(searchInput) searchInput.value='';
+  renderSalaModalBody('');
+  $('sala-overlay').classList.add('open');
+}
+
+function closeSalaModal(){
+  $('sala-overlay').classList.remove('open');
+  _salaModalWrapId=null;
+}
+
+function renderSalaModalBody(query){
+  var body=$('sala-modal-body');
+  if(!body) return;
+  var q=(query||'').trim().toLowerCase();
+  var html='';
+  var totalMatches=0;
+
+  SALAS_CATEGORIZADAS.forEach(function(c){
+    var salasFiltradas=q?c.salas.filter(function(s){return s.toLowerCase().indexOf(q)!==-1;}):c.salas;
+    if(!salasFiltradas.length) return;
+    totalMatches+=salasFiltradas.length;
+    html+='<div class="choices-cat"><div class="choices-cat-title">'+escHtml(c.cat)+'</div><div class="choices-grid">';
+    salasFiltradas.forEach(function(s){
+      html+='<span class="choice-chip" onclick="selectSala(\''+s.replace(/'/g,"\\'")+'\')">'+escHtml(s)+'</span>';
+    });
+    html+='</div></div>';
+  });
+
+  if(!q || totalMatches===0){
+    // Opção "Outra / Manual" sempre visível quando não há pesquisa activa ou quando a pesquisa não encontra nada
+    html+='<div class="choices-cat"><div class="choices-cat-title">Outra / Manual</div>'
+      +'<div class="sala-manual-row">'
+      +'<input type="text" id="sala-manual-input" placeholder="Escrever nome da sala..." value="'+escHtml(q?query:'')+'">'
+      +'<button type="button" class="btn-add-sm" onclick="applySalaManual()">Usar</button>'
+      +'</div></div>';
+  }
+
+  if(!totalMatches && q){
+    html='<div class="sala-modal-empty">Nenhuma sala encontrada para "'+escHtml(query)+'".</div>'+html;
+  }
+
+  body.innerHTML=html;
+}
+
+function selectSala(nome){
+  if(!_salaModalWrapId) { closeSalaModal(); return; }
+  var wrap=$(_salaModalWrapId);
+  if(wrap) wrap.innerHTML=salaSelectHTML(nome);
+  closeSalaModal();
+}
+
+function applySalaManual(){
+  var input=$('sala-manual-input');
+  var nome=input?input.value.trim():'';
+  if(!nome) return;
+  selectSala(nome);
+}
+
 function layoutSelectHTML(selVal){ return'<select class="rm-input">'+LAYOUTS.map(function(l){return'<option value="'+l+'"'+(l===selVal?' selected':'')+'>'+l+'</option>';}).join('')+'</select>';}
 function timeSelectHTML(id,val,cls){
   var opts=['','00:00','00:15','00:30','00:45','01:00','01:15','01:30','01:45','02:00','02:15','02:30','02:45','03:00','03:15','03:30','03:45','04:00','04:15','04:30','04:45','05:00','05:15','05:30','05:45','06:00','06:15','06:30','06:45','07:00','07:15','07:30','07:45','08:00','08:15','08:30','08:45','09:00','09:15','09:30','09:45','10:00','10:15','10:30','10:45','11:00','11:15','11:30','11:45','12:00','12:15','12:30','12:45','13:00','13:15','13:30','13:45','14:00','14:15','14:30','14:45','15:00','15:15','15:30','15:45','16:00','16:15','16:30','16:45','17:00','17:15','17:30','17:45','18:00','18:15','18:30','18:45','19:00','19:15','19:30','19:45','20:00','20:15','20:30','20:45','21:00','21:15','21:30','21:45','22:00','22:15','22:30','22:45','23:00','23:15','23:30','23:45'];
