@@ -2417,9 +2417,8 @@ function validateOS(d, onProceed){
   if(!hasDate) blockers.push('Data do evento não preenchida.');
   var allDays=d.days.filter(function(day){return day.rooms.length;});
   var hasAnyRoom=allDays.some(function(day){return day.rooms.some(function(r){return r.sala;});});
-  if(!hasAnyRoom) blockers.push('Nenhuma sala definida.');
   var hasAnySvc=allDays.some(function(day){return day.rooms.some(function(r){return r.servicos&&r.servicos.length>0;});});
-  if(!hasAnySvc) blockers.push('Nenhum serviço adicionado à OS.');
+  if(!hasAnyRoom && !hasAnySvc) blockers.push('Nenhuma sala/espaço nem serviço adicionado à OS.');
 
   if(blockers.length){
     var html='<div class="osvm-section"><div class="osvm-section-title">🚫 Não é possível gerar a OS</div>';
