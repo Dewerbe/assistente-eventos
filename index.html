@@ -216,17 +216,17 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
 /* ─── MODAL VALIDAÇÃO OS ────────────────────────────────────────────────────── */
 #os-validation-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;}
 #os-validation-modal.active{display:flex;}
-.osvm-box{background:#fff;border-radius:8px;max-width:520px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.22);overflow:hidden;}
-.osvm-header{background:#231F20;padding:14px 20px;display:flex;align-items:center;gap:10px;}
+.osvm-box{background:#fff;border-radius:8px;max-width:520px;width:90%;max-height:85vh;box-shadow:0 8px 32px rgba(0,0,0,.22);overflow:hidden;display:flex;flex-direction:column;}
+.osvm-header{background:#231F20;padding:14px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .osvm-header-icon{font-size:18px;}
 .osvm-header-title{color:#fff;font-size:14px;font-weight:700;letter-spacing:.5px;}
-.osvm-body{padding:18px 20px 10px;}
+.osvm-body{padding:18px 20px 10px;overflow-y:auto;flex:1 1 auto;min-height:0;}
 .osvm-section{margin-bottom:14px;}
 .osvm-section-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#887157;margin-bottom:6px;}
 .osvm-item{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid #f0ede9;font-size:12px;color:#231F20;line-height:1.4;}
 .osvm-item:last-child{border-bottom:none;}
 .osvm-item-icon{font-size:13px;flex-shrink:0;margin-top:1px;}
-.osvm-footer{display:flex;gap:10px;padding:14px 20px;background:#f6f4f1;justify-content:flex-end;}
+.osvm-footer{display:flex;gap:10px;padding:14px 20px;background:#f6f4f1;justify-content:flex-end;flex-shrink:0;}
 .osvm-btn-back{padding:8px 18px;border:1px solid #887157;background:#fff;color:#887157;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
 .osvm-btn-back:hover{background:#ede7df;}
 .osvm-btn-proceed{padding:8px 18px;background:#887157;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
