@@ -744,7 +744,7 @@ const I18N = {
     sign_placeholder: 'Seleccionar responsável...',
     bna_texto: 'Em conformidade com o Instrutivo N.º 01/2023, de 9 de Janeiro, do Banco Nacional de Angola (BNA), os pagamentos por transferência bancária, provenientes do exterior de Angola, obrigam ao preenchimento do campo 77B no formulário de transferência, o qual inclui o código referente à finalidade da operação. Para garantir que a transferência é bem-sucedida, deve solicitar ao seu banco o preenchimento deste campo com os seguintes códigos: Viagens trabalho: B01.01 — sector público; B01.02 — sector privado. Viagens para Turismo: B03.01. A não inclusão desta informação poderá implicar a não aceitação da operação pelo banco receptor, impossibilitando a validação da reserva.',
     bank_beneficiario: 'Beneficiário', bank_banco: 'Banco', bank_iban: 'IBAN', bank_swift: 'Swift/BIC',
-    bank_conta: 'Conta', bank_nif: 'NIF', bank_despesas: 'Despesas', bank_despesas_val: 'A ordem do ordenante',
+    bank_conta: 'Conta', bank_despesas: 'Despesas', bank_despesas_val: 'À ordem do ordenante',
     bank_title_aoa: 'Conta em AOA', bank_title_usd: 'Conta em USD', bank_title_eur: 'Conta em EUR',
     tb_assistente: '← Assistente', tb_nova: '＋ Nova', tb_abrir: '📂 Abrir', tb_guardar: '💾 Guardar',
     tb_alojamento: '🛏 Gerir Alojamento', tb_pdf: '🖨 PDF',
@@ -839,7 +839,7 @@ const I18N = {
     sign_placeholder: 'Select person in charge...',
     bna_texto: 'In accordance with Instructive No. 01/2023, of 9 January, of the National Bank of Angola (BNA), bank transfer payments originating from outside Angola require field 77B to be completed on the transfer form, which includes the code referring to the purpose of the transaction. To ensure the transfer is successful, please ask your bank to complete this field with the following codes: Business travel: B01.01 — public sector; B01.02 — private sector. Tourism travel: B03.01. Failure to include this information may result in the transaction being rejected by the receiving bank, preventing validation of the reservation.',
     bank_beneficiario: 'Beneficiary', bank_banco: 'Bank', bank_iban: 'IBAN', bank_swift: 'Swift/BIC',
-    bank_conta: 'Account', bank_nif: 'Tax ID', bank_despesas: 'Charges', bank_despesas_val: 'Borne by the sender',
+    bank_conta: 'Account', bank_despesas: 'Charges', bank_despesas_val: 'Borne by the sender',
     bank_title_aoa: 'AOA Account', bank_title_usd: 'USD Account', bank_title_eur: 'EUR Account',
     tb_assistente: '← Assistant', tb_nova: '＋ New', tb_abrir: '📂 Open', tb_guardar: '💾 Save',
     tb_alojamento: '🛏 Manage Accommodation', tb_pdf: '🖨 PDF',
@@ -879,9 +879,9 @@ function T(key){
 // labels de cada linha são traduzidos dinamicamente através de T().
 function getBanking(){
   return [
-    {title:T('bank_title_aoa'),rows:[[T('bank_beneficiario'),'Henda Hotelaria, Lda'],[T('bank_banco'),'Banco Caixa Geral Angola, S.A.'],[T('bank_iban'),'AO06 0004 0000 1005 7242 1016 5'],[T('bank_swift'),'BCGAAOLU'],[T('bank_conta'),'10057242/10/001'],[T('bank_nif'),'5001094645'],[T('bank_despesas'),T('bank_despesas_val')]]},
-    {title:T('bank_title_usd'),rows:[[T('bank_beneficiario'),'Henda Hotelaria, Lda'],[T('bank_banco'),'Banco Caixa Geral Angola, S.A.'],[T('bank_iban'),'AO06 0004 0000 1005 7242 1511 2'],[T('bank_swift'),'BCGAAOLU'],[T('bank_conta'),'10057242/15/001'],[T('bank_nif'),'5001094645'],[T('bank_despesas'),T('bank_despesas_val')]]},
-    {title:T('bank_title_eur'),rows:[[T('bank_beneficiario'),'Henda Hotelaria, Lda'],[T('bank_banco'),'Banco Caixa Geral Angola, S.A.'],[T('bank_iban'),'AO06 0004 0000 1005 7242 1520 9'],[T('bank_swift'),'BCGAAOLU'],[T('bank_conta'),'10057242/15/002'],[T('bank_nif'),'5001094645'],[T('bank_despesas'),T('bank_despesas_val')]]}
+    {title:T('bank_title_aoa'),rows:[[T('bank_beneficiario'),'Henda Hotelaria, Lda'],[T('bank_banco'),'Banco Caixa Geral Angola, S.A.'],[T('bank_iban'),'AO06 0004 0000 1005 7242 1016 5'],[T('bank_swift'),'BCGAAOLU'],[T('bank_conta'),'10057242/10/001'],[T('bank_despesas'),T('bank_despesas_val')]]},
+    {title:T('bank_title_usd'),rows:[[T('bank_beneficiario'),'Henda Hotelaria, Lda'],[T('bank_banco'),'Banco Caixa Geral Angola, S.A.'],[T('bank_iban'),'AO06 0004 0000 1005 7242 1511 2'],[T('bank_swift'),'BCGAAOLU'],[T('bank_conta'),'10057242/15/001'],[T('bank_despesas'),T('bank_despesas_val')]]},
+    {title:T('bank_title_eur'),rows:[[T('bank_beneficiario'),'Henda Hotelaria, Lda'],[T('bank_banco'),'Banco Caixa Geral Angola, S.A.'],[T('bank_iban'),'AO06 0004 0000 1005 7242 1520 9'],[T('bank_swift'),'BCGAAOLU'],[T('bank_conta'),'10057242/15/002'],[T('bank_despesas'),T('bank_despesas_val')]]}
   ];
 }
 
