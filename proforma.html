@@ -552,13 +552,13 @@ tr.dragging{opacity:0.4}
 <div id="toast"></div>
 
 <!-- MODAL GERIR ALOJAMENTO (fora do layout da proforma, não é impresso) -->
-<div id="lod-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+<div id="lod-modal" style="display:none;position:fixed;inset:0;
   background:rgba(0,0,0,0.5);z-index:9998;align-items:center;justify-content:center;
-  font-family:'Montserrat',sans-serif">
-  <div style="background:#fff;border-radius:4px;width:94%;max-width:980px;max-height:88vh;
-    display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25);overflow:hidden">
+  overflow:hidden;padding:24px;box-sizing:border-box;font-family:'Montserrat',sans-serif">
+  <div style="background:#fff;border-radius:4px;width:100%;max-width:980px;height:auto;max-height:100%;
+    display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25);overflow:hidden;box-sizing:border-box">
 
-    <div style="padding:16px 22px;border-bottom:1px solid #e0dbd5;display:flex;align-items:center;gap:14px">
+    <div style="padding:16px 22px;border-bottom:1px solid #e0dbd5;display:flex;align-items:center;gap:14px;flex:0 0 auto">
       <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#231F20" data-i18n="lod_title">
         🛏 Gestão de Alojamento
       </div>
@@ -576,7 +576,7 @@ tr.dragging{opacity:0.4}
       <button onclick="closeLodgingModal()" style="background:none;border:none;color:#999;font-size:18px;cursor:pointer;padding:0 4px;margin-left:6px">×</button>
     </div>
 
-    <div style="padding:16px 22px;overflow-y:auto;flex:1">
+    <div style="padding:16px 22px;overflow-y:auto;flex:1 1 auto;min-height:0">
 
       <!-- RESUMO -->
       <div id="lod-view-summary">
@@ -616,18 +616,18 @@ tr.dragging{opacity:0.4}
         <table style="width:100%;border-collapse:collapse;font-size:10px" id="lod-rooming-table">
           <thead>
             <tr style="background:#231F20;color:#fff">
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_ocupacao">Ocupação</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_hospedes">Hóspede(s)</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_tipo_quarto">Tipo Quarto</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_regime">Regime</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_checkin">Check-in</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_checkout">Check-out</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_noites">Noites</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_preco_noite">Preço/Noite</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_iva">IVA</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_eci">Early Check-in</th>
-              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px" data-i18n="th_lco">Late Check-out</th>
-              <th style="padding:5px 6px;width:24px"></th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_ocupacao">Ocupação</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_hospedes">Hóspede(s)</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_tipo_quarto">Tipo Quarto</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_regime">Regime</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_checkin">Check-in</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_checkout">Check-out</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_noites">Noites</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_preco_noite">Preço/Noite</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_iva">IVA</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_eci">Early Check-in</th>
+              <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_lco">Late Check-out</th>
+              <th style="padding:5px 6px;width:24px;position:sticky;top:0;background:#231F20;z-index:1"></th>
             </tr>
           </thead>
           <tbody id="lod-rooming-body"></tbody>
@@ -637,7 +637,7 @@ tr.dragging{opacity:0.4}
 
     </div>
 
-    <div style="padding:12px 22px;border-top:1px solid #e0dbd5;display:flex;justify-content:flex-end;gap:10px">
+    <div style="padding:12px 22px;border-top:1px solid #e0dbd5;display:flex;justify-content:flex-end;gap:10px;flex:0 0 auto">
       <button onclick="printRoomingList()" data-i18n="btn_imprimir_rooming"
         style="background:none;border:1px solid var(--bronze);border-radius:3px;padding:7px 16px;
         font-family:'Montserrat',sans-serif;font-size:10px;color:var(--bronze);cursor:pointer;
@@ -1619,10 +1619,12 @@ function selectCatalogItem(idx){
 function openLodgingModal(){
   renderLodging();
   document.getElementById('lod-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 }
 
 function closeLodgingModal(){
   document.getElementById('lod-modal').style.display = 'none';
+  document.body.style.overflow = '';
 }
 
 function saveLodgingAndClose(){
