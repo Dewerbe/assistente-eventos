@@ -995,9 +995,15 @@ function normalizeLodging(d){
   if(!d || typeof d!=='object') return { mode:'summary', summaryRows:[], roomingRows:[] };
   return {
     mode: d.mode==='rooming' ? 'rooming' : 'summary',
-    summaryRows: Array.isArray(d.summaryRows) ? d.summaryRows : [],
+    summaryRows: Array.isArray(d.summaryRows) ? d.summaryRows.map(normalizeSummaryRow) : [],
     roomingRows: Array.isArray(d.roomingRows) ? d.roomingRows.map(normalizeRoomingRow) : []
   };
+}
+
+// Garante que blocos do Resumo gravados antes desta correcção continuam a funcionar,
+// assumindo "não convertido" (converted:false) por defeito, sem alterar mais nada.
+function normalizeSummaryRow(r){
+  return Object.assign({ converted:false }, r);
 }
 
 // Garante que linhas antigas (gravadas antes desta melhoria) continuam a funcionar,
@@ -1659,7 +1665,7 @@ function calcNights(checkin, checkout){
 function addSummaryRow(d){
   d = d || {roomType:'Standard',regime:'BB',checkin:'',checkout:'',qty:1,price:'',tax:'7',notes:''};
   const id = ++_lodRid;
-  LODGING.summaryRows.push(Object.assign({id}, d));
+  LODGING.summaryRows.push(normalizeSummaryRow(Object.assign({id}, d)));
   renderSummaryTable();
 }
 
@@ -1684,36 +1690,38 @@ function renderSummaryTable(){
   const addBtn = document.getElementById('lod-summary-add-btn');
   const hasRooming = LODGING.roomingRows.length > 0;
 
-  if(hasRooming){
-    // Rooming List é a fonte real: o Resumo passa a ser um espelho agregado, em modo leitura,
-    // usando exactamente o mesmo agrupamento que alimenta a Proforma (groupRoomingForProforma).
-    note.style.display = 'block';
-    addBtn.style.display = 'none';
+  const pendingRows = LODGING.summaryRows.filter(r => !r.converted);
+  const convertedGroups = hasRooming ? groupRoomingForProforma(LODGING.roomingRows) : [];
 
-    const groups = groupRoomingForProforma(LODGING.roomingRows);
-    body.innerHTML = groups.map(g => {
-      return '<tr>'
-        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px">'+(g.roomType)+'</td>'
-        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px">'+(g.regime)+'</td>'
-        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px">'+(fmtDatePT(g.checkin))+'</td>'
-        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px">'+(fmtDatePT(g.checkout))+'</td>'
-        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px;text-align:center;font-weight:600">'+(g.nights)+'</td>'
-        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px;text-align:center;font-weight:600">'+(g.qty)+'</td>'
-        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px;text-align:right">'+(fmtInput(g.unit))+'</td>'
-        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px">'+(g.tax=='6.5'?'6,5':g.tax)+'%</td>'
-        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px;color:#aaa;font-style:italic">'+(T('lod_ver_rooming'))+'</td>'
-        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px"></td>'
-        + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px"></td>'
-        + '</tr>';
-    }).join('');
-    return;
+  if(hasRooming){
+    // Já existe Rooming List: os blocos já convertidos passam a reflectir-se através do
+    // agregado da Rooming List (só leitura), mas os blocos ainda por converter continuam
+    // a aparecer normalmente, editáveis, com o respectivo botão "Gerar Rooming" — nunca
+    // devem desaparecer só porque outro bloco já foi convertido.
+    note.style.display = pendingRows.length ? 'none' : 'block';
+    addBtn.style.display = '';
+  } else {
+    note.style.display = 'none';
+    addBtn.style.display = '';
   }
 
-  // Sem Rooming List: Resumo continua totalmente editável, comportamento original.
-  note.style.display = 'none';
-  addBtn.style.display = '';
+  const convertedHtml = convertedGroups.map(g => {
+    return '<tr>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px">'+(g.roomType)+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px">'+(g.regime)+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px">'+(fmtDatePT(g.checkin))+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px">'+(fmtDatePT(g.checkout))+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px;text-align:center;font-weight:600">'+(g.nights)+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px;text-align:center;font-weight:600">'+(g.qty)+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px;text-align:right">'+(fmtInput(g.unit))+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px">'+(g.tax=='6.5'?'6,5':g.tax)+'%</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px;color:#aaa;font-style:italic">'+(T('lod_ver_rooming'))+'</td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px"></td>'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px 6px"></td>'
+      + '</tr>';
+  }).join('');
 
-  body.innerHTML = LODGING.summaryRows.map(r => {
+  const pendingHtml = pendingRows.map(r => {
     const nights = calcNights(r.checkin, r.checkout);
     return '<tr id="lod-sum-'+(r.id)+'">'
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+roomTypeSelFor('summary',r.id,r.roomType)+'</td>'
@@ -1729,6 +1737,8 @@ function renderSummaryTable(){
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px;text-align:center"><button class="add-btn" style="font-size:8px;padding:2px 6px" onclick="convertSummaryToRooming('+(r.id)+')">Gerar Rooming</button></td>'
       + '</tr>';
   }).join('');
+
+  body.innerHTML = convertedHtml + pendingHtml;
 }
 
 // ---- ROOMING LIST ----
@@ -1910,6 +1920,10 @@ function convertSummaryToRooming(id){
     toast('Aviso: geradas '+generated+' de '+qty+' linhas esperadas.');
   }
 
+  // Marca este bloco como já convertido (não apagado): a partir daqui, o seu resumo
+  // passa a ser mostrado através do agregado da Rooming List, e não como bloco editável solto.
+  row.converted = true;
+
   renderSummaryTable();
   switchLodgingMode('rooming');
   toast(qty+' quarto(s) adicionados à rooming list, todos com ocupação Single.');
@@ -1945,10 +1959,13 @@ function applyLodgingToProforma(){
   const secTr = tbody.lastElementChild;
   secTr.setAttribute('data-lodging-gen','1');
 
-  // Fonte de dados: se existir Rooming List preenchida, é ela que alimenta a Proforma
-  // (reflecte qualquer alteração feita directamente na rooming list). Só na ausência
-  // total de rooming list se recorre aos blocos do Resumo.
-  const groups = hasRooming ? groupRoomingForProforma(LODGING.roomingRows) : groupSummaryForProforma(LODGING.summaryRows);
+  // Fonte de dados: os blocos já convertidos ficam representados pelas linhas da Rooming
+  // List (reflectindo qualquer alteração feita directamente nela); os blocos do Resumo
+  // que ainda não foram convertidos continuam a alimentar a Proforma directamente,
+  // para nunca se perderem enquanto não tiverem a sua rooming list gerada.
+  const pendingSummaryRows = LODGING.summaryRows.filter(r => !r.converted);
+  const groups = (hasRooming ? groupRoomingForProforma(LODGING.roomingRows) : [])
+    .concat(pendingSummaryRows.length ? groupSummaryForProforma(pendingSummaryRows) : []);
 
   groups.forEach(g => {
     const roomLabel = g.qty===1 ? 'Quarto' : 'Quartos';
