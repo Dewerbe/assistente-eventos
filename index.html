@@ -634,6 +634,31 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
   </div>
 </div>
 
+<div class="sala-modal-overlay" id="custom-desc-overlay" onclick="if(event.target===this)closeCustomizeModal()">
+  <div class="sala-modal" style="width:640px">
+    <div class="sala-modal-hdr">
+      <span class="sala-modal-title">Personalizar Descrição do Serviço</span>
+      <button class="sala-modal-close" onclick="closeCustomizeModal()">×</button>
+    </div>
+    <div class="sala-modal-body" style="padding:16px 18px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gm);margin-bottom:3px">Nome do Serviço</div>
+      <div id="custom-desc-svcname" style="font-size:13px;font-weight:600;color:var(--black);margin-bottom:14px"></div>
+
+      <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gm);margin-bottom:3px">Descrição Original (apenas leitura)</div>
+      <div id="custom-desc-original" style="font-size:11px;color:var(--gm);line-height:1.5;white-space:pre-line;background:var(--gbg);border-radius:2px;padding:8px 10px;margin-bottom:14px;max-height:120px;overflow-y:auto;border-left:2px solid var(--gl)"></div>
+
+      <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--bronze);margin-bottom:3px">Descrição Personalizada (usada apenas nesta Ordem de Serviço)</div>
+      <textarea id="custom-desc-textarea" rows="8" style="width:100%;border:1px solid var(--bronze-l);border-radius:2px;padding:9px 10px;font-family:'Montserrat',sans-serif;font-size:12px;color:var(--black);line-height:1.5;resize:vertical;outline:none;box-sizing:border-box"></textarea>
+    </div>
+    <div class="sala-modal-footer" style="justify-content:space-between">
+      <button type="button" class="btn-add-sm" onclick="resetCustomDesc()" style="background:none;border:1px solid var(--gl);color:var(--gm)">↺ Repor descrição original</button>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="btn-add-sm" onclick="closeCustomizeModal()" style="background:none;border:1px solid var(--gl);color:var(--gm)">Cancelar</button>
+        <button type="button" class="btn-add-sm" onclick="saveCustomDesc()">Gravar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="os-validation-modal">
   <div class="osvm-box">
@@ -1856,7 +1881,7 @@ function applyCatalog(sel){
   var hasChoices=!!ESCOLHAS[key];
   var div=document.createElement('div');
   div.className='svc-blk';div.id=sid;
-  div.innerHTML='<div class="svc-row" style="grid-template-columns:64px 1fr 46px 20px"><select class="svc-input" id="'+sid+'-t-sel"></select><div style="display:flex;flex-direction:column;gap:2px"><div style="display:flex;align-items:center;gap:6px"><input class="svc-input" id="'+sid+'-n" value="'+escHtml(item.nome)+'" style="font-weight:600;flex:1">'+(item.desc?'<button type="button" onclick="toggleDesc(\''+sid+'\')" style="flex-shrink:0;font-size:10px;color:var(--bronze);background:var(--bronze-ll);border:1px solid var(--bronze-l);border-radius:2px;padding:3px 8px;cursor:pointer;white-space:nowrap;font-family:Montserrat,sans-serif">detalhes</button>':'')+' </div>'+(item.desc?'<div id="'+sid+'-desc" style="display:none;font-size:8px;color:var(--gm);line-height:1.4;padding:4px 6px;background:var(--gbg);border-radius:2px;white-space:pre-line;border-left:2px solid var(--bronze-l)">'+item.desc+'</div>':'')+(hasChoices?'<button type="button" class="choices-trigger-btn" id="'+sid+'-choices-btn" onclick="openChoicesModal(\''+sid+'\',\''+key.replace(/\'/g,"\\\'")+'\')">escolhas</button>':'')+'<textarea class="svc-nota" id="'+sid+'-nota" rows="1" placeholder="Nota operacional (ex: colocar dentro da sala)..."></textarea></div><input type="number" class="svc-input" id="'+sid+'-p" placeholder="pax" min="0" value=""><button class="btn-xs" onclick="document.getElementById(\''+sid+'\').remove()">×</button></div>';
+  div.innerHTML='<div class="svc-row" style="grid-template-columns:64px 1fr 46px 20px"><select class="svc-input" id="'+sid+'-t-sel"></select><div style="display:flex;flex-direction:column;gap:2px"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;row-gap:4px"><input class="svc-input" id="'+sid+'-n" value="'+escHtml(item.nome)+'" style="font-weight:600;flex:1 1 160px;min-width:160px">'+(item.desc?'<div style="display:flex;gap:6px;flex-shrink:0"><button type="button" onclick="toggleDesc(\''+sid+'\')" style="flex-shrink:0;font-size:10px;color:var(--bronze);background:var(--bronze-ll);border:1px solid var(--bronze-l);border-radius:2px;padding:3px 8px;cursor:pointer;white-space:nowrap;font-family:Montserrat,sans-serif">detalhes</button><button type="button" onclick="openCustomizeModal(\''+sid+'\')" style="flex-shrink:0;font-size:10px;color:var(--blue);background:#eef4fb;border:1px solid #b9d3ee;border-radius:2px;padding:3px 8px;cursor:pointer;white-space:nowrap;font-family:Montserrat,sans-serif">personalizar</button></div>':'')+' </div>'+(item.desc?'<div id="'+sid+'-desc" style="display:none;font-size:8px;color:var(--gm);line-height:1.4;padding:4px 6px;background:var(--gbg);border-radius:2px;white-space:pre-line;border-left:2px solid var(--bronze-l)" data-orig-desc="'+escHtml(item.desc)+'" data-custom-desc="">'+item.desc+'</div>':'')+(hasChoices?'<button type="button" class="choices-trigger-btn" id="'+sid+'-choices-btn" onclick="openChoicesModal(\''+sid+'\',\''+key.replace(/\'/g,"\\\'")+'\')">escolhas</button>':'')+'<textarea class="svc-nota" id="'+sid+'-nota" rows="1" placeholder="Nota operacional (ex: colocar dentro da sala)..."></textarea></div><input type="number" class="svc-input" id="'+sid+'-p" placeholder="pax" min="0" value=""><button class="btn-xs" onclick="document.getElementById(\''+sid+'\').remove()">×</button></div>';
   $(rid+'-svcs').appendChild(div);
   div.dataset.catalogKey=key;
   var tSelCat=document.getElementById(sid+'-t-sel');
@@ -1869,7 +1894,9 @@ function addSvcManual(roomId,s){
   var div=document.createElement('div');
   div.className='svc-blk';div.id=sid;
   var desc=s.desc||'';
-  div.innerHTML='<div class="svc-row" style="grid-template-columns:64px 1fr 46px 20px"><select class="svc-input" id="'+sid+'-t-sel"></select><div style="display:flex;flex-direction:column;gap:2px"><div style="display:flex;align-items:center;gap:6px"><input class="svc-input" id="'+sid+'-n" placeholder="Nome do serviço" value="'+(s.nome||'')+'" style="flex:1">'+(desc?'<button type="button" onclick="toggleDesc(\''+sid+'\')" style="flex-shrink:0;font-size:10px;color:var(--bronze);background:var(--bronze-ll);border:1px solid var(--bronze-l);border-radius:2px;padding:3px 8px;cursor:pointer;white-space:nowrap;font-family:Montserrat,sans-serif">detalhes</button>':'')+' </div>'+(desc?'<div id="'+sid+'-desc" style="display:none;font-size:8px;color:var(--gm);line-height:1.4;padding:4px 6px;background:var(--gbg);border-radius:2px;white-space:pre-line;border-left:2px solid var(--bronze-l)">'+desc+'</div>':'')+'<textarea class="svc-nota" id="'+sid+'-nota" rows="1" placeholder="Nota operacional (ex: colocar dentro da sala)...">'+(s.nota||'')+'</textarea></div><input type="number" class="svc-input" id="'+sid+'-p" placeholder="pax" value="'+(s.pax||'')+'"><button class="btn-xs" onclick="document.getElementById(\''+sid+'\').remove()">×</button></div>';
+  var descCustom=s.descCustom||'';
+  var descAtivo=descCustom||desc;
+  div.innerHTML='<div class="svc-row" style="grid-template-columns:64px 1fr 46px 20px"><select class="svc-input" id="'+sid+'-t-sel"></select><div style="display:flex;flex-direction:column;gap:2px"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;row-gap:4px"><input class="svc-input" id="'+sid+'-n" placeholder="Nome do serviço" value="'+(s.nome||'')+'" style="flex:1 1 160px;min-width:160px">'+(desc?'<div style="display:flex;gap:6px;flex-shrink:0"><button type="button" onclick="toggleDesc(\''+sid+'\')" style="flex-shrink:0;font-size:10px;color:var(--bronze);background:var(--bronze-ll);border:1px solid var(--bronze-l);border-radius:2px;padding:3px 8px;cursor:pointer;white-space:nowrap;font-family:Montserrat,sans-serif">detalhes</button><button type="button" onclick="openCustomizeModal(\''+sid+'\')" style="flex-shrink:0;font-size:10px;color:var(--blue);background:#eef4fb;border:1px solid #b9d3ee;border-radius:2px;padding:3px 8px;cursor:pointer;white-space:nowrap;font-family:Montserrat,sans-serif">personalizar</button></div>':'')+' </div>'+(desc?'<div id="'+sid+'-desc" style="display:none;font-size:8px;color:var(--gm);line-height:1.4;padding:4px 6px;background:var(--gbg);border-radius:2px;white-space:pre-line;border-left:2px solid var(--bronze-l)" data-orig-desc="'+escHtml(desc)+'" data-custom-desc="'+escHtml(descCustom)+'">'+escHtml(descAtivo)+'</div>':'')+'<textarea class="svc-nota" id="'+sid+'-nota" rows="1" placeholder="Nota operacional (ex: colocar dentro da sala)...">'+(s.nota||'')+'</textarea></div><input type="number" class="svc-input" id="'+sid+'-p" placeholder="pax" value="'+(s.pax||'')+'"><button class="btn-xs" onclick="document.getElementById(\''+sid+'\').remove()">×</button></div>';
   $(roomId+'-svcs').appendChild(div);
   var tSelSvc=document.getElementById(sid+'-t-sel');
   if(tSelSvc) tSelSvc.outerHTML=timeSelectHTML(sid+'-t',s.horario||'','svc-input');
@@ -1967,10 +1994,12 @@ function collectForm(){
         var tEl=$(sid+'-t'); var t=tEl?tEl.value:'';
         var nEl=$(sid+'-n'); var n=nEl?nEl.value:'';
         var pEl=$(sid+'-p'); var p2=pEl?pEl.value:'';
-        var descEl=$(sid+'-desc'); var desc=descEl?descEl.textContent:'';
+        var descEl=$(sid+'-desc');
+        var desc=descEl?(descEl.dataset.origDesc||descEl.textContent):'';
+        var descCustom=descEl?(descEl.dataset.customDesc||''):'';
         var notaEl=$(sid+'-nota'); var nota=notaEl?notaEl.value.trim():'';
         var escolhas=getChoicesSummary(sid);
-        if(n)svcs.push({horario:t,nome:n,pax:p2,desc:desc,nota:nota,escolhas:escolhas});
+        if(n)svcs.push({horario:t,nome:n,pax:p2,desc:desc,descCustom:descCustom,nota:nota,escolhas:escolhas});
       });
       rooms.push({sala:sala,horarioInicio:hi,horarioFim:hf,pax:pax,layout:layout,servicos:svcs});
     });
@@ -2139,6 +2168,68 @@ function toggleDesc(sid){
     if(btn&&btn.tagName==='BUTTON')btn.textContent='detalhes';
   }
 }
+
+// ---- Personalizar descrição do serviço (apenas nesta Ordem de Serviço) ----
+var _customDescSid=null; // id do serviço (#{sid}-desc) actualmente a ser personalizado no modal
+
+function openCustomizeModal(sid){
+  var descEl=document.getElementById(sid+'-desc');
+  if(!descEl)return;
+  _customDescSid=sid;
+
+  var nameEl=document.getElementById(sid+'-n');
+  var svcName=nameEl?nameEl.value:'';
+  var origDesc=descEl.dataset.origDesc||'';
+  var customDesc=descEl.dataset.customDesc||'';
+
+  document.getElementById('custom-desc-svcname').textContent=svcName||'(sem nome)';
+  document.getElementById('custom-desc-original').textContent=origDesc;
+  // Ao abrir pela primeira vez (sem personalização ainda guardada), a caixa editável
+  // vem automaticamente preenchida com a descrição original. Se já existir uma versão
+  // personalizada anteriormente gravada, mostra sempre essa última versão.
+  document.getElementById('custom-desc-textarea').value=customDesc||origDesc;
+
+  document.getElementById('custom-desc-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeCustomizeModal(){
+  document.getElementById('custom-desc-overlay').classList.remove('open');
+  document.body.style.overflow='';
+  _customDescSid=null;
+}
+
+function saveCustomDesc(){
+  if(!_customDescSid)return;
+  var descEl=document.getElementById(_customDescSid+'-desc');
+  if(!descEl){closeCustomizeModal();return;}
+
+  var origDesc=descEl.dataset.origDesc||'';
+  var newText=document.getElementById('custom-desc-textarea').value;
+
+  // Se o texto gravado for igual ao original, não faz sentido guardar uma "personalização"
+  // à parte — trata-se como se não houvesse personalização activa (repõe-se automaticamente).
+  var isSameAsOriginal=(newText.trim()===origDesc.trim());
+  descEl.dataset.customDesc=isSameAsOriginal?'':newText;
+
+  // A descrição visível (usada em "detalhes" e na impressão) passa a ser sempre a activa:
+  // personalizada, se existir; caso contrário, a original. A base de dados/catálogo nunca é tocada.
+  descEl.textContent=isSameAsOriginal?origDesc:newText;
+
+  closeCustomizeModal();
+  geToast('Descrição personalizada guardada para esta Ordem de Serviço.');
+}
+
+function resetCustomDesc(){
+  if(!_customDescSid)return;
+  var descEl=document.getElementById(_customDescSid+'-desc');
+  if(!descEl)return;
+  var origDesc=descEl.dataset.origDesc||'';
+
+  // Repõe a caixa editável do modal com a descrição original (o utilizador ainda tem de
+  // clicar "Gravar" para confirmar — nada é alterado até isso acontecer).
+  document.getElementById('custom-desc-textarea').value=origDesc;
+}
 function timeToMin(t){
   // Converte "HH:MM" para minutos. Vazio/inválido = 9999 (vai para o fim)
   if(!t||!t.includes(':'))return 9999;
@@ -2278,7 +2369,7 @@ function _doGenerateOS(d){
             +'<div>'
             +'<div class="os-svc-name">'+svc.nome+(svc.pax?'<span class="os-svc-pax-badge">'+svc.pax+' pax</span>':'')+'</div>'
 
-            +(svc.desc?'<div class="os-svc-sub" style="margin-top:3px;line-height:1.5;white-space:pre-line;color:var(--gm)">'+svc.desc+'</div>':'')
+            +((svc.descCustom||svc.desc)?'<div class="os-svc-sub" style="margin-top:3px;line-height:1.5;white-space:pre-line;color:var(--gm)">'+(svc.descCustom||svc.desc)+'</div>':'')
             +(svc.escolhas&&svc.escolhas!=='Cliente ainda não decidiu'
               ?'<div style="margin-top:4px;padding:5px 8px;background:#f0f7ff;border-left:2px solid var(--blue);border-radius:0 2px 2px 0;font-size:8px;line-height:1.5;white-space:pre-line"><strong style="display:block;margin-bottom:2px;font-size:7.5px;letter-spacing:.3px;text-transform:uppercase;color:var(--blue)">Escolhas do Cliente</strong>'+svc.escolhas+'</div>'
               :svc.escolhas==='Cliente ainda não decidiu'
@@ -2552,6 +2643,10 @@ function validateOS(d, onProceed){
   var hasAnyRoom=allDays.some(function(day){return day.rooms.some(function(r){return r.sala;});});
   var hasAnySvc=allDays.some(function(day){return day.rooms.some(function(r){return r.servicos&&r.servicos.length>0;});});
   if(!hasAnyRoom && !hasAnySvc) blockers.push('Nenhuma sala/espaço nem serviço adicionado à OS.');
+  // Cada dia da OS tem de ter obrigatoriamente uma data preenchida
+  (d.days||[]).forEach(function(day,di){
+    if(!day.date) blockers.push('Dia '+(di+1)+': data não definida.');
+  });
 
   if(blockers.length){
     var html='<div class="osvm-section"><div class="osvm-section-title">🚫 Não é possível gerar a OS</div>';
