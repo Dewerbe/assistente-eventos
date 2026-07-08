@@ -272,6 +272,20 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
 .tb-btn-sm.save-btn{background:#887157;color:#fff}
 .tb-btn-sm.pdf-btn{background:#fff;color:#231F20;border:1px solid #DDD4C8}
 
+/* Emissão de Senhas — pré-visualização dentro da app (versão em escala reduzida) */
+.senha-card{position:relative;border:1px solid var(--gl);border-radius:4px;overflow:hidden;display:flex;width:150px;height:110px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.senha-faixa{width:10px;flex-shrink:0}
+.senha-corpo{flex:1;padding:8px 8px 6px;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
+.senha-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:4px}
+.senha-logo-hcta{height:16px;max-width:60px;object-fit:contain;flex-shrink:0}
+.senha-logo-cliente{height:32px;max-width:90px;object-fit:contain;flex-shrink:0}
+.senha-titulo{font-size:12px;font-weight:800;letter-spacing:.3px;color:var(--black);text-align:center;margin-top:3px;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.senha-evento{font-size:7px;color:var(--gm);text-align:center;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.senha-local{font-size:6.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--bronze);text-align:center;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.senha-rodape{display:flex;align-items:center;justify-content:space-between;margin-top:3px;border-top:1px solid var(--gl);padding-top:3px}
+.senha-data{font-size:6px;color:var(--gm)}
+.senha-numero{font-size:8px;font-weight:800;color:var(--black);background:var(--gbg);border-radius:8px;padding:1px 6px}
+
 @media print {
   @page{margin:5mm 6mm;size:297mm 210mm landscape}
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box}
@@ -601,6 +615,59 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
       </div>
     </div>
 
+    <div id="senhasview" style="display:none;">
+      <div style="margin-bottom:16px;"><a href="#" onclick="goHome();return false;" style="font-size:11px;color:#887157;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;">← Voltar</a></div>
+      <div style="font-size:18px;color:#231F20;font-weight:300;margin-bottom:6px;">Emissão de Senhas</div>
+      <div style="width:40px;height:1px;background:#887157;margin-bottom:20px;"></div>
+
+      <div style="display:grid;grid-template-columns:380px 1fr;gap:20px;align-items:start">
+
+        <!-- COLUNA ESQUERDA: formulário -->
+        <div style="background:#fff;border:1px solid var(--gl);border-radius:4px;padding:16px">
+
+          <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gm);margin-bottom:10px">Dados do Evento</div>
+
+          <label style="display:block;font-size:9px;color:var(--gm);margin-bottom:3px">Nome do Evento</label>
+          <input type="text" id="senhas-evento" placeholder="Ex.: Conferência AFIS 2026" style="width:100%;border:1px solid var(--gl);border-radius:2px;padding:6px 9px;font-family:'Montserrat',sans-serif;font-size:12px;margin-bottom:10px;box-sizing:border-box" oninput="senhasState.evento=this.value">
+
+          <label style="display:block;font-size:9px;color:var(--gm);margin-bottom:3px">Data</label>
+          <input type="date" id="senhas-data" style="width:100%;border:1px solid var(--gl);border-radius:2px;padding:6px 9px;font-family:'Montserrat',sans-serif;font-size:12px;margin-bottom:10px;box-sizing:border-box" oninput="senhasState.data=this.value">
+
+          <label style="display:block;font-size:9px;color:var(--gm);margin-bottom:3px">Logótipo do Cliente / Evento (opcional)</label>
+          <label style="display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed var(--gl);border-radius:2px;padding:10px;font-size:11px;color:var(--gm);cursor:pointer;margin-bottom:16px;background:var(--gbg)">
+            <span id="senhas-logo-label">📎 Carregar imagem (PNG/JPG)</span>
+            <input type="file" accept="image/*" style="display:none" onchange="handleSenhaLogoUpload(event)">
+          </label>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gm)">Blocos de Senhas</div>
+            <button type="button" onclick="addSenhaBloco()" style="font-size:10px;color:var(--bronze);background:var(--bronze-ll);border:1px solid var(--bronze-l);border-radius:2px;padding:4px 9px;cursor:pointer;font-family:'Montserrat',sans-serif">+ Adicionar bloco</button>
+          </div>
+
+          <div id="senhas-blocos-list"></div>
+
+          <div style="display:flex;gap:8px;margin-top:16px;border-top:1px solid var(--gl);padding-top:14px">
+            <button type="button" onclick="gerarSenhas()" style="flex:1;background:var(--bronze);color:#fff;border:none;border-radius:2px;padding:9px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;font-family:'Montserrat',sans-serif">Gerar Senhas</button>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button type="button" onclick="printSenhas()" style="flex:1;background:none;border:1px solid var(--gl);color:var(--black);border-radius:2px;padding:8px;font-size:11px;cursor:pointer;font-family:'Montserrat',sans-serif">🖨 Imprimir / PDF</button>
+            <button type="button" onclick="limparSenhas()" style="flex:1;background:none;border:1px solid var(--gl);color:var(--gm);border-radius:2px;padding:8px;font-size:11px;cursor:pointer;font-family:'Montserrat',sans-serif">Limpar</button>
+          </div>
+        </div>
+
+        <!-- COLUNA DIREITA: pré-visualização -->
+        <div style="background:#fff;border:1px solid var(--gl);border-radius:4px;padding:16px;min-height:400px">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gm);margin-bottom:10px">Pré-visualização</div>
+          <div id="senhas-preview">
+            <div style="text-align:center;color:var(--gm);font-size:12px;padding:60px 20px">
+              🎫 Preenche os dados e clica <strong>Gerar Senhas</strong> para veres aqui a pré-visualização.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div><!-- /content-col -->
 </div><!-- /grid -->
 
@@ -690,6 +757,23 @@ var xlsData=[];
 var weekStart=null;
 var activeFilters=new Set(['Confirmado','1ª Opção','2ª Opção','Consulta']);
 var dayCounter=0,svcCounter=0;
+
+// Estado do módulo "Emissão de Senhas" — totalmente independente dos restantes módulos.
+var senhaBlocoCounter=0;
+var senhasState={
+  evento:'', data:'', logoClienteDataUrl:'',
+  blocos:[] // {id, titulo, local, qtd, numInicial, cor}
+};
+var SENHA_CORES=[
+  {nome:'Bronze (TD Hotels)', valor:'#887157'},
+  {nome:'Verde', valor:'#2e7d32'},
+  {nome:'Azul', valor:'#1a4e8c'},
+  {nome:'Vermelho', valor:'#c0392b'},
+  {nome:'Roxo', valor:'#6a4c93'},
+  {nome:'Laranja', valor:'#d97b29'},
+  {nome:'Preto', valor:'#231F20'},
+  {nome:'Dourado', valor:'#b8962e'}
+];
 const DIAS_PT=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
 const DIAS_S=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -909,6 +993,7 @@ function T(key){
     'mapa-sub':['Mapa Semanal','Weekly Map'],'mapa-desc':['Carregar XLS do NewPlan','Load XLS from NewPlan'],
     'os-sub':['Ordem de Serviço','Service Order'],'os-desc':['Criar documento operacional','Create operational document'],
     'pf-sub':['Proforma','Proforma'],'pf-desc':['Emissão de factura proforma','Issue proforma invoice'],
+    'senhas-sub':['Emissão de Senhas','Ticket Issuing'],'senhas-desc':['Senhas para eventos','Event tickets'],
     'fc-title':['Calculadora de Retenção e Cativação','Retention & Withholding Calculator'],
     'fc-entity-lbl':['Tipo de entidade pagadora','Payer entity type'],
     'ent-pub':['🏛 Agente Cativador','🏛 Withholding Agent'],'ent-priv':['🏢 Entidade Privada','🏢 Private Entity'],
@@ -956,7 +1041,7 @@ function setLang(l){
 // 3. NAVEGAÇÃO E VIEWS
 // ══════════════════════════════════════════════════════
 function hideAllViews(){
-  ['landing','formview','resultview','fiscalview','mapaview','osview'].forEach(function(id){ hide(id); });
+  ['landing','formview','resultview','fiscalview','mapaview','osview','senhasview'].forEach(function(id){ hide(id); });
 }
 function refreshAll(){
   setText('hdr-events',T('hdr-events')); setText('sidebar-title',T('nav'));
@@ -1005,6 +1090,13 @@ function openOS(){
   renderMenu();
   if(!document.querySelectorAll('.day-blk').length) addDay();
 }
+function openSenhas(){
+  curType=null;curSection='senhas';
+  hideAllViews(); show('senhasview');
+  renderMenu();
+  if(!senhasState.blocos.length) addSenhaBloco();
+  renderSenhasForm();
+}
 function backToForm(){ emailResult=null;hide('resultview');show('formview');renderFields(); }
 function fiscalTab(tab){
   curFiscalTab=tab;
@@ -1037,6 +1129,7 @@ function renderMenu(){
   menu.appendChild(makeMenuBtn(T('mapa-sub'),T('mapa-desc'),curSection==='mapa',openMapa));
   menu.appendChild(makeMenuBtn(T('os-sub'),T('os-desc'),curSection==='os',openOS));
   menu.appendChild(makeMenuBtn(T('pf-sub'),T('pf-desc'),false,openPF));
+  menu.appendChild(makeMenuBtn(T('senhas-sub'),T('senhas-desc'),curSection==='senhas',openSenhas));
 }
 function addMenuLabel(menu,text,size){
   var d=document.createElement('div');
@@ -1085,6 +1178,7 @@ function renderLanding(){
   ger.appendChild(makeCard(T('mapa-sub'),T('mapa-desc'),openMapa));
   ger.appendChild(makeCard(T('os-sub'),T('os-desc'),openOS));
   ger.appendChild(makeCard(T('pf-sub'),T('pf-desc'),openPF));
+  ger.appendChild(makeCard(T('senhas-sub'),T('senhas-desc'),openSenhas));
   grid.appendChild(ger);
 }
 function makeCard(main,sub,fn){
@@ -2763,6 +2857,165 @@ function loadSession(ev){
 }
 
 // ── PRINT MAPA ──
+
+// ══════════════════════════════════════════════════════
+// 12. EMISSÃO DE SENHAS (módulo independente)
+// ══════════════════════════════════════════════════════
+
+function addSenhaBloco(){
+  senhaBlocoCounter++;
+  senhasState.blocos.push({
+    id: senhaBlocoCounter,
+    titulo: '',
+    local: '',
+    qtd: 24,
+    numInicial: 1,
+    cor: SENHA_CORES[0].valor
+  });
+  renderSenhasForm();
+}
+
+function delSenhaBloco(id){
+  senhasState.blocos = senhasState.blocos.filter(function(b){ return b.id !== id; });
+  renderSenhasForm();
+}
+
+function updateSenhaBlocoField(id, field, value){
+  var bloco = senhasState.blocos.find(function(b){ return b.id === id; });
+  if(!bloco) return;
+  bloco[field] = value;
+}
+
+function corSelectHTML(id, selVal){
+  return '<select onchange="updateSenhaBlocoField('+id+',\'cor\',this.value)" style="width:100%;border:1px solid var(--gl);border-radius:2px;padding:5px 6px;font-family:\'Montserrat\',sans-serif;font-size:11px">'
+    + SENHA_CORES.map(function(c){ return '<option value="'+c.valor+'"'+(c.valor===selVal?' selected':'')+'>'+c.nome+'</option>'; }).join('')
+    + '</select>';
+}
+
+function renderSenhasForm(){
+  var list = $('senhas-blocos-list');
+  if(!list) return;
+  list.innerHTML = senhasState.blocos.map(function(b){
+    return '<div style="border:1px solid var(--gl);border-radius:3px;padding:10px;margin-bottom:8px;background:var(--gbg)">'
+      + '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">'
+      + '<div style="width:14px;height:14px;border-radius:50%;background:'+b.cor+';flex-shrink:0;border:1px solid rgba(0,0,0,.15)"></div>'
+      + '<input type="text" placeholder="Título da senha (ex.: ALMOÇO)" value="'+escHtml(b.titulo)+'" oninput="updateSenhaBlocoField('+b.id+',\'titulo\',this.value)" style="flex:1;border:1px solid var(--gl);border-radius:2px;padding:5px 8px;font-family:\'Montserrat\',sans-serif;font-size:11px;font-weight:600">'
+      + '<button type="button" onclick="delSenhaBloco('+b.id+')" style="flex-shrink:0;background:none;border:none;color:#c0392b;font-size:14px;cursor:pointer;padding:0 4px">×</button>'
+      + '</div>'
+      + '<input type="text" placeholder="Local / Área (ex.: Restaurante, Piso 1)" value="'+escHtml(b.local)+'" oninput="updateSenhaBlocoField('+b.id+',\'local\',this.value)" style="width:100%;border:1px solid var(--gl);border-radius:2px;padding:5px 8px;font-family:\'Montserrat\',sans-serif;font-size:11px;margin-bottom:6px;box-sizing:border-box">'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">'
+      + '<div><label style="display:block;font-size:8px;color:var(--gm);margin-bottom:2px">Nº Senhas</label><input type="number" min="1" value="'+(b.qtd)+'" oninput="updateSenhaBlocoField('+b.id+',\'qtd\',parseInt(this.value)||1)" style="width:100%;border:1px solid var(--gl);border-radius:2px;padding:5px 6px;font-family:\'Montserrat\',sans-serif;font-size:11px;box-sizing:border-box"></div>'
+      + '<div><label style="display:block;font-size:8px;color:var(--gm);margin-bottom:2px">Nº Inicial</label><input type="number" min="1" value="'+(b.numInicial)+'" oninput="updateSenhaBlocoField('+b.id+',\'numInicial\',parseInt(this.value)||1)" style="width:100%;border:1px solid var(--gl);border-radius:2px;padding:5px 6px;font-family:\'Montserrat\',sans-serif;font-size:11px;box-sizing:border-box"></div>'
+      + '<div><label style="display:block;font-size:8px;color:var(--gm);margin-bottom:2px">Cor da Área</label>'+corSelectHTML(b.id,b.cor)+'</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function handleSenhaLogoUpload(ev){
+  var file = ev.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    senhasState.logoClienteDataUrl = e.target.result;
+    var label = $('senhas-logo-label');
+    if(label) label.textContent = '✓ '+file.name;
+  };
+  reader.readAsDataURL(file);
+}
+
+function limparSenhas(){
+  if(!confirm('Limpar todos os dados de senhas? Esta acção não pode ser desfeita.')) return;
+  senhasState = { evento:'', data:'', logoClienteDataUrl:'', blocos:[] };
+  var eventoEl=$('senhas-evento'); if(eventoEl) eventoEl.value='';
+  var dataEl=$('senhas-data'); if(dataEl) dataEl.value='';
+  var labelEl=$('senhas-logo-label'); if(labelEl) labelEl.textContent='📎 Carregar imagem (PNG/JPG)';
+  addSenhaBloco();
+  $('senhas-preview').innerHTML='<div style="text-align:center;color:var(--gm);font-size:12px;padding:60px 20px">🎫 Preenche os dados e clica <strong>Gerar Senhas</strong> para veres aqui a pré-visualização.</div>';
+  geToast('Dados de senhas limpos.');
+}
+
+// Gera o HTML de uma senha individual (usado tanto na pré-visualização como na impressão)
+function buildSenhaHTML(bloco, numero){
+  var dataFmt = senhasState.data ? fmtDate(senhasState.data) : '';
+  return '<div class="senha-card" style="border-left-color:'+bloco.cor+'">'
+    + '<div class="senha-faixa" style="background:'+bloco.cor+'"></div>'
+    + '<div class="senha-corpo">'
+    + '<div class="senha-topo">'
+    + '<img class="senha-logo-hcta" src="./FOTOS/Imagem1.png" alt="HCTA" onerror="this.style.display=\'none\'">'
+    + (senhasState.logoClienteDataUrl ? '<img class="senha-logo-cliente" src="'+senhasState.logoClienteDataUrl+'">' : '')
+    + '</div>'
+    + '<div class="senha-titulo">'+escHtml(bloco.titulo||'SENHA')+'</div>'
+    + '<div class="senha-evento">'+escHtml(senhasState.evento||'')+'</div>'
+    + (bloco.local ? '<div class="senha-local">'+escHtml(bloco.local)+'</div>' : '')
+    + '<div class="senha-rodape">'
+    + '<div class="senha-data">'+dataFmt+'</div>'
+    + '<div class="senha-numero">Nº '+String(numero).padStart(3,'0')+'</div>'
+    + '</div>'
+    + '</div>'
+    + '</div>';
+}
+
+function gerarSenhas(){
+  if(!senhasState.blocos.length){ geToast('Adiciona pelo menos um bloco de senhas.'); return; }
+  var semTitulo = senhasState.blocos.some(function(b){ return !b.titulo.trim(); });
+  if(semTitulo){ geToast('Preenche o título de todos os blocos de senhas.'); return; }
+
+  renderSenhasPreview();
+  geToast('Senhas geradas com sucesso.');
+}
+
+function renderSenhasPreview(){
+  var preview = $('senhas-preview');
+  var html = '<div style="display:flex;flex-wrap:wrap;gap:10px">';
+  senhasState.blocos.forEach(function(bloco){
+    for(var i=0; i<bloco.qtd; i++){
+      html += buildSenhaHTML(bloco, bloco.numInicial+i);
+    }
+  });
+  html += '</div>';
+  preview.innerHTML = html;
+}
+
+function printSenhas(){
+  if(!senhasState.blocos.length || senhasState.blocos.every(function(b){return !b.titulo.trim();})){
+    geToast('Gera primeiro as senhas antes de imprimir.');
+    return;
+  }
+  var cardsHtml='';
+  senhasState.blocos.forEach(function(bloco){
+    for(var i=0; i<bloco.qtd; i++){
+      cardsHtml += buildSenhaHTML(bloco, bloco.numInicial+i);
+    }
+  });
+
+  var win=window.open('','_blank','width=1100,height=800');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Senhas — '+escHtml(senhasState.evento||'Evento')+'</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">'
+    +'<style>'
+    +'@page{size:A4 landscape;margin:8mm}'
+    +'*{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
+    +'body{font-family:Montserrat,Arial,sans-serif;margin:0;padding:0;background:#fff;color:#231F20}'
+    +'.senhas-grid{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:1fr;gap:3mm;width:100%}'
+    +'.senha-card{position:relative;border:1px solid #ddd4c8;border-radius:3px;overflow:hidden;display:flex;min-height:58mm;page-break-inside:avoid;outline:1px dashed #bbb;outline-offset:2px}'
+    +'.senha-faixa{width:7mm;flex-shrink:0}'
+    +'.senha-corpo{flex:1;padding:3mm 3mm 2.5mm;display:flex;flex-direction:column;justify-content:space-between}'
+    +'.senha-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:4px}'
+    +'.senha-logo-hcta{height:7mm;max-width:22mm;object-fit:contain;flex-shrink:0}'
+    +'.senha-logo-cliente{height:13mm;max-width:32mm;object-fit:contain;flex-shrink:0}'
+    +'.senha-titulo{font-size:15px;font-weight:800;letter-spacing:.5px;color:#231F20;text-align:center;margin-top:4px;line-height:1.15}'
+    +'.senha-evento{font-size:8px;color:#888;text-align:center;margin-top:2px;line-height:1.3}'
+    +'.senha-local{font-size:7.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#887157;text-align:center;margin-top:3px}'
+    +'.senha-rodape{display:flex;align-items:center;justify-content:space-between;margin-top:4px;border-top:1px solid #e0dbd5;padding-top:3px}'
+    +'.senha-data{font-size:7px;color:#888}'
+    +'.senha-numero{font-size:10px;font-weight:800;color:#231F20;background:#f6f4f1;border-radius:9px;padding:1px 7px}'
+    +'@media print{ .senhas-grid{page-break-after:auto} .senha-card{page-break-inside:avoid;break-inside:avoid} }'
+    +'</style></head><body>'
+    +'<div class="senhas-grid">'+cardsHtml+'</div>'
+    +'<'+'script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script>'
+    +'</body></html>');
+  win.document.close();
+}
 
 // ══════════════════════════════════════════════════════
 // 11. INICIALIZAÇÃO DA APLICAÇÃO
