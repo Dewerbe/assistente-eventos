@@ -612,10 +612,13 @@ tr.dragging{opacity:0.4}
         <div style="font-size:9px;color:#888;margin-bottom:10px;line-height:1.6" data-i18n="lod_rooming_desc">
           Lista detalhada por hóspede. O nome do hóspede é opcional — pode deixar por preencher e completar mais tarde.
         </div>
-        <div id="lod-room-summary" style="display:flex;gap:18px;margin-bottom:10px;font-size:9px;color:#555"></div>
+        <div id="lod-room-summary" style="display:flex;gap:18px;margin-bottom:8px;font-size:9px;color:#555"></div>
+        <div id="lod-room-summary-tipos" style="margin-bottom:8px"></div>
+        <div id="lod-room-progress" style="margin-bottom:10px"></div>
         <table style="width:100%;border-collapse:collapse;font-size:10px" id="lod-rooming-table">
           <thead>
             <tr style="background:#231F20;color:#fff">
+              <th style="padding:5px 6px;width:20px;position:sticky;top:0;background:#231F20;z-index:1"></th>
               <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_ocupacao">Ocupação</th>
               <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_hospedes">Hóspede(s)</th>
               <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_tipo_quarto">Tipo Quarto</th>
@@ -623,6 +626,7 @@ tr.dragging{opacity:0.4}
               <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_checkin">Check-in</th>
               <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_checkout">Check-out</th>
               <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_noites">Noites</th>
+
               <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_preco_noite">Preço/Noite</th>
               <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_iva">IVA</th>
               <th style="padding:5px 6px;font-size:8px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;background:#231F20;z-index:1" data-i18n="th_eci">Early Check-in</th>
@@ -985,7 +989,7 @@ let _hideTimer = null;
 })();
 
 // ===== ALOJAMENTO =====
-const ROOM_TYPES = ['Standard','Suite Junior','Suite Executiva','Suite Presidencial'];
+const ROOM_TYPES = ['Standard','Standard Deluxe','Suite Junior','Suite Executiva','Suite Presidencial'];
 const OCCUPANCY_OPTS = ['Single','Duplo','Twin'];
 const REGIME_OPTS = ['BB','HB','FB'];
 let LODGING = { mode:'summary', summaryRows:[], roomingRows:[] };
@@ -1175,13 +1179,16 @@ function updateTaxPrint(sel){
   const span = sel.parentNode.querySelector('.tax-print');
   if(span) span.textContent = sel.value=='6.5'?'6,5%':sel.value+'%';
 }
-function addSection(label){
+function addSection(label, origin){
   const id = ++lid;
   const tbody = document.getElementById('lbody');
   const tr = document.createElement('tr');
   tr.id = 'S'+id;
   tr.className = 'sec-row';
   tr.innerHTML = '\n    <td class="drag-handle" draggable="false">⠿</td>\n    <td colspan="8" style="padding:0">\n      <input type="text" value="'+(label||'')+'" placeholder="DATA / DESCRIÇÃO DA SECÇÃO" \n        style="width:100%;background:transparent;color:#fff;font-weight:700;font-size:9px;\n        letter-spacing:1.5px;text-transform:uppercase;text-align:center;border:none;outline:none;\n        padding:5px 8px;font-family:\'Montserrat\',sans-serif">\n    </td>\n    <td style="background:var(--bronze);text-align:center;padding:0 4px;width:22px">\n      <button class="sec-del" onclick="delSection('+(id)+')">×</button>\n    </td>';
+  // Marca de origem (ex.: 'lodging'): identifica a secção gerada automaticamente pelo módulo
+  // de alojamento, restaurável a partir do JSON (ver getData/loadJSON).
+  if(origin){ tr.dataset.origin = origin; tr.setAttribute('data-lodging-gen','1'); }
   tbody.appendChild(tr);
   initDrag(tr);
   updatePageBreaks();
@@ -1246,6 +1253,10 @@ function addLine(d){
   const unitVal = d.unit ? fmtInput(+d.unit) : '';
   const discVal = d.disc ? fmtInput(+d.disc) : '';
   tr.innerHTML='\n    <td class="drag-handle" draggable="false">⠿</td>\n    <td class="n tc">'+(n)+'</td>\n    <td class="ds" style="position:relative"><textarea class="ta" placeholder="Descrição do serviço" oninput="autoResize(this);calcTot();showCatalog(this)" onfocus="showCatalog(this)" onblur="hideCatalog()" rows="1">'+(d.desc)+'</textarea></td>\n    <td class="qt"><input type="text" class="tc" value="'+(qtyVal)+'" placeholder="1" oninput="fmtField(this)" onblur="fmtBlur(this,true)" data-raw="'+(+d.qty||1)+'"></td>\n    <td class="dy"><input type="text" class="tc" value="'+(daysVal)+'" placeholder="1" oninput="fmtField(this)" onblur="fmtBlur(this,true)" data-raw="'+(+d.days||1)+'"></td>\n    <td class="vu"><input type="text" class="tr" value="'+(unitVal)+'" placeholder="0,00" oninput="fmtField(this)" onblur="fmtBlur(this,false)" data-raw="'+(+d.unit||0)+'"></td>\n    <td class="tx tc"><span class="tax-print">'+(d.tax=='6.5'?'6,5':d.tax)+'%</span>'+(taxSel(d.tax))+'</td>\n    <td class="dc"><input type="text" class="tr" value="'+(discVal)+'" placeholder="" oninput="fmtField(this)" onblur="fmtBlur(this,false)" data-raw="'+(+d.disc||0)+'"></td>\n    <td class="to tr" id="lt'+(id)+'">0,00</td>\n    <td class="dl"><button class="del-btn" onclick="delLine('+(id)+')">×</button></td>';
+  // Marca de origem (ex.: 'lodging'): identifica linhas geradas automaticamente pelo módulo
+  // de alojamento, para que possam ser encontradas e substituídas sem duplicar, mesmo depois
+  // de a proforma ser guardada em JSON e reaberta (ver getData/loadJSON).
+  if(d.origin){ tr.dataset.origin = d.origin; tr.setAttribute('data-lodging-gen','1'); }
   tbody.appendChild(tr);
   initDrag(tr);
   autoResize(tr.querySelector('.ta'));
@@ -1311,20 +1322,22 @@ function updatePageBreaks(){
 // 5. FUNCOES DE GUARDAR / CARREGAR JSON
 // ============================================================
 function getData(){
-  const rows=document.querySelectorAll('#lbody tr:not(.sec-row):not(.pbm-row)');
+  const rows=document.querySelectorAll('#lbody tr:not(.pbm-row)');
   const lines=[];
   rows.forEach(tr=>{
+    // Marca de origem (ex.: 'lodging'): permite reconhecer, depois de recarregar o JSON,
+    // quais linhas/secções foram geradas automaticamente pelo módulo de alojamento.
+    const origin = tr.dataset.origin || undefined;
     if(tr.classList.contains('sec-row')){
       const inp=tr.querySelector('input');
-      lines.push({type:'section',label:inp?inp.value:''});
+      lines.push({type:'section',label:inp?inp.value:'',origin});
       return;
     }
-    if(tr.classList.contains('pbm-row')) return;
     const id=parseInt(tr.id.replace('L',''));
     const ta=tr.querySelector('textarea');
     const inp=tr.querySelectorAll('input');
     const sel=tr.querySelector('select');
-    lines.push({type:'line',desc:ta?ta.value:'',qty:inp[0].dataset.raw||1,days:inp[1].dataset.raw||1,unit:inp[2].dataset.raw||0,tax:sel.value,disc:inp[3].dataset.raw||0});
+    lines.push({type:'line',desc:ta?ta.value:'',qty:inp[0].dataset.raw||1,days:inp[1].dataset.raw||1,unit:inp[2].dataset.raw||0,tax:sel.value,disc:inp[3].dataset.raw||0,origin});
   });
   return{data:document.getElementById('f-data').value,rsv:document.getElementById('f-rsv').value,sign:document.getElementById('sign-sel').value,
     ev:document.getElementById('f-ev').value,ent:document.getElementById('f-ent').value,
@@ -1422,7 +1435,7 @@ function loadJSON(ev){
       if(d.sign){document.getElementById('sign-sel').value=d.sign;updateSign();}
       document.getElementById('lbody').innerHTML='';lid=0;
       (d.lines||[]).forEach(l=>{
-        if(l.type==='section') addSection(l.label);
+        if(l.type==='section') addSection(l.label, l.origin);
         else addLine(l);
       });
       _loadedFilename = file.name.replace(/\.json$/i,'');
@@ -1774,6 +1787,14 @@ function updateRoomingField(id, field, value){
   if(field==='roomType' || field==='regime' || field==='checkin' || field==='checkout' || field==='price' || field==='tax' || field==='qty'){
     renderSummaryTable();
   }
+  // Resumo por tipo de quarto e indicador de progresso: actualizam-se sempre que o tipo
+  // de quarto ou o preenchimento dos nomes dos hóspedes mudam (não afecta cálculos existentes).
+  if(field==='roomType'){
+    renderRoomingTypeSummary();
+  }
+  if(field==='guest' || field==='guest2' || field==='occupancy'){
+    renderRoomingProgress();
+  }
 }
 
 function occupancySelFor(id, value){
@@ -1817,7 +1838,8 @@ function renderRoomingTable(){
   const body = document.getElementById('lod-rooming-body');
   body.innerHTML = LODGING.roomingRows.map(r => {
     const nights = calcNights(r.checkin, r.checkout);
-    return '<tr id="lod-room-'+(r.id)+'">'
+    return '<tr id="lod-room-'+(r.id)+'" draggable="true" ondragstart="roomingDragStart(event,'+(r.id)+')" ondragover="roomingDragOver(event)" ondrop="roomingDrop(event,'+(r.id)+')" ondragend="roomingDragEnd(event)">'
+      + '<td style="border-bottom:1px solid #e0dbd5;padding:3px;text-align:center;cursor:grab;color:#bbb;font-size:13px;user-select:none" title="Arrastar para reordenar">⠿</td>'
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+occupancySelFor(r.id, r.occupancy)+occupancySupplementCellFor(r)+'</td>'
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+guestFieldsFor(r)+'</td>'
       + '<td style="border-bottom:1px solid #e0dbd5;padding:3px">'+roomTypeSelFor('rooming',r.id,r.roomType)+'</td>'
@@ -1833,6 +1855,42 @@ function renderRoomingTable(){
       + '</tr>';
   }).join('');
   renderRoomingSummary();
+  renderRoomingTypeSummary();
+  renderRoomingProgress();
+}
+
+// ---- Reordenação da Rooming List (Drag & Drop) ----
+let _roomingDragId = null;
+
+function roomingDragStart(ev, id){
+  _roomingDragId = id;
+  ev.dataTransfer.effectAllowed = 'move';
+  try{ ev.dataTransfer.setData('text/plain', String(id)); }catch(e){}
+  ev.currentTarget.style.opacity = '0.4';
+}
+
+function roomingDragOver(ev){
+  ev.preventDefault();
+  ev.dataTransfer.dropEffect = 'move';
+}
+
+function roomingDrop(ev, targetId){
+  ev.preventDefault();
+  if(_roomingDragId === null || _roomingDragId === targetId) return;
+
+  const fromIdx = LODGING.roomingRows.findIndex(r => r.id === _roomingDragId);
+  const toIdx = LODGING.roomingRows.findIndex(r => r.id === targetId);
+  if(fromIdx === -1 || toIdx === -1) return;
+
+  const [moved] = LODGING.roomingRows.splice(fromIdx, 1);
+  LODGING.roomingRows.splice(toIdx, 0, moved);
+
+  renderRoomingTable();
+}
+
+function roomingDragEnd(ev){
+  ev.currentTarget.style.opacity = '';
+  _roomingDragId = null;
 }
 
 // Totais automáticos: Quartos, Hóspedes e Room Nights
@@ -1857,6 +1915,79 @@ function renderRoomingSummary(){
     '<div><b style="color:#231F20">'+(T('rl_total_quartos'))+':</b> '+(t.totalRooms)+'</div>'
     + '<div><b style="color:#231F20">'+(T('rl_total_hospedes'))+':</b> '+(t.totalGuests)+'</div>'
     + '<div><b style="color:#231F20">'+(T('rl_total_nights'))+':</b> '+(t.totalRoomNights)+'</div>';
+}
+
+// Resumo automático por tipo de quarto (nº de quartos por cada tipo presente na Rooming List)
+// Conta o total de quartos (soma de qty) por cada tipo de quarto presente nas linhas dadas.
+// Reutilizada tanto pelo resumo do modal como pela impressão da Rooming List.
+function getRoomingTypeCounts(rows){
+  const counts = {};
+  const order = [];
+  rows.forEach(r => {
+    const qty = parseInt(r.qty) || 0;
+    if(!(r.roomType in counts)){ counts[r.roomType] = 0; order.push(r.roomType); }
+    counts[r.roomType] += qty;
+  });
+  return order.map(rt => ({ roomType: rt, qty: counts[rt] }));
+}
+
+function renderRoomingTypeSummary(){
+  const el = document.getElementById('lod-room-summary-tipos');
+  if(!el) return;
+  const rows = LODGING.roomingRows;
+  if(!rows.length){ el.innerHTML=''; return; }
+
+  const typeCounts = getRoomingTypeCounts(rows);
+
+  el.innerHTML = '<div style="font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#887157;margin-bottom:4px">Resumo por Tipo de Quarto</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:6px 18px;font-size:9px;color:#444">'
+    + typeCounts.map(tc => {
+        const label = tc.qty===1 ? 'quarto' : 'quartos';
+        return '<div><span style="color:#231F20">'+(tc.roomType)+'</span> — <b>'+(tc.qty)+'</b> '+(label)+'</div>';
+      }).join('')
+    + '</div>';
+}
+
+// Considera um quarto "completo" quando todos os hóspedes esperados estão identificados:
+// Single precisa de 1 nome preenchido; Duplo/Twin precisam de 2 nomes preenchidos.
+// N/A, vazio ou apenas espaços em branco contam como não preenchido.
+function isGuestNamePresent(name){
+  if(!name) return false;
+  const trimmed = (''+name).trim();
+  if(!trimmed) return false;
+  const upper = trimmed.toUpperCase();
+  if(upper === 'N/A' || upper === 'NA' || trimmed === '-') return false;
+  return true;
+}
+
+function isRoomingRowComplete(r){
+  const guest1ok = isGuestNamePresent(r.guest);
+  if(occupancyGuestCount(r.occupancy) !== 2) return guest1ok;
+  const guest2ok = isGuestNamePresent(r.guest2);
+  return guest1ok && guest2ok;
+}
+
+// Indicador visual do estado de preenchimento da Rooming List (não afecta Total de Hóspedes
+// nem Room Nights — é apenas informativo sobre quantos quartos já têm todos os hóspedes identificados).
+function renderRoomingProgress(){
+  const el = document.getElementById('lod-room-progress');
+  if(!el) return;
+  const rows = LODGING.roomingRows;
+  if(!rows.length){ el.innerHTML=''; return; }
+
+  const total = rows.length;
+  const completos = rows.filter(isRoomingRowComplete).length;
+  const pct = total ? Math.round((completos/total)*100) : 0;
+  const barWidth = 160;
+  const filledWidth = Math.round((barWidth*pct)/100);
+
+  el.innerHTML = '<div style="font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#887157;margin-bottom:4px">Rooming List</div>'
+    + '<div style="display:flex;align-items:center;gap:8px">'
+    + '<div style="width:'+(barWidth)+'px;height:8px;background:#e8e4de;border-radius:4px;overflow:hidden">'
+    + '<div style="width:'+(filledWidth)+'px;height:100%;background:#887157;border-radius:4px"></div>'
+    + '</div>'
+    + '<span style="font-size:9px;color:#555;font-weight:600">'+(completos)+' / '+(total)+' quartos completos</span>'
+    + '</div>';
 }
 
 // ---- SELECTS ligados a uma linha específica (resumo ou rooming) ----
@@ -1944,6 +2075,21 @@ function fmtDatePT(iso){
   return d+'/'+m+'/'+y;
 }
 
+// Identifica se uma linha/secção da proforma foi gerada automaticamente pelo módulo de
+// alojamento. Reconhece tanto a marca formal (data-lodging-gen / dataset.origin) como,
+// para compatibilidade com proformas antigas já guardadas antes desta marca existir, uma
+// linha de descrição cujo texto comece por "Alojamento —" (o formato sempre usado aqui).
+function isLodgingGeneratedRow(tr){
+  if(tr.dataset.origin === 'lodging' || tr.getAttribute('data-lodging-gen') === '1') return true;
+  if(tr.classList.contains('sec-row')){
+    const inp = tr.querySelector('input');
+    const label = inp ? inp.value.trim().toUpperCase() : '';
+    return label === 'ALOJAMENTO' || label === 'SUPLEMENTOS ALOJAMENTO';
+  }
+  const ta = tr.querySelector('textarea');
+  return !!(ta && ta.value.indexOf('Alojamento —') === 0);
+}
+
 function applyLodgingToProforma(){
   const hasRooming = LODGING.roomingRows.length > 0;
   const hasSummary = LODGING.summaryRows.length > 0;
@@ -1951,13 +2097,15 @@ function applyLodgingToProforma(){
 
   const tbody = document.getElementById('lbody');
 
-  // Remove linhas e secções de alojamento geradas anteriormente, para evitar duplicar
-  tbody.querySelectorAll('[data-lodging-gen="1"]').forEach(el => el.remove());
+  // Remove linhas e secções de alojamento geradas anteriormente, para evitar duplicar —
+  // encontra-as pela marca formal ou, em proformas antigas sem essa marca, pelo padrão
+  // de descrição "Alojamento —" / título de secção conhecido.
+  Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
+    if(isLodgingGeneratedRow(tr)) tr.remove();
+  });
 
-  // Cria a secção "ALOJAMENTO"
-  addSection('ALOJAMENTO');
-  const secTr = tbody.lastElementChild;
-  secTr.setAttribute('data-lodging-gen','1');
+  // Cria a secção "ALOJAMENTO", já marcada com a origem correcta
+  addSection('ALOJAMENTO', 'lodging');
 
   // Fonte de dados: os blocos já convertidos ficam representados pelas linhas da Rooming
   // List (reflectindo qualquer alteração feita directamente nela); os blocos do Resumo
@@ -1971,23 +2119,17 @@ function applyLodgingToProforma(){
     const roomLabel = g.qty===1 ? 'Quarto' : 'Quartos';
     const desc = 'Alojamento — '+(g.qty)+' '+(roomLabel)+' '+(g.roomType)+' | Regime '+(g.regime)+' | '+(fmtDatePT(g.checkin))+' a '+(fmtDatePT(g.checkout));
 
-    addLine({desc:desc, qty:g.qty, days:g.nights, unit:g.unit, tax:g.tax, disc:''});
-    const lineTr = tbody.lastElementChild;
-    lineTr.setAttribute('data-lodging-gen','1');
+    addLine({desc:desc, qty:g.qty, days:g.nights, unit:g.unit, tax:g.tax, disc:'', origin:'lodging'});
   });
 
   // Suplementos manuais definidos na Rooming List (Early Check-in, Late Check-out,
   // Suplemento Ocupação Duplo/Twin) — agrupados por tipo + valor unitário.
   const supplementGroups = collectLodgingSupplements(LODGING.roomingRows);
   if(supplementGroups.length){
-    addSection('SUPLEMENTOS ALOJAMENTO');
-    const supSecTr = tbody.lastElementChild;
-    supSecTr.setAttribute('data-lodging-gen','1');
+    addSection('SUPLEMENTOS ALOJAMENTO', 'lodging');
 
     supplementGroups.forEach(g => {
-      addLine({desc:g.desc, qty:g.qty, days:1, unit:g.unit, tax:g.tax, disc:''});
-      const lineTr = tbody.lastElementChild;
-      lineTr.setAttribute('data-lodging-gen','1');
+      addLine({desc:g.desc, qty:g.qty, days:1, unit:g.unit, tax:g.tax, disc:'', origin:'lodging'});
     });
   }
 
@@ -2100,6 +2242,9 @@ function printRoomingList(){
   const periodoFim = checkouts.length ? fmtDatePT(checkouts[checkouts.length-1]) : '—';
 
   const totals = getRoomingTotals(rows);
+  const typeCounts = getRoomingTypeCounts(rows);
+  const comNome = rows.filter(isRoomingRowComplete).length;
+  const semNome = rows.length - comNome;
 
   const rowsHtml = rows.map(r => {
     const nights = calcNights(r.checkin, r.checkout);
@@ -2127,7 +2272,7 @@ function printRoomingList(){
     + '<style>'
     + '*{box-sizing:border-box;margin:0;padding:0}'
     + 'body{font-family:\'Montserrat\',sans-serif;color:#231F20;font-size:11px;padding:24px}'
-    + '.rl-header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:3px solid #887157;padding-bottom:12px;margin-bottom:16px}'
+    + '.rl-header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:3px solid #887157;padding-bottom:12px;margin-bottom:12px}'
     + '.rl-header img{height:60px;object-fit:contain;display:block;margin-bottom:6px}'
     + '.rl-title{font-size:20px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#231F20}'
     + '.rl-meta{font-size:9.5px;color:#555;line-height:1.7;margin-top:4px}'
@@ -2135,6 +2280,12 @@ function printRoomingList(){
     + '.rl-summary{text-align:right;font-size:9.5px;color:#555;line-height:1.8;white-space:nowrap}'
     + '.rl-summary .rl-sum-item{margin-bottom:2px}'
     + '.rl-summary .rl-sum-val{font-size:15px;font-weight:700;color:#887157;margin-left:4px}'
+    + '.rl-extra{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #e0dbd5}'
+    + '.rl-extra-block{font-size:9px;color:#444}'
+    + '.rl-extra-title{font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#887157;margin-bottom:4px}'
+    + '.rl-extra-types{display:flex;flex-wrap:wrap;gap:4px 16px}'
+    + '.rl-extra-names{display:flex;gap:16px}'
+    + '.rl-extra-names b{color:#231F20}'
     + 'table{width:100%;border-collapse:collapse;font-size:9.5px}'
     + 'thead{display:table-header-group}'
     + 'tr{page-break-inside:avoid;break-inside:avoid}'
@@ -2143,7 +2294,7 @@ function printRoomingList(){
     + 'tr:nth-child(even) td{background:#f6f4f1}'
     + '.rl-yes{color:#2e7d32;font-weight:700;font-size:12px}'
     + '.rl-no{color:#b0b0b0;font-weight:700;font-size:12px}'
-    + '@media print{ body{padding:0} @page{margin:12mm;size:A4 portrait} }'
+    + '@media print{ body{padding:0} @page{margin:12mm;size:A4 portrait; @bottom-right{content:"'+(currentLang==='en'?'Page':'Página')+' " counter(page); font-family:\'Montserrat\',sans-serif; font-size:8.5px; color:#888} } }'
     + '</style></head><body>'
     + '<div class="rl-header">'
     + '<div>'
@@ -2161,6 +2312,24 @@ function printRoomingList(){
     + '<div class="rl-sum-item">'+(T('rl_total_quartos'))+'<span class="rl-sum-val">'+(totals.totalRooms)+'</span></div>'
     + '<div class="rl-sum-item">'+(T('rl_total_hospedes'))+'<span class="rl-sum-val">'+(totals.totalGuests)+'</span></div>'
     + '<div class="rl-sum-item">'+(T('rl_total_nights'))+'<span class="rl-sum-val">'+(totals.totalRoomNights)+'</span></div>'
+    + '</div>'
+    + '</div>'
+    + '<div class="rl-extra">'
+    + '<div class="rl-extra-block">'
+    + '<div class="rl-extra-title">'+(currentLang==='en'?'Summary by Room Type':'Resumo por Tipo de Quarto')+'</div>'
+    + '<div class="rl-extra-types">'
+    + typeCounts.map(tc => {
+        const label = currentLang==='en' ? (tc.qty===1?'room':'rooms') : (tc.qty===1?'quarto':'quartos');
+        return '<span>'+(tc.roomType)+' — <b>'+(tc.qty)+'</b> '+(label)+'</span>';
+      }).join('')
+    + '</div>'
+    + '</div>'
+    + '<div class="rl-extra-block">'
+    + '<div class="rl-extra-title">'+(currentLang==='en'?'Guest Name Status':'Estado de Identificação')+'</div>'
+    + '<div class="rl-extra-names">'
+    + '<span>'+(currentLang==='en'?'Rooms with name(s):':'Quartos com nome:')+' <b>'+(comNome)+'</b></span>'
+    + '<span>'+(currentLang==='en'?'Rooms without name(s):':'Quartos sem nome:')+' <b>'+(semNome)+'</b></span>'
+    + '</div>'
     + '</div>'
     + '</div>'
     + '<table><thead><tr>'
