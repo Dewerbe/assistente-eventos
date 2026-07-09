@@ -307,6 +307,11 @@ tr.dragging{opacity:0.4}
   .tr-transport td,.tr-carry td{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   @page{margin:10mm 12mm;size:A4 portrait}
 
+  /* Numeração automática de página ("Página X de Y" / "Page X of Y"): a regra
+     @page{@bottom-right{...}} com o texto no idioma correcto é injectada dinamicamente
+     por updatePrintPageLabel() (chamada em preparePrintLayout(), antes de cada impressão),
+     numa <style id="print-page-label-style"> própria — evita duplicar a regra aqui. */
+
   /* Repetir cabeçalho da tabela em nova página */
   .lt thead{display:table-header-group}
 
@@ -1502,6 +1507,28 @@ function preparePrintLayout(){
 
   // Recalcula o indicador visual de quebra de página com base na altura útil A4
   updatePageBreaks();
+
+  // Actualiza o texto "Página X de Y" / "Page X of Y" no rodapé impresso, de acordo
+  // com o idioma activo no momento de imprimir.
+  updatePrintPageLabel();
+}
+
+// Injecta (ou actualiza) uma <style> dedicada que define o texto da numeração de página
+// no idioma correcto. @page é uma regra de topo, por isso não pode depender de um
+// selector CSS condicional — o texto é escrito aqui em JS, mas o cálculo do número de
+// página e do total (counter(page)/counter(pages)) continua a ser feito nativamente
+// pelo motor de impressão, não por JavaScript.
+function updatePrintPageLabel(){
+  const label = currentLang==='en' ? 'Page' : 'Página';
+  const of    = currentLang==='en' ? 'of'   : 'de';
+  let styleEl = document.getElementById('print-page-label-style');
+  if(!styleEl){
+    styleEl = document.createElement('style');
+    styleEl.id = 'print-page-label-style';
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent =
+    '@media print{ @page{ @bottom-right{ content:"'+(label)+' " counter(page) " '+(of)+' " counter(pages); font-family:\'Montserrat\',sans-serif; font-size:8px; color:#999; } } }';
 }
 
 // Cria (ou actualiza) o span de texto limpo usado apenas em impressão,
