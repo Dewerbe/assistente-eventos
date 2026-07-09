@@ -2538,6 +2538,7 @@ function printOS(){
     +'<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">'
     +'<style>'
     +'@page{size:A4 portrait;margin:7mm 8mm}'
+    +'@page{ @bottom-right{ content:"'+(p()?'Página':'Page')+' " counter(page) " '+(p()?'de':'of')+' " counter(pages); font-family:Montserrat,Arial,sans-serif; font-size:8px; color:#999; } }'
     +'*{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
     +'body{font-family:Montserrat,Arial,sans-serif;margin:0;padding:0;background:#fff;color:#231F20}'
     +':root{--black:#231F20;--bronze:#887157;--bronze-l:#b09a80;--bronze-ll:#ede7df;--gl:#e0dbd5;--gbg:#f6f4f1;--gm:#888;--gd:#555;--blue:#1a4e8c;--red:#c0392b}'
