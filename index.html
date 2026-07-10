@@ -286,6 +286,39 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
 .senha-data{font-size:6px;color:var(--gm)}
 .senha-numero{font-size:8px;font-weight:800;color:var(--black);background:var(--gbg);border-radius:8px;padding:1px 6px}
 
+/* Sinalética — pré-visualização dentro da app (miniatura A4 proporcional, 210×297mm) */
+.sinal-preview-wrap{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
+.sinal-page{width:280px;height:396px;background:#fff;border:1px solid var(--gl);border-radius:2px;box-shadow:0 3px 14px rgba(0,0,0,.12);position:relative;display:flex;flex-direction:column;overflow:hidden}
+
+/* Cabeçalho institucional — comum às duas páginas */
+.sinal-hdr{display:flex;align-items:center;justify-content:center;padding:16px 0 10px}
+.sinal-logo-hcta{height:26px;object-fit:contain}
+.sinal-hdr-faixa{height:3px;background:var(--bronze);margin:0 0 0}
+
+/* Página 1 — Porta da sala */
+.sinal-porta-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:18px 22px}
+.sinal-porta-logo-frame{width:100%;height:180px;background:var(--gbg);border:1px solid var(--gl);border-radius:4px;display:flex;align-items:center;justify-content:center;padding:16px}
+.sinal-logo-cliente{max-width:100%;max-height:148px;object-fit:contain}
+.sinal-logo-cliente-placeholder{font-size:10px;color:#bbb;font-weight:600;letter-spacing:1px;text-transform:uppercase;text-align:center;line-height:1.6}
+.sinal-porta-evento{font-size:11px;font-weight:600;color:var(--black);text-align:center;letter-spacing:.5px;max-width:220px}
+
+/* Rodapé institucional — comum às duas páginas */
+.sinal-footer{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0 14px;font-size:8px;font-weight:700;letter-spacing:2px;color:var(--gm)}
+.sinal-footer-line{width:26px;height:1px;background:var(--gl)}
+
+/* Página 2 — Recepção */
+.sinal-recepcao-top{display:flex;align-items:center;justify-content:center;padding:6px 22px 14px}
+.sinal-logo-cliente-r-frame{width:100%;height:74px;display:flex;align-items:center;justify-content:center}
+.sinal-logo-cliente-r{max-width:100%;max-height:74px;object-fit:contain}
+.sinal-logo-cliente-r-placeholder{font-size:11px;font-weight:600;color:var(--gm);letter-spacing:.5px;text-align:center}
+.sinal-orient-block{flex:1;display:flex;align-items:center;justify-content:center;margin:0 14px 14px;padding:10px 16px}
+.sinal-orient-inner{display:flex;flex-direction:column;align-items:center;gap:20px}
+.sinal-seta{font-size:58px;line-height:1;color:var(--bronze);font-weight:300}
+.sinal-recepcao-sala{font-weight:800;color:var(--black);line-height:1.15;letter-spacing:.3px;max-width:220px;width:100%;text-align:center;word-break:normal;overflow-wrap:normal;hyphens:none;white-space:normal}
+.sinal-recepcao-sala-lg{font-size:28px}
+.sinal-recepcao-sala-md{font-size:22px}
+.sinal-recepcao-sala-sm{font-size:17px}
+
 @media print {
   @page{margin:5mm 6mm;size:297mm 210mm landscape}
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box}
@@ -668,6 +701,52 @@ button { cursor:pointer; font-family:'Montserrat',Arial,sans-serif; }
       </div>
     </div>
 
+    <div id="sinaleticaview" style="display:none;">
+      <div style="margin-bottom:16px;"><a href="#" onclick="goHome();return false;" style="font-size:11px;color:#887157;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;">← Voltar</a></div>
+      <div style="font-size:18px;color:#231F20;font-weight:300;margin-bottom:6px;">Sinalética</div>
+      <div style="width:40px;height:1px;background:#887157;margin-bottom:20px;"></div>
+
+      <div style="display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start">
+
+        <!-- COLUNA ESQUERDA: formulário -->
+        <div style="background:#fff;border:1px solid var(--gl);border-radius:4px;padding:16px">
+
+          <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gm);margin-bottom:10px">Dados</div>
+
+          <label style="display:block;font-size:9px;color:var(--gm);margin-bottom:3px">Nome do Evento / Entidade (opcional)</label>
+          <input type="text" id="sinal-evento" placeholder="Ex.: Conferência AFIS 2026" style="width:100%;border:1px solid var(--gl);border-radius:2px;padding:6px 9px;font-family:'Montserrat',sans-serif;font-size:12px;margin-bottom:10px;box-sizing:border-box" oninput="sinaleticaState.evento=this.value">
+
+          <label style="display:block;font-size:9px;color:var(--gm);margin-bottom:3px">Nome da Sala</label>
+          <input type="text" id="sinal-sala" placeholder="Ex.: Cabinda I" style="width:100%;border:1px solid var(--gl);border-radius:2px;padding:6px 9px;font-family:'Montserrat',sans-serif;font-size:12px;margin-bottom:10px;box-sizing:border-box" oninput="sinaleticaState.sala=this.value">
+
+          <label style="display:block;font-size:9px;color:var(--gm);margin-bottom:3px">Logótipo do Cliente / Evento</label>
+          <label style="display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed var(--gl);border-radius:2px;padding:10px;font-size:11px;color:var(--gm);cursor:pointer;margin-bottom:16px;background:var(--gbg)">
+            <span id="sinal-logo-label">📎 Carregar imagem (PNG/JPG)</span>
+            <input type="file" accept="image/*" style="display:none" onchange="handleSinaleticaLogoUpload(event)">
+          </label>
+
+          <div style="display:flex;gap:8px;margin-top:16px;border-top:1px solid var(--gl);padding-top:14px">
+            <button type="button" onclick="gerarSinaletica()" style="flex:1;background:var(--bronze);color:#fff;border:none;border-radius:2px;padding:9px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;font-family:'Montserrat',sans-serif">Gerar Sinalética</button>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button type="button" onclick="printSinaletica()" style="flex:1;background:none;border:1px solid var(--gl);color:var(--black);border-radius:2px;padding:8px;font-size:11px;cursor:pointer;font-family:'Montserrat',sans-serif">🖨 Imprimir / PDF</button>
+            <button type="button" onclick="limparSinaletica()" style="flex:1;background:none;border:1px solid var(--gl);color:var(--gm);border-radius:2px;padding:8px;font-size:11px;cursor:pointer;font-family:'Montserrat',sans-serif">Limpar</button>
+          </div>
+        </div>
+
+        <!-- COLUNA DIREITA: pré-visualização das 2 páginas A4 -->
+        <div style="background:#fff;border:1px solid var(--gl);border-radius:4px;padding:16px;min-height:400px">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gm);margin-bottom:10px">Pré-visualização</div>
+          <div id="sinal-preview">
+            <div style="text-align:center;color:var(--gm);font-size:12px;padding:60px 20px">
+              🪧 Preenche os dados e clica <strong>Gerar Sinalética</strong> para veres aqui a pré-visualização.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div><!-- /content-col -->
 </div><!-- /grid -->
 
@@ -774,6 +853,11 @@ var SENHA_CORES=[
   {nome:'Preto', valor:'#231F20'},
   {nome:'Dourado', valor:'#b8962e'}
 ];
+
+// Estado do módulo "Sinalética" — totalmente independente dos restantes módulos.
+var sinaleticaState={
+  evento:'', sala:'', logoClienteDataUrl:''
+};
 const DIAS_PT=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
 const DIAS_S=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -994,6 +1078,7 @@ function T(key){
     'os-sub':['Ordem de Serviço','Service Order'],'os-desc':['Criar documento operacional','Create operational document'],
     'pf-sub':['Proforma','Proforma'],'pf-desc':['Emissão de factura proforma','Issue proforma invoice'],
     'senhas-sub':['Emissão de Senhas','Ticket Issuing'],'senhas-desc':['Senhas para eventos','Event tickets'],
+    'sinaletica-sub':['Sinalética','Signage'],'sinaletica-desc':['Sinalética de sala e recepção','Room and reception signage'],
     'fc-title':['Calculadora de Retenção e Cativação','Retention & Withholding Calculator'],
     'fc-entity-lbl':['Tipo de entidade pagadora','Payer entity type'],
     'ent-pub':['🏛 Agente Cativador','🏛 Withholding Agent'],'ent-priv':['🏢 Entidade Privada','🏢 Private Entity'],
@@ -1041,7 +1126,7 @@ function setLang(l){
 // 3. NAVEGAÇÃO E VIEWS
 // ══════════════════════════════════════════════════════
 function hideAllViews(){
-  ['landing','formview','resultview','fiscalview','mapaview','osview','senhasview'].forEach(function(id){ hide(id); });
+  ['landing','formview','resultview','fiscalview','mapaview','osview','senhasview','sinaleticaview'].forEach(function(id){ hide(id); });
 }
 function refreshAll(){
   setText('hdr-events',T('hdr-events')); setText('sidebar-title',T('nav'));
@@ -1097,6 +1182,11 @@ function openSenhas(){
   if(!senhasState.blocos.length) addSenhaBloco();
   renderSenhasForm();
 }
+function openSinaletica(){
+  curType=null;curSection='sinaletica';
+  hideAllViews(); show('sinaleticaview');
+  renderMenu();
+}
 function backToForm(){ emailResult=null;hide('resultview');show('formview');renderFields(); }
 function fiscalTab(tab){
   curFiscalTab=tab;
@@ -1130,6 +1220,7 @@ function renderMenu(){
   menu.appendChild(makeMenuBtn(T('os-sub'),T('os-desc'),curSection==='os',openOS));
   menu.appendChild(makeMenuBtn(T('pf-sub'),T('pf-desc'),false,openPF));
   menu.appendChild(makeMenuBtn(T('senhas-sub'),T('senhas-desc'),curSection==='senhas',openSenhas));
+  menu.appendChild(makeMenuBtn(T('sinaletica-sub'),T('sinaletica-desc'),curSection==='sinaletica',openSinaletica));
 }
 function addMenuLabel(menu,text,size){
   var d=document.createElement('div');
@@ -1179,6 +1270,7 @@ function renderLanding(){
   ger.appendChild(makeCard(T('os-sub'),T('os-desc'),openOS));
   ger.appendChild(makeCard(T('pf-sub'),T('pf-desc'),openPF));
   ger.appendChild(makeCard(T('senhas-sub'),T('senhas-desc'),openSenhas));
+  ger.appendChild(makeCard(T('sinaletica-sub'),T('sinaletica-desc'),openSinaletica));
   grid.appendChild(ger);
 }
 function makeCard(main,sub,fn){
@@ -3013,6 +3105,157 @@ function printSenhas(){
     +'@media print{ .senhas-grid{page-break-after:auto} .senha-card{page-break-inside:avoid;break-inside:avoid} }'
     +'</style></head><body>'
     +'<div class="senhas-grid">'+cardsHtml+'</div>'
+    +'<'+'script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script>'
+    +'</body></html>');
+  win.document.close();
+}
+
+// ══════════════════════════════════════════════════════
+// 13. SINALÉTICA (módulo independente)
+// ══════════════════════════════════════════════════════
+
+function handleSinaleticaLogoUpload(ev){
+  var file = ev.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    sinaleticaState.logoClienteDataUrl = e.target.result;
+    var label = $('sinal-logo-label');
+    if(label) label.textContent = '✓ '+file.name;
+  };
+  reader.readAsDataURL(file);
+}
+
+function limparSinaletica(){
+  if(!confirm('Limpar todos os dados de sinalética? Esta acção não pode ser desfeita.')) return;
+  sinaleticaState = { evento:'', sala:'', logoClienteDataUrl:'' };
+  var eventoEl=$('sinal-evento'); if(eventoEl) eventoEl.value='';
+  var salaEl=$('sinal-sala'); if(salaEl) salaEl.value='';
+  var labelEl=$('sinal-logo-label'); if(labelEl) labelEl.textContent='📎 Carregar imagem (PNG/JPG)';
+  $('sinal-preview').innerHTML='<div style="text-align:center;color:var(--gm);font-size:12px;padding:60px 20px">🪧 Preenche os dados e clica <strong>Gerar Sinalética</strong> para veres aqui a pré-visualização.</div>';
+  geToast('Dados de sinalética limpos.');
+}
+
+// Constrói o HTML das duas páginas de sinalética (porta da sala + recepção).
+// scale: 1 = tamanho real em mm convertido para px de impressão; <1 = miniatura de pré-visualização.
+function buildSinaleticaPagesHTML(){
+  var evento = sinaleticaState.evento ? escHtml(sinaleticaState.evento) : '';
+  var salaUpper = escHtml((sinaleticaState.sala||'').toUpperCase()) || 'SALA';
+
+  // O logótipo HCTA é resolvido para um URL absoluto a partir da localização do próprio
+  // documento (mesmo ficheiro/pasta usados em Proforma, Rooming List, OS e Senhas). Isto é
+  // necessário aqui porque a impressão abre numa janela nova em branco (about:blank), que
+  // não tem uma base própria para resolver um caminho relativo como "./FOTOS/Imagem1.png".
+  var hctaLogoUrl;
+  try{ hctaLogoUrl = new URL('./FOTOS/Imagem1.png', window.location.href).href; }
+  catch(e){ hctaLogoUrl = './FOTOS/Imagem1.png'; }
+
+  // Cabeçalho institucional: logótipo HCTA bem visível + faixa bronze — comum às duas páginas.
+  var header =
+    '<div class="sinal-hdr">'
+    + '<img class="sinal-logo-hcta" src="'+hctaLogoUrl+'" alt="HCTA" onerror="this.style.display=\'none\'">'
+    + '</div>'
+    + '<div class="sinal-hdr-faixa"></div>';
+
+  var logoClientePorta = sinaleticaState.logoClienteDataUrl
+    ? '<img class="sinal-logo-cliente" src="'+sinaleticaState.logoClienteDataUrl+'">'
+    : '<div class="sinal-logo-cliente-placeholder">Logótipo do<br>Cliente / Evento</div>';
+
+  var logoClienteRecepcao = sinaleticaState.logoClienteDataUrl
+    ? '<img class="sinal-logo-cliente-r" src="'+sinaleticaState.logoClienteDataUrl+'">'
+    : '<div class="sinal-logo-cliente-r-placeholder">'+(evento||'Logótipo do Cliente')+'</div>';
+
+  // Página 1 — Porta da sala: cabeçalho institucional, logótipo do cliente numa moldura
+  // generosa que se adapta a proporções horizontais/verticais/quadradas, rodapé institucional.
+  var pagina1 =
+    '<div class="sinal-page sinal-page-porta">'
+    + (header)
+    + '<div class="sinal-porta-body">'
+    + '<div class="sinal-porta-logo-frame">'+(logoClientePorta)+'</div>'
+    + (evento ? '<div class="sinal-porta-evento">'+(evento)+'</div>' : '')
+    + '</div>'
+    + '<div class="sinal-footer"><span class="sinal-footer-line"></span>HCTA · CCTA<span class="sinal-footer-line"></span></div>'
+    + '</div>';
+
+  // Página 2 — Recepção: cabeçalho institucional, logótipo do cliente em destaque médio,
+  // e um único bloco (fundo branco) onde a seta e o nome da sala formam uma composição coesa.
+  // O tamanho do nome da sala ajusta-se automaticamente ao comprimento do texto, para ficar
+  // sempre o maior possível sem sair do bloco; a quebra de linha, quando necessária, ocorre
+  // apenas entre palavras (nunca a meio de uma palavra).
+  var salaFontClass = 'sinal-recepcao-sala-md';
+  if(salaUpper.length <= 10) salaFontClass = 'sinal-recepcao-sala-lg';
+  else if(salaUpper.length > 20) salaFontClass = 'sinal-recepcao-sala-sm';
+
+  var pagina2 =
+    '<div class="sinal-page sinal-page-recepcao">'
+    + (header)
+    + '<div class="sinal-recepcao-top">'
+    + '<div class="sinal-logo-cliente-r-frame">'+(logoClienteRecepcao)+'</div>'
+    + '</div>'
+    + '<div class="sinal-orient-block">'
+    + '<div class="sinal-orient-inner">'
+    + '<div class="sinal-seta">&#8592;</div>'
+    + '<div class="sinal-recepcao-sala '+(salaFontClass)+'">'+(salaUpper)+'</div>'
+    + '</div>'
+    + '</div>'
+    + '<div class="sinal-footer"><span class="sinal-footer-line"></span>HCTA · CCTA<span class="sinal-footer-line"></span></div>'
+    + '</div>';
+
+  return pagina1 + pagina2;
+}
+
+function gerarSinaletica(){
+  if(!sinaleticaState.sala.trim()){ geToast('Preenche o nome da sala.'); return; }
+  renderSinaleticaPreview();
+  geToast('Sinalética gerada com sucesso.');
+}
+
+function renderSinaleticaPreview(){
+  var preview = $('sinal-preview');
+  preview.innerHTML = '<div class="sinal-preview-wrap">'+(buildSinaleticaPagesHTML())+'</div>';
+}
+
+function printSinaletica(){
+  if(!sinaleticaState.sala.trim()){ geToast('Gera primeiro a sinalética antes de imprimir.'); return; }
+
+  var pagesHtml = buildSinaleticaPagesHTML();
+
+  var win=window.open('','_blank','width=1000,height=1200');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Sinalética — '+escHtml(sinaleticaState.sala||'')+'</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">'
+    +'<style>'
+    +'@page{size:A4 portrait;margin:0}'
+    +'*{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
+    +'body{font-family:Montserrat,Arial,sans-serif;margin:0;padding:0;background:#fff;color:#231F20}'
+    +'.sinal-page{width:210mm;height:297mm;position:relative;display:flex;flex-direction:column;page-break-after:always;break-after:page;overflow:hidden}'
+    +'.sinal-page:last-child{page-break-after:auto;break-after:auto}'
+    // Cabeçalho institucional — comum às duas páginas (proporção idêntica à pré-visualização: 280px = 210mm)
+    +'.sinal-hdr{display:flex;align-items:center;justify-content:center;padding:12mm 0 7.5mm}'
+    +'.sinal-logo-hcta{height:19.5mm;object-fit:contain}'
+    +'.sinal-hdr-faixa{height:2.2mm;background:#887157;margin:0}'
+    // Página 1 — Porta
+    +'.sinal-porta-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12mm;padding:13.5mm 16.5mm}'
+    +'.sinal-porta-logo-frame{width:100%;height:135mm;background:#f6f4f1;border:0.4mm solid #e0dbd5;border-radius:3mm;display:flex;align-items:center;justify-content:center;padding:12mm}'
+    +'.sinal-logo-cliente{max-width:100%;max-height:111mm;object-fit:contain}'
+    +'.sinal-logo-cliente-placeholder{font-size:9mm;color:#bbb;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;text-align:center;line-height:1.6}'
+    +'.sinal-porta-evento{font-size:8.2mm;font-weight:600;color:#231F20;text-align:center;letter-spacing:.5px;max-width:165mm}'
+    // Rodapé institucional — comum às duas páginas
+    +'.sinal-footer{display:flex;align-items:center;justify-content:center;gap:6mm;padding:6mm 0 10.5mm;font-size:6mm;font-weight:700;letter-spacing:2.5px;color:#888}'
+    +'.sinal-footer-line{width:19.5mm;height:0.3mm;background:#e0dbd5}'
+    // Página 2 — Recepção
+    +'.sinal-recepcao-top{display:flex;align-items:center;justify-content:center;padding:4.5mm 16.5mm 10.5mm}'
+    +'.sinal-logo-cliente-r-frame{width:100%;height:55.5mm;display:flex;align-items:center;justify-content:center}'
+    +'.sinal-logo-cliente-r{max-width:100%;max-height:55.5mm;object-fit:contain}'
+    +'.sinal-logo-cliente-r-placeholder{font-size:8mm;font-weight:600;color:#888;letter-spacing:.5px;text-align:center}'
+    +'.sinal-orient-block{flex:1;display:flex;align-items:center;justify-content:center;margin:0 10.5mm 10.5mm;padding:7.5mm 12mm}'
+    +'.sinal-orient-inner{display:flex;flex-direction:column;align-items:center;gap:15mm}'
+    +'.sinal-seta{font-size:43.5mm;line-height:1;color:#887157;font-weight:300}'
+    +'.sinal-recepcao-sala{font-weight:800;color:#231F20;line-height:1.15;letter-spacing:.5px;max-width:165mm;width:100%;text-align:center;word-break:normal;overflow-wrap:normal;hyphens:none;white-space:normal}'
+    +'.sinal-recepcao-sala-lg{font-size:21mm}'
+    +'.sinal-recepcao-sala-md{font-size:16.5mm}'
+    +'.sinal-recepcao-sala-sm{font-size:12.8mm}'
+    +'</style></head><body>'
+    +pagesHtml
     +'<'+'script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script>'
     +'</body></html>');
   win.document.close();
