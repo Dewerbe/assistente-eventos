@@ -2286,22 +2286,26 @@ function groupSummaryForProforma(summaryRows){
 // Suplemento Ocupação Duplo, Suplemento Ocupação Twin) por descrição + valor unitário,
 // somando as quantidades. O valor é sempre o introduzido manualmente pelo utilizador.
 function collectLodgingSupplements(roomingRows){
-  const groups = {}; // key: "desc|unit|tax" -> {desc, unit, tax, qty}
+  const groups = {}; // key: "desc|roomType|unit|tax" -> {desc, unit, tax, qty}
 
-  function addToGroup(desc, priceRaw, tax){
+  // Cada suplemento passa a incluir o tipo de quarto na descrição (ex.: "Early Check-in —
+  // Standard Deluxe"), para ficar claro a que quarto se refere quando há vários tipos no
+  // mesmo evento. Nunca referencia o hóspede — a Proforma é um documento comercial/fiscal,
+  // a identificação de hóspedes fica na Rooming List.
+  function addToGroup(label, roomType, priceRaw, tax){
     const unit = parseFloat((''+(priceRaw||'')).replace(/\s/g,'').replace(/\./g,'').replace(',','.')) || 0;
     if(unit <= 0) return; // suplemento sem valor preenchido não gera linha
+    const desc = label+' — '+(roomType||'Quarto');
     const key = desc+'|'+unit+'|'+tax;
     if(!groups[key]) groups[key] = { desc, unit, tax, qty:0 };
     groups[key].qty += 1;
   }
 
   roomingRows.forEach(r => {
-    if(r.eciOn) addToGroup('Early Check-in', r.eciPrice, r.tax);
-    if(r.lcoOn) addToGroup('Late Check-out', r.lcoPrice, r.tax);
+    if(r.eciOn) addToGroup('Early Check-in', r.roomType, r.eciPrice, r.tax);
+    if(r.lcoOn) addToGroup('Late Check-out', r.roomType, r.lcoPrice, r.tax);
     if(occupancyGuestCount(r.occupancy)===2 && r.occSupplement){
-      const label = 'Suplemento Ocupação '+(r.occupancy);
-      addToGroup(label, r.occSupplement, r.tax);
+      addToGroup('Suplemento Ocupação '+(r.occupancy), r.roomType, r.occSupplement, r.tax);
     }
   });
 
