@@ -1009,6 +1009,39 @@ function normalizeLodging(d){
   };
 }
 
+// Repara ids duplicados em LODGING.summaryRows / LODGING.roomingRows (podem existir em
+// ficheiros guardados antes da correcção do contador _lodRid). Duas linhas com o mesmo id
+// faziam com que apagar uma delas removesse ambas, e a "Noites"/outros campos de uma linha
+// pudessem reflectir os valores da outra. Aqui, a primeira ocorrência de cada id mantém-se;
+// qualquer ocorrência repetida a seguir recebe um novo id único. Nenhum dado é perdido.
+function dedupeLodgingIds(){
+  const seen = new Set();
+  let maxId = 0;
+
+  function fixArray(arr){
+    arr.forEach(r => {
+      const idNum = parseInt(r.id, 10) || 0;
+      if(idNum > maxId) maxId = idNum;
+    });
+  }
+  fixArray(LODGING.summaryRows);
+  fixArray(LODGING.roomingRows);
+
+  function dedupe(arr){
+    arr.forEach(r => {
+      const idNum = parseInt(r.id, 10) || 0;
+      if(seen.has(idNum)){
+        maxId += 1;
+        r.id = maxId;
+      } else {
+        seen.add(idNum);
+      }
+    });
+  }
+  dedupe(LODGING.summaryRows);
+  dedupe(LODGING.roomingRows);
+}
+
 // Garante que blocos do Resumo gravados antes desta correcção continuam a funcionar,
 // assumindo "não convertido" (converted:false) por defeito, sem alterar mais nada.
 function normalizeSummaryRow(r){
@@ -1445,6 +1478,22 @@ function loadJSON(ev){
       });
       _loadedFilename = file.name.replace(/\.json$/i,'');
       LODGING = normalizeLodging(d.lodging);
+      // Repara automaticamente ids duplicados que possam existir em ficheiros guardados
+      // antes desta correcção (o bug de colisão fazia com que dois quartos ficassem com o
+      // mesmo id; ao apagar um deles, ambos desapareciam). Nenhum dado é perdido — só o id
+      // interno da(s) linha(s) repetida(s) é substituído por um novo id único.
+      dedupeLodgingIds();
+      // Corrige o contador de ids do alojamento (_lodRid) para o maior id já usado nas
+      // linhas carregadas. Sem isto, novos quartos adicionados após abrir um ficheiro
+      // podiam receber um id já existente (ex.: id=1), causando um <tr>/elemento duplicado
+      // no DOM — e updateRoomingField() acabava a actualizar (ex.: as "Noites") do quarto
+      // antigo com esse id em vez do novo, porque getElementById() devolve sempre o primeiro
+      // elemento encontrado com esse id.
+      const _allLodgingIds = [].concat(
+        LODGING.summaryRows.map(r=>r.id||0),
+        LODGING.roomingRows.map(r=>r.id||0)
+      );
+      _lodRid = _allLodgingIds.length ? Math.max(_lodRid, ..._allLodgingIds) : _lodRid;
       currentLang = (d.lang==='en') ? 'en' : 'pt';
       refreshLang();
       updatePageBreaks();toast('Proforma carregada com sucesso.');
@@ -1460,6 +1509,7 @@ function newProforma(){
   addLine();addLine();addLine();
   _loadedFilename = null;
   LODGING = normalizeLodging(null);
+  _lodRid = 0;
   updatePageBreaks();toast('Nova proforma iniciada.');
 }
 
@@ -1710,7 +1760,10 @@ function addSummaryRow(d){
 }
 
 function delSummaryRow(id){
-  LODGING.summaryRows = LODGING.summaryRows.filter(r => r.id !== id);
+  // Remove apenas a primeira linha com este id (nunca todas as ocorrências), como
+  // salvaguarda extra caso alguma vez existam ids duplicados nos dados.
+  const idx = LODGING.summaryRows.findIndex(r => r.id === id);
+  if(idx !== -1) LODGING.summaryRows.splice(idx, 1);
   renderSummaryTable();
 }
 
@@ -1792,7 +1845,12 @@ function addRoomingRow(d, skipSummarySync){
 }
 
 function delRoomingRow(id){
-  LODGING.roomingRows = LODGING.roomingRows.filter(r => r.id !== id);
+  // Remove apenas a primeira linha com este id (nunca todas as ocorrências). Isto é a
+  // correcção directa do bug em que apagar um quarto removia também outro quarto com o
+  // mesmo id (id duplicado por um bug anterior de sincronização — já corrigido na origem
+  // e reparado automaticamente ao abrir ficheiros antigos via dedupeLodgingIds()).
+  const idx = LODGING.roomingRows.findIndex(r => r.id === id);
+  if(idx !== -1) LODGING.roomingRows.splice(idx, 1);
   renderRoomingTable();
   renderSummaryTable();
 }
