@@ -345,7 +345,7 @@ tr.dragging{opacity:0.4}
   th:first-child[style*="width:18px"],td:first-child[style*="width:18px"]{display:none!important}
   .sec-del{display:none!important}
   .lt td select{display:none!important}
-  .tax-print{display:inline!important}
+  .tax-print{display:none!important}
   #sign-name,#sign-role{display:block!important}
   .pbm-row{display:none!important}
   .ta{height:auto!important;overflow:visible!important}
@@ -379,6 +379,11 @@ tr.dragging{opacity:0.4}
   }
   .lt .qt .print-value,.lt .dy .print-value{text-align:center}
   .lt .vu .print-value,.lt .dc .print-value{text-align:right;padding-right:6px}
+
+  /* Coluna IVA: esconder o select, mostrar apenas o valor realmente seleccionado
+     (preenchido em preparePrintLayout(), sempre a partir do select no momento da impressão). */
+  .lt .tx select{display:none!important}
+  .lt .tx .print-value{display:block!important;text-align:center}
 
   /* Linhas de serviço completamente vazias (sem descrição e sem valores) não saem no PDF */
   .lt tbody tr.print-empty-row{display:none!important}
@@ -605,7 +610,7 @@ tr.dragging{opacity:0.4}
     </table>
   </div>
 
-  <div class="sec-title" id="pub-title-resumo-fin">Pagamento de Impostos</div>
+  <div class="sec-title" id="pub-title-resumo-fin">Pagamentos e Impostos</div>
   <div style="padding:8px 22px 16px">
 
     <div class="pub-highlight-row">
@@ -1739,6 +1744,14 @@ function preparePrintLayout(){
 
     const discInput = dcCell ? dcCell.querySelector('input') : null;
     setPrintValue(dcCell, discInput ? discInput.value.trim() : '');
+
+    // Coluna IVA: lê sempre o valor REALMENTE seleccionado no <select> desta linha, no
+    // momento da impressão — nunca depende de um valor guardado anteriormente (o antigo
+    // span.tax-print só era actualizado no evento onchange do select, o que podia ficar
+    // dessincronizado). Nunca recalcula nem infere a taxa a partir da descrição do serviço.
+    const txCell = tr.querySelector('td.tx');
+    const taxSelect = txCell ? txCell.querySelector('select') : null;
+    setPrintValue(txCell, taxSelect ? (taxSelect.value=='6.5'?'6,5':taxSelect.value)+'%' : '');
 
     // Linha vazia/default: sem descrição e sem valor unitário lançado -> não sai no PDF
     const unitRaw = unitInput ? parseFloat(unitInput.dataset.raw||'0') : 0;
