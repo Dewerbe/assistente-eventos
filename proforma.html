@@ -234,6 +234,10 @@ tr.dragging{opacity:0.4}
    "Instituição Pública". */
 .public-only-page{display:none}
 
+.pub-main-title{padding:16px 22px 10px;font-size:20px;font-weight:700;color:var(--black);
+  letter-spacing:1.5px;text-transform:uppercase;border-bottom:2px solid var(--bronze);
+  margin-bottom:6px}
+
 .pub-block-title{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
   color:var(--bronze);padding:8px 0 4px}
 
@@ -245,6 +249,10 @@ tr.dragging{opacity:0.4}
 .pub-fin-table .pub-col-conceito{width:auto}
 .pub-fin-table th:not(.pub-col-conceito),.pub-fin-table td:not(.pub-col-conceito){width:15.5%}
 .pub-cell-na{color:var(--gl)}
+
+/* Tabela "Detalhe da Factura": todo o conteúdo centrado, para ficar simétrico e alinhado */
+.pub-fin-detalhe th,.pub-fin-detalhe td,.pub-fin-detalhe th.tr,.pub-fin-detalhe td.tr{text-align:center}
+.pub-fin-detalhe .pub-col-conceito{text-align:center}
 
 .pub-fin-table.pub-fin-total td{font-weight:700;color:var(--black);border-top:1.5px solid var(--black);
   border-bottom:none;padding-top:7px;background:var(--gbg)}
@@ -485,7 +493,11 @@ tr.dragging{opacity:0.4}
             <td class="imp">14,0%</td>
             <td id="inc-iva-14">0,00</td>
           </tr>
-          <tr>
+          <!-- Linha de retenção 6,5% escondida nesta página: essa informação passou a
+               constar apenas na página financeira das Instituições Públicas. Os elementos
+               mantêm-se no DOM (id inc-base-ret / inc-val-ret) porque calcTot() continua a
+               calculá-los e renderPublicSummaryPage() continua a lê-los a partir daqui. -->
+          <tr style="display:none">
             <td id="inc-base-ret">0,00</td>
             <td class="imp">6,5%</td>
             <td id="inc-val-ret">0,00</td>
@@ -532,11 +544,12 @@ tr.dragging{opacity:0.4}
      novo, por isso fica sempre sincronizada automaticamente com a proforma. -->
 <div class="card2 public-only-page" id="public-summary-page" style="display:none">
   <div class="p2h"></div>
-  <div class="sec-title" id="pub-title-resumo-factura">Resumo da Factura Proforma / Factura Definitiva</div>
+  <div class="pub-main-title" id="pub-main-title">Resumo Financeiro</div>
+  <div class="sec-title" id="pub-title-resumo-factura">Detalhe da Factura</div>
 
   <div style="padding:4px 22px 10px">
     <div class="pub-block-title" id="pub-title-fora-hotelaria">Serviços fora do Âmbito da Hotelaria</div>
-    <table class="pub-fin-table">
+    <table class="pub-fin-table pub-fin-detalhe">
       <thead>
         <tr>
           <th class="pub-col-conceito" id="pub-th-conceito-1">Conceito</th>
@@ -558,7 +571,7 @@ tr.dragging{opacity:0.4}
     </table>
 
     <div class="pub-block-title" style="margin-top:10px" id="pub-title-do-hotelaria">Serviços do Âmbito da Hotelaria</div>
-    <table class="pub-fin-table">
+    <table class="pub-fin-table pub-fin-detalhe">
       <thead>
         <tr>
           <th class="pub-col-conceito" id="pub-th-conceito-2">Conceito</th>
@@ -579,7 +592,7 @@ tr.dragging{opacity:0.4}
       </tbody>
     </table>
 
-    <table class="pub-fin-table pub-fin-total">
+    <table class="pub-fin-table pub-fin-detalhe pub-fin-total">
       <tbody>
         <tr>
           <td class="pub-col-conceito" id="pub-total-label">TOTAL</td>
@@ -592,7 +605,7 @@ tr.dragging{opacity:0.4}
     </table>
   </div>
 
-  <div class="sec-title" id="pub-title-resumo-fin">Resumo Financeiro (Pagamentos e Impostos)</div>
+  <div class="sec-title" id="pub-title-resumo-fin">Pagamento de Impostos</div>
   <div style="padding:8px 22px 16px">
 
     <div class="pub-highlight-row">
@@ -879,13 +892,13 @@ const I18N = {
     th_qtd: 'Quant.',
     th_dias: 'Nº Dias',
     th_vunit: 'V. Unit (AOA)',
-    th_txi: 'Tx Imp',
+    th_txi: 'IVA',
     th_desconto: 'Desconto',
     th_total_iva: 'Total c/ IVA',
     btn_add_linha: '+ Adicionar linha',
     btn_add_seccao: '+ Secção / Data',
     th_incidencia: 'Incidência',
-    th_imp: 'Imp',
+    th_imp: 'IVA',
     th_valor: 'Valor',
     lbl_total_sem_desc: 'Total s/ Desconto',
     lbl_desconto_total: 'Desconto Total',
