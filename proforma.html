@@ -228,6 +228,43 @@ tr.dragging{opacity:0.4}
 .ib.warn{background:#fffbf5;border-left:3px solid var(--bronze)}
 .ib.warn .it{color:var(--bronze)}
 
+/* Página extra: Resumo Financeiro para Entidades Públicas — segue de perto a estrutura
+   do simulador Excel de cativação/retenção, com a identidade gráfica da proforma (cores,
+   tipografia, tabelas). Só é mostrada na impressão, quando o tipo de documento escolhido é
+   "Instituição Pública". */
+.public-only-page{display:none}
+
+.pub-block-title{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--bronze);padding:8px 0 4px}
+
+.pub-fin-table{width:100%;border-collapse:collapse;font-size:8.5px;margin-bottom:2px;table-layout:fixed}
+.pub-fin-table th{background:var(--black);color:#fff;text-align:left;padding:6px 6px;
+  font-size:7px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;vertical-align:middle;line-height:1.3}
+.pub-fin-table th.tr,.pub-fin-table td.tr{text-align:right}
+.pub-fin-table td{padding:6px 6px;border-bottom:1px solid var(--gl);color:var(--gd);vertical-align:middle;font-size:8.5px}
+.pub-fin-table .pub-col-conceito{width:auto}
+.pub-fin-table th:not(.pub-col-conceito),.pub-fin-table td:not(.pub-col-conceito){width:15.5%}
+.pub-cell-na{color:var(--gl)}
+
+.pub-fin-table.pub-fin-total td{font-weight:700;color:var(--black);border-top:1.5px solid var(--black);
+  border-bottom:none;padding-top:7px;background:var(--gbg)}
+
+/* Resumo Financeiro: linhas simples (detalhe do IVA cativo por taxa) */
+.pub-fin-table.pub-fin-resumo{margin:6px 0}
+.pub-fin-table.pub-fin-resumo td{font-size:8.5px;padding:4px 6px}
+
+/* Linhas de destaque intermédio (Valor Total da Proposta, Total IVA Cativo, Retenção) */
+.pub-highlight-row{display:flex;justify-content:space-between;align-items:center;
+  background:var(--gbg);border-left:3px solid var(--bronze);padding:7px 10px;margin:6px 0;
+  font-size:9px;font-weight:700;color:var(--black)}
+.pub-highlight-row span:last-child{font-size:10px;color:var(--bronze);white-space:nowrap;margin-left:12px}
+
+/* Caixa final — o elemento visual mais importante da página */
+.pub-final-box{display:flex;justify-content:space-between;align-items:center;
+  background:var(--black);color:#fff;padding:12px 16px;margin-top:10px;border-radius:2px}
+.pub-final-box span:first-child{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.pub-final-box span:last-child{font-size:16px;font-weight:700;color:var(--bronze-l);white-space:nowrap;margin-left:12px}
+
 /* Banking */
 .bank-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 22px 8px}
 .bb{border:1px solid var(--gl);border-radius:2px;padding:6px 10px}
@@ -487,6 +524,107 @@ tr.dragging{opacity:0.4}
   <div class="fline"></div>
 </div>
 
+<!-- PÁGINA EXTRA — Resumo Financeiro para Entidades Públicas.
+     Só é mostrada durante a impressão, e só quando o tipo de documento escolhido é
+     "Instituição Pública" (ver applyDoctypeExtraPages()/generatePdfAs()). Nunca aparece
+     no editor nem na pré-visualização normal. Todos os valores são lidos directamente do
+     DOM já calculado por calcTot() na Página 1 — nada é introduzido ou calculado aqui de
+     novo, por isso fica sempre sincronizada automaticamente com a proforma. -->
+<div class="card2 public-only-page" id="public-summary-page" style="display:none">
+  <div class="p2h"></div>
+  <div class="sec-title" id="pub-title-resumo-factura">Resumo da Factura Proforma / Factura Definitiva</div>
+
+  <div style="padding:4px 22px 10px">
+    <div class="pub-block-title" id="pub-title-fora-hotelaria">Serviços fora do Âmbito da Hotelaria</div>
+    <table class="pub-fin-table">
+      <thead>
+        <tr>
+          <th class="pub-col-conceito" id="pub-th-conceito-1">Conceito</th>
+          <th class="tr" id="pub-th-valorft-1">Valor FT</th>
+          <th class="tr" id="pub-th-base-1">Base de Incidência</th>
+          <th class="tr" id="pub-th-iva-1">IVA 14%</th>
+          <th class="tr" id="pub-th-ret-1">Retenção Imposto Industrial (6,5%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="pub-col-conceito" id="pub-conceito-14">Bens ou Serviços com taxa de IVA a 14%</td>
+          <td class="tr" id="pub-valorft-14">0,00</td>
+          <td class="tr" id="pub-base-14">0,00</td>
+          <td class="tr" id="pub-iva-14">0,00</td>
+          <td class="tr" id="pub-ret-14">0,00</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="pub-block-title" style="margin-top:10px" id="pub-title-do-hotelaria">Serviços do Âmbito da Hotelaria</div>
+    <table class="pub-fin-table">
+      <thead>
+        <tr>
+          <th class="pub-col-conceito" id="pub-th-conceito-2">Conceito</th>
+          <th class="tr" id="pub-th-valorft-2">Valor FT</th>
+          <th class="tr" id="pub-th-base-2">Base de Incidência</th>
+          <th class="tr" id="pub-th-iva-2">IVA 7%</th>
+          <th class="tr" id="pub-th-ret-2">Retenção Imposto Industrial (6,5%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="pub-col-conceito" id="pub-conceito-7">Bens ou Serviços com taxa de IVA a 7%</td>
+          <td class="tr" id="pub-valorft-7">0,00</td>
+          <td class="tr" id="pub-base-7">0,00</td>
+          <td class="tr" id="pub-iva-7">0,00</td>
+          <td class="tr pub-cell-na" id="pub-ret-7">—</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table class="pub-fin-table pub-fin-total">
+      <tbody>
+        <tr>
+          <td class="pub-col-conceito" id="pub-total-label">TOTAL</td>
+          <td class="tr" id="pub-total-valorft">0,00</td>
+          <td class="tr" id="pub-total-base">0,00</td>
+          <td class="tr" id="pub-total-iva">0,00</td>
+          <td class="tr" id="pub-total-ret">0,00</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec-title" id="pub-title-resumo-fin">Resumo Financeiro (Pagamentos e Impostos)</div>
+  <div style="padding:8px 22px 16px">
+
+    <div class="pub-highlight-row">
+      <span id="pub-lbl-total-proposta">Valor Total da Proposta/Factura</span>
+      <span class="tr" id="pub-val-total-proposta">0,00</span>
+    </div>
+
+    <table class="pub-fin-table pub-fin-resumo">
+      <tbody>
+        <tr><td id="pub-lbl-iva14">IVA cativo à taxa de 14% (Serviços fora do Âmbito da Hotelaria)</td><td class="tr" id="pub-val-iva14">0,00</td></tr>
+        <tr><td id="pub-lbl-iva7">IVA cativo à taxa de 7% (Serviços do Âmbito da Hotelaria)</td><td class="tr" id="pub-val-iva7">0,00</td></tr>
+      </tbody>
+    </table>
+
+    <div class="pub-highlight-row">
+      <span id="pub-lbl-total-iva">Total de IVA Cativo</span>
+      <span class="tr" id="pub-val-total-iva">0,00</span>
+    </div>
+
+    <div class="pub-highlight-row">
+      <span id="pub-lbl-retencao">Retenção de Imposto Industrial (6,5% sobre Serviços fora da Hotelaria)</span>
+      <span class="tr" id="pub-val-retencao">0,00</span>
+    </div>
+
+    <div class="pub-final-box">
+      <span id="pub-lbl-liquido">Valor Total a Receber em Banco</span>
+      <span class="tr" id="pub-val-liquido">0,00</span>
+    </div>
+
+  </div>
+</div>
+
 <!-- PAGE 2 -->
 <div class="card2">
   <div class="p2h"></div>
@@ -557,6 +695,43 @@ tr.dragging{opacity:0.4}
 <div id="toast"></div>
 
 <!-- MODAL GERIR ALOJAMENTO (fora do layout da proforma, não é impresso) -->
+<div id="doctype-modal" style="display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;
+  overflow:hidden;padding:24px;box-sizing:border-box;font-family:'Montserrat',sans-serif">
+  <div style="background:#fff;border-radius:4px;width:100%;max-width:420px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.25);overflow:hidden">
+    <div style="padding:18px 22px;border-bottom:1px solid #e0dbd5">
+      <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#231F20" id="doctype-modal-title">
+        Gerar PDF da Proforma
+      </div>
+      <div style="font-size:9px;color:#888;margin-top:4px" id="doctype-modal-subtitle">
+        Escolha o tipo de destinatário para esta proforma.
+      </div>
+    </div>
+    <div style="padding:18px 22px;display:flex;flex-direction:column;gap:10px">
+      <button onclick="generatePdfAs('privada')"
+        style="text-align:left;padding:14px 16px;border:1px solid #e0dbd5;border-radius:3px;
+        background:#faf7f3;cursor:pointer;font-family:'Montserrat',sans-serif">
+        <div style="font-size:11px;font-weight:700;color:#231F20;letter-spacing:.3px" id="doctype-opt-privada-title">Proforma — Empresa Privada</div>
+        <div style="font-size:9px;color:#888;margin-top:2px" id="doctype-opt-privada-desc">PDF padrão, exactamente como hoje.</div>
+      </button>
+      <button onclick="generatePdfAs('publica')"
+        style="text-align:left;padding:14px 16px;border:1px solid #e0dbd5;border-radius:3px;
+        background:#faf7f3;cursor:pointer;font-family:'Montserrat',sans-serif">
+        <div style="font-size:11px;font-weight:700;color:#231F20;letter-spacing:.3px" id="doctype-opt-publica-title">Proforma — Instituição Pública</div>
+        <div style="font-size:9px;color:#888;margin-top:2px" id="doctype-opt-publica-desc">Inclui página adicional com o resumo financeiro de cativação/retenção.</div>
+      </button>
+    </div>
+    <div style="padding:12px 22px;border-top:1px solid #e0dbd5;display:flex;justify-content:flex-end">
+      <button onclick="closeDoctypeModal()"
+        style="background:none;border:1px solid #ddd;border-radius:3px;padding:7px 16px;
+        font-family:'Montserrat',sans-serif;font-size:10px;color:#888;cursor:pointer" id="doctype-modal-cancel">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
 <div id="lod-modal" style="display:none;position:fixed;inset:0;
   background:rgba(0,0,0,0.5);z-index:9998;align-items:center;justify-content:center;
   overflow:hidden;padding:24px;box-sizing:border-box;font-family:'Montserrat',sans-serif">
@@ -1510,6 +1685,9 @@ function newProforma(){
   _loadedFilename = null;
   LODGING = normalizeLodging(null);
   _lodRid = 0;
+  _currentDocType = 'privada';
+  const pubPage = document.getElementById('public-summary-page');
+  if(pubPage) pubPage.style.display = 'none';
   updatePageBreaks();toast('Nova proforma iniciada.');
 }
 
@@ -1595,8 +1773,120 @@ function setPrintValue(cell, text){
 }
 
 function validateAndPrint(){
+  openDoctypeModal();
+}
+
+// ============================================================
+// PÁGINAS EXTRA POR TIPO DE DOCUMENTO (arquitectura modular)
+// ============================================================
+// Cada tipo de documento pode ter zero ou mais páginas extra, activadas apenas na
+// impressão. Para adicionar uma nova página especial no futuro, basta:
+//   1. Criar o <div class="card2 public-only-page" id="..."> correspondente no HTML,
+//      escondido por defeito (display:none), com o mesmo estilo da proforma.
+//      Adicionar a alimentação automática dos seus valores numa função própria.
+//   2. Registar essa função em DOCTYPE_EXTRA_PAGES, na entrada do tipo de documento.
+// Nada mais na lógica de impressão precisa de ser alterado.
+const DOCTYPE_EXTRA_PAGES = {
+  privada: [],
+  publica: ['renderPublicSummaryPage']
+};
+
+let _currentDocType = 'privada';
+
+function openDoctypeModal(){
+  document.getElementById('doctype-modal').style.display = 'flex';
+}
+
+function closeDoctypeModal(){
+  document.getElementById('doctype-modal').style.display = 'none';
+}
+
+function generatePdfAs(docType){
+  _currentDocType = (docType==='publica') ? 'publica' : 'privada';
+  closeDoctypeModal();
+  applyDoctypeExtraPages();
   preparePrintLayout();
   window.print();
+}
+
+// Activa (ou esconde) cada página extra registada consoante o tipo de documento
+// actualmente seleccionado. Antes de mostrar uma página, chama a sua função de
+// alimentação automática de valores (sem qualquer campo editável).
+function applyDoctypeExtraPages(){
+  const allExtraPageIds = ['public-summary-page']; // ids de todas as páginas extra existentes
+  allExtraPageIds.forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.style.display = 'none';
+  });
+
+  const fns = DOCTYPE_EXTRA_PAGES[_currentDocType] || [];
+  fns.forEach(fnName=>{
+    if(typeof window[fnName] === 'function') window[fnName]();
+  });
+}
+
+// Lê directamente os valores já calculados por calcTot() na Página 1 (nunca recalcula
+// nem introduz valores manuais) e preenche a página de Resumo Financeiro para Entidades
+// Públicas, replicando a lógica do simulador de cativação/retenção:
+//   - Serviços fora do âmbito da Hotelaria = artigos a 14%
+//   - Serviços do âmbito da Hotelaria      = artigos a 7%
+//   - IVA cativo 14% / 7%, Total de IVA cativo
+//   - Retenção de Imposto Industrial 6,5% sobre a base de 14%
+//   - Valor total a receber em banco = Total Proposta − Total IVA cativo − Retenção
+function renderPublicSummaryPage(){
+  const page = document.getElementById('public-summary-page');
+  if(!page) return;
+
+  const val14  = parseFloat((document.getElementById('inc-iva-14').textContent||'0').replace(/\s/g,'').replace(/\./g,'').replace(',','.'))||0;
+  const base14 = parseFloat((document.getElementById('inc-base-14').textContent||'0').replace(/\s/g,'').replace(/\./g,'').replace(',','.'))||0;
+  const val7   = parseFloat((document.getElementById('inc-iva-7').textContent||'0').replace(/\s/g,'').replace(/\./g,'').replace(',','.'))||0;
+  const base7  = parseFloat((document.getElementById('inc-base-7').textContent||'0').replace(/\s/g,'').replace(/\./g,'').replace(',','.'))||0;
+  const retencao = parseFloat((document.getElementById('inc-val-ret').textContent||'0').replace(/\s/g,'').replace(/\./g,'').replace(',','.'))||0;
+  const grandTotal = parseFloat((document.getElementById('gt').textContent||'0').replace(/\s/g,'').replace(/\./g,'').replace(',','.'))||0;
+
+  // Valor Facturado (coluna "VALOR FT" do Excel) = Base de Incidência + o próprio IVA da taxa.
+  const valorFt14 = base14 + val14;
+  const valorFt7  = base7  + val7;
+
+  // A retenção de 6,5% aplica-se apenas à base dos serviços FORA do âmbito da Hotelaria
+  // (14%) — exactamente como no Excel; a linha de 7% nunca tem retenção.
+  const ret14 = retencao;
+  const ret7  = 0;
+
+  const totalValorFt = valorFt14 + valorFt7;
+  const totalBase    = base14 + base7;
+  const totalIva     = val14 + val7;
+  const totalRet     = ret14 + ret7;
+
+  const totalIvaCativo = val14 + val7;
+  const valorLiquido = grandTotal - totalIvaCativo - retencao;
+
+  // Linha "Serviços fora do Âmbito da Hotelaria" (14%)
+  document.getElementById('pub-valorft-14').textContent = fmt(valorFt14);
+  document.getElementById('pub-base-14').textContent    = fmt(base14);
+  document.getElementById('pub-iva-14').textContent     = fmt(val14);
+  document.getElementById('pub-ret-14').textContent     = fmt(ret14);
+
+  // Linha "Serviços do Âmbito da Hotelaria" (7%) — sem retenção (célula com "—")
+  document.getElementById('pub-valorft-7').textContent = fmt(valorFt7);
+  document.getElementById('pub-base-7').textContent    = fmt(base7);
+  document.getElementById('pub-iva-7').textContent     = fmt(val7);
+
+  // TOTAL (soma de cada coluna, tal como no Excel)
+  document.getElementById('pub-total-valorft').textContent = fmt(totalValorFt);
+  document.getElementById('pub-total-base').textContent    = fmt(totalBase);
+  document.getElementById('pub-total-iva').textContent     = fmt(totalIva);
+  document.getElementById('pub-total-ret').textContent     = fmt(totalRet);
+
+  // Resumo Financeiro (Pagamentos e Impostos)
+  document.getElementById('pub-val-total-proposta').textContent = fmt(grandTotal);
+  document.getElementById('pub-val-iva14').textContent = fmt(val14);
+  document.getElementById('pub-val-iva7').textContent  = fmt(val7);
+  document.getElementById('pub-val-total-iva').textContent = fmt(totalIvaCativo);
+  document.getElementById('pub-val-retencao').textContent  = fmt(retencao);
+  document.getElementById('pub-val-liquido').textContent   = fmt(valorLiquido);
+
+  page.style.display = 'block';
 }
 
 function showValidationModal(fields){
