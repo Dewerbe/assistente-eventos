@@ -862,8 +862,8 @@ const DIAS_PT=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-f
 const DIAS_S=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const LAYOUTS=['—','Plateia','Escola','Mesa U','Cabaret','Banquete','Cocktail','Sala VIP'];
-const SALAS=['Cabinda I','Cabinda II','Cabinda III','Cabinda IV','Talatona I','Talatona II','Talatona III','Talatona IV','Talatona I-II-III','Talatona II-III','CCTA Auditório','CCTA 1º Piso / Sala 2','CCTA Lobby','Entrada Lobby CCTA','Pátio Interior','Piscina','Restaurante HCTA','Restaurante CCTA','Girassol I','Girassol II','Girassol III','Tenda'];
-const SALA_ORDER=['Cabinda I','Cabinda II','Cabinda III','Cabinda IV','Talatona I','Talatona II','Talatona III','Talatona IV','Talatona I-II-III','Talatona II-III','CCTA Auditório','CCTA 1º Piso / Sala 2','CCTA Lobby','Entrada Lobby CCTA','Pátio Interior','Piscina','Restaurante HCTA','Restaurante CCTA','Girassol I','Girassol II','Girassol III','Tenda'];
+const SALAS=['Cabinda I','Cabinda II','Cabinda III','Cabinda IV','Talatona I','Talatona II','Talatona III','Talatona IV','Talatona I-II-III','Talatona II-III','CCTA Auditório','CCTA 1º Piso / Sala 2','CCTA 1º Piso / Sala 3','CCTA Lobby','CCTA Centro de Imprensa','Entrada Lobby CCTA','Pátio Interior','Piscina','Restaurante HCTA','Restaurante CCTA','Girassol I','Girassol II','Girassol III','Girassol IV','Tenda'];
+const SALA_ORDER=['Cabinda I','Cabinda II','Cabinda III','Cabinda IV','Talatona I','Talatona II','Talatona III','Talatona IV','Talatona I-II-III','Talatona II-III','CCTA Auditório','CCTA 1º Piso / Sala 2','CCTA 1º Piso / Sala 3','CCTA Lobby','CCTA Centro de Imprensa','Entrada Lobby CCTA','Pátio Interior','Piscina','Restaurante HCTA','Restaurante CCTA','Girassol I','Girassol II','Girassol III','Girassol IV','Tenda'];
 // Salas organizadas por categoria, usadas no modal "Escolher Sala" da Ordem de Serviço.
 // Lista independente de SALAS/SALA_ORDER (que continuam a servir o Mapa Semanal) para não
 // alterar nenhum outro comportamento existente.
@@ -891,7 +891,7 @@ var TYPES=[
 function emptyRow(){ return {conceito:'',valor:0}; }
 function initRows(){ foraRows=[]; hotRows=[]; for(var i=0;i<NUM_ROWS;i++){ foraRows.push(emptyRow()); hotRows.push(emptyRow()); } }
 function parseXLS(rows){
-  var SALA_NORM={'TALATONA I-II-III':'Talatona I-II-III','TALATONA II-III':'Talatona II-III','TALATONA I':'Talatona I','TALATONA II':'Talatona II','TALATONA III':'Talatona III','TALATONA IV':'Talatona IV','CABINDA I':'Cabinda I','CABINDA II':'Cabinda II','CABINDA III':'Cabinda III','CABINDA IV':'Cabinda IV','AUDITORIO':'CCTA Auditório','SALA 2':'CCTA 1º Piso / Sala 2','GIRASSOL I':'Girassol I','GIRASSOL II':'Girassol II','GIRASSOL III':'Girassol III','PATIO INTERIOR':'Pátio Interior','PISCINA':'Piscina','RESTAURANTE HOTEL':'Restaurante HCTA','RESTAURANTE CCTA':'Restaurante CCTA','TENDA':'Tenda'};
+  var SALA_NORM={'TALATONA I-II-III':'Talatona I-II-III','TALATONA II-III':'Talatona II-III','TALATONA I':'Talatona I','TALATONA II':'Talatona II','TALATONA III':'Talatona III','TALATONA IV':'Talatona IV','CABINDA I':'Cabinda I','CABINDA II':'Cabinda II','CABINDA III':'Cabinda III','CABINDA IV':'Cabinda IV','AUDITORIO':'CCTA Auditório','SALA 2':'CCTA 1º Piso / Sala 2','SALA 3':'CCTA 1º Piso / Sala 3','GIRASSOL I':'Girassol I','GIRASSOL II':'Girassol II','GIRASSOL III':'Girassol III','GIRASSOL IV':'Girassol IV','PATIO INTERIOR':'Pátio Interior','PISCINA':'Piscina','RESTAURANTE HOTEL':'Restaurante HCTA','RESTAURANTE CCTA':'Restaurante CCTA','TENDA':'Tenda','LOBBY':'CCTA Lobby','CENTRO DE IMPRENSA':'CCTA Centro de Imprensa'};
   var DIAS_MAP={'Segunda':'x','Terça':'x','Quarta':'x','Quinta':'x','Sexta':'x','Sábado':'x','Domingo':'x'};
   var rtype=detectReportType(rows);
   var events=[],eventMap={},curDate=null,curEv=null,inTotals=false;
